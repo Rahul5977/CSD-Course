@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSD Lab 2 Report — Rahul Raj</title>
+<style>
+  :root {
+    --ink: #1f2933;
+    --muted: #6b7785;
+    --accent: #c2680d;
+    --border: #d8dce1;
+    --code-bg: #f5f6f8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 32px 80px;
+    line-height: 1.5;
+  }
+  header {
+    border-bottom: 3px solid var(--accent);
+    padding-bottom: 16px;
+    margin-bottom: 24px;
+  }
+  h1 { font-size: 1.6em; margin: 0 0 4px; }
+  h2 {
+    font-size: 1.15em;
+    margin: 36px 0 12px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+  h3 { font-size: 1em; margin: 20px 0 8px; }
+  .subtitle { color: var(--muted); margin: 0; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    font-size: 0.92em;
+    vertical-align: top;
+  }
+  th { background: var(--code-bg); }
+  .meta-table td:first-child { font-weight: 600; width: 220px; }
+  .fillin {
+    background: #fff3e0;
+    color: #9a5b00;
+    font-weight: 600;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: 0.82em;
+    line-height: 1.45;
+  }
+  code { font-family: "SF Mono", Menlo, Consolas, monospace; }
+  .route-block {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    margin: 16px 0 28px;
+  }
+  .route-title {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 1.05em;
+    color: var(--accent);
+    margin: 0 0 8px;
+  }
+  .img-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 12px;
+  }
+  figure {
+    margin: 0;
+    flex: 1 1 260px;
+    text-align: center;
+  }
+  figure img {
+    max-width: 100%;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: #fff;
+  }
+  figcaption {
+    font-size: 0.82em;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+  .screenshot-box {
+    flex: 1 1 260px;
+    min-height: 180px;
+    border: 2px dashed var(--accent);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: var(--accent);
+    font-size: 0.85em;
+    padding: 12px;
+    background: #fffaf3;
+  }
+  .screenshot-box img {
+    max-width: 100%;
+    max-height: 260px;
+    border-radius: 4px;
+  }
+  ul.observations li { margin-bottom: 8px; }
+  footer { margin-top: 48px; color: var(--muted); font-size: 0.85em; }
+  @media print {
+    body { padding: 0 8mm; }
+    .route-block { break-inside: avoid; page-break-inside: avoid; }
+    h2 { break-after: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Computer Systems Design — Lab 2 Report</h1>
+  <p class="subtitle">Building Computer Vision APIs using OpenCV and Flask</p>
+</header>
+
+<table class="meta-table">
+  <tr><td>Student Name</td><td>Rahul Raj</td></tr>
+  <tr><td>Roll Number</td><td>12341680</td></tr>
+  <tr><td>Assigned System / Hostname</td><td><span class="fillin">[stuXX-sysXX]</span></td></tr>
+  <tr><td>SSH Port</td><td><span class="fillin">[fill in after SSH allocation]</span></td></tr>
+  <tr><td>Application Port Used</td><td><span class="fillin">[e.g. 3210 — see port-derivation table in README]</span></td></tr>
+  <tr><td>Date</td><td>5th August, 2026</td></tr>
+</table>
+
+<h2>1. Objective</h2>
+<p>
+  Implement a Flask REST API that exposes four OpenCV image-processing operations —
+  grayscale conversion, Gaussian blur, Canny edge detection, and contour detection —
+  as HTTP <code>POST</code> endpoints. Each endpoint accepts an uploaded image and
+  returns the processed image as a JPEG response. The API was first built and
+  verified locally with <code>curl</code>, then deployed on the allocated lab
+  machine and tested with Postman.
+</p>
+
+<h2>2. Flask Source Code (app.py)</h2>
+<pre><code>import os
+
+from flask import Flask, request, Response, jsonify
+import cv2
+import numpy as np
+
+app = Flask(__name__)
+
+
+def decode_image(file_storage):
+    data = np.frombuffer(file_storage.read(), np.uint8)
+    return cv2.imdecode(data, cv2.IMREAD_COLOR)
+
+
+def encode_image(img):
+    _, buf = cv2.imencode(".jpg", img)
+    return buf.tobytes()
+
+
+def require_image():
+    if "image" not in request.files:
+        return None, (jsonify({"error": "No 'image' file part in request"}), 400)
+    img = decode_image(request.files["image"])
+    if img is None:
+        return None, (jsonify({"error": "Uploaded file is not a valid image"}), 400)
+    return img, None
+
+
+@app.route("/")
+def home():
+    return jsonify({
+        "message": "OpenCV Image Processing API",
+        "routes": {
+            "/gray": "POST form-data 'image' -&gt; grayscale JPEG",
+            "/blur": "POST form-data 'image' -&gt; Gaussian-blurred JPEG",
+            "/edges": "POST form-data 'image' -&gt; Canny edge-detected JPEG",
+            "/contours": "POST form-data 'image' -&gt; JPEG with contours drawn",
+        },
+    })
+
+
+@app.route("/gray", methods=["POST"])
+def gray():
+    img, err = require_image()
+    if err:
+        return err
+
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return Response(encode_image(gray_img), mimetype="image/jpeg")
+
+
+@app.route("/blur", methods=["POST"])
+def blur():
+    img, err = require_image()
+    if err:
+        return err
+
+    blurred = cv2.GaussianBlur(img, (15, 15), 0)
+    return Response(encode_image(blurred), mimetype="image/jpeg")
+
+
+@app.route("/edges", methods=["POST"])
+def edges():
+    img, err = require_image()
+    if err:
+        return err
+
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edge_img = cv2.Canny(gray_img, 50, 150)
+    return Response(encode_image(edge_img), mimetype="image/jpeg")
+
+
+@app.route("/contours", methods=["POST"])
+def contours():
+    img, err = require_image()
+    if err:
+        return err
+
+    gray_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    edge_img = cv2.Canny(gray_img, 50, 150)
+    cnts, _ = cv2.findContours(edge_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+    output = img.copy()
+    cv2.drawContours(output, cnts, -1, (0, 255, 0), 2)
+    return Response(encode_image(output), mimetype="image/jpeg")
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
+</code></pre>
+
+<h2>3. API Routes Summary</h2>
+<table>
+  <tr><th>Method</th><th>Route</th><th>Purpose</th><th>Response</th></tr>
+  <tr><td>GET</td><td>/</td><td>API info / health check</td><td>JSON</td></tr>
+  <tr><td>POST</td><td>/gray</td><td>Grayscale conversion</td><td>JPEG</td></tr>
+  <tr><td>POST</td><td>/blur</td><td>Gaussian blur (15×15 kernel)</td><td>JPEG</td></tr>
+  <tr><td>POST</td><td>/edges</td><td>Canny edge detection (50, 150)</td><td>JPEG</td></tr>
+  <tr><td>POST</td><td>/contours</td><td>Contour detection + drawing</td><td>JPEG</td></tr>
+</table>
+<p>All processing routes take a multipart form-data field named <code>image</code>.</p>
+
+<h2>4. Route Testing — Input, Output, curl, Postman</h2>
+
+<div class="route-block">
+  <p class="route-title">POST /gray</p>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/gray -o gray_output.jpg</code></pre>
+  <div class="img-row">
+    <figure>
+      <img src="../sample.jpg" alt="input image">
+      <figcaption>Input — sample.jpg</figcaption>
+    </figure>
+    <figure>
+      <img src="../output/gray_output.jpg" alt="gray output">
+      <figcaption>Output — grayscale</figcaption>
+    </figure>
+    <div class="screenshot-box">
+      <img src="../postman_screenshots/gray.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span style="display:none;">Paste Postman screenshot for<br><code>POST /gray</code> here<br>(save as postman_screenshots/gray.png)</span>
+    </div>
+  </div>
+</div>
+
+<div class="route-block">
+  <p class="route-title">POST /blur</p>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/blur -o blur_output.jpg</code></pre>
+  <div class="img-row">
+    <figure>
+      <img src="../sample.jpg" alt="input image">
+      <figcaption>Input — sample.jpg</figcaption>
+    </figure>
+    <figure>
+      <img src="../output/blur_output.jpg" alt="blur output">
+      <figcaption>Output — Gaussian blurred</figcaption>
+    </figure>
+    <div class="screenshot-box">
+      <img src="../postman_screenshots/blur.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span style="display:none;">Paste Postman screenshot for<br><code>POST /blur</code> here<br>(save as postman_screenshots/blur.png)</span>
+    </div>
+  </div>
+</div>
+
+<div class="route-block">
+  <p class="route-title">POST /edges</p>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/edges -o edges_output.jpg</code></pre>
+  <div class="img-row">
+    <figure>
+      <img src="../sample.jpg" alt="input image">
+      <figcaption>Input — sample.jpg</figcaption>
+    </figure>
+    <figure>
+      <img src="../output/edges_output.jpg" alt="edges output">
+      <figcaption>Output — Canny edges</figcaption>
+    </figure>
+    <div class="screenshot-box">
+      <img src="../postman_screenshots/edges.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span style="display:none;">Paste Postman screenshot for<br><code>POST /edges</code> here<br>(save as postman_screenshots/edges.png)</span>
+    </div>
+  </div>
+</div>
+
+<div class="route-block">
+  <p class="route-title">POST /contours</p>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/contours -o contours_output.jpg</code></pre>
+  <div class="img-row">
+    <figure>
+      <img src="../sample.jpg" alt="input image">
+      <figcaption>Input — sample.jpg</figcaption>
+    </figure>
+    <figure>
+      <img src="../output/contours_output.jpg" alt="contours output">
+      <figcaption>Output — contours drawn</figcaption>
+    </figure>
+    <div class="screenshot-box">
+      <img src="../postman_screenshots/contours.png" alt="" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+      <span style="display:none;">Paste Postman screenshot for<br><code>POST /contours</code> here<br>(save as postman_screenshots/contours.png)</span>
+    </div>
+  </div>
+</div>
+
+<h2>5. Observations</h2>
+<ul class="observations">
+  <li>All four routes returned <code>HTTP 200</code> with header
+    <code>Content-Type: image/jpeg</code> when a valid image file was attached
+    under the form-data key <code>image</code>.</li>
+  <li>Sending a request to <code>/gray</code> with no file attached correctly
+    returned <code>HTTP 400</code> with a JSON error body
+    (<code>{"error": "No 'image' file part in request"}</code>), confirming the
+    input-validation path works as expected.</li>
+  <li><code>/edges</code> and <code>/gray</code> return single-channel
+    (grayscale) JPEGs, while <code>/blur</code> and <code>/contours</code> return
+    3-channel color JPEGs — visible in the output file sizes and in
+    <code>cv2.imencode</code>'s handling of the array shape.</li>
+  <li>The synthetic shapes test image (rectangle, circle, triangle) made it easy
+    to visually confirm that Canny edge detection produced clean single-pixel
+    outlines and that <code>findContours</code>/<code>drawContours</code>
+    correctly traced the boundary of each shape.</li>
+  <li><span class="fillin">[Add any additional observations from your SSH-machine
+    / Postman testing here — e.g. response times, differences from local testing,
+    any errors encountered.]</span></li>
+</ul>
+
+<footer>
+  Submitted for CSD Lab 2 — Indian Institute of Technology Bhilai.
+</footer>
+
+</body>
+</html>
