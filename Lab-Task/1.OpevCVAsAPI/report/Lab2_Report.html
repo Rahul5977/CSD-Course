@@ -133,9 +133,9 @@
 <table class="meta-table">
   <tr><td>Student Name</td><td>Rahul Raj</td></tr>
   <tr><td>Roll Number</td><td>12341680</td></tr>
-  <tr><td>Assigned System / Hostname</td><td><span class="fillin">[stuXX-sysXX]</span></td></tr>
-  <tr><td>SSH Port</td><td><span class="fillin">[fill in after SSH allocation]</span></td></tr>
-  <tr><td>Application Port Used</td><td><span class="fillin">[e.g. 3210 — see port-derivation table in README]</span></td></tr>
+  <tr><td>Assigned System / Hostname</td><td>10.1.75.53</td></tr>
+  <tr><td>SSH Port</td><td>2269</td></tr>
+  <tr><td>Application Port Used</td><td>3269</td></tr>
   <tr><td>Date</td><td>5th August, 2026</td></tr>
 </table>
 
@@ -257,7 +257,7 @@ if __name__ == "__main__":
 
 <div class="route-block">
   <p class="route-title">POST /gray</p>
-  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/gray -o gray_output.jpg</code></pre>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://10.1.75.53:3269/gray -o gray_output.jpg</code></pre>
   <div class="img-row">
     <figure>
       <img src="../sample.jpg" alt="input image">
@@ -276,7 +276,7 @@ if __name__ == "__main__":
 
 <div class="route-block">
   <p class="route-title">POST /blur</p>
-  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/blur -o blur_output.jpg</code></pre>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://10.1.75.53:3269/blur -o blur_output.jpg</code></pre>
   <div class="img-row">
     <figure>
       <img src="../sample.jpg" alt="input image">
@@ -295,7 +295,7 @@ if __name__ == "__main__":
 
 <div class="route-block">
   <p class="route-title">POST /edges</p>
-  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/edges -o edges_output.jpg</code></pre>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://10.1.75.53:3269/edges -o edges_output.jpg</code></pre>
   <div class="img-row">
     <figure>
       <img src="../sample.jpg" alt="input image">
@@ -314,7 +314,7 @@ if __name__ == "__main__":
 
 <div class="route-block">
   <p class="route-title">POST /contours</p>
-  <pre><code>curl -X POST -F "image=@sample.jpg" http://&lt;host&gt;:&lt;port&gt;/contours -o contours_output.jpg</code></pre>
+  <pre><code>curl -X POST -F "image=@sample.jpg" http://10.1.75.53:3269/contours -o contours_output.jpg</code></pre>
   <div class="img-row">
     <figure>
       <img src="../sample.jpg" alt="input image">
@@ -348,9 +348,15 @@ if __name__ == "__main__":
     to visually confirm that Canny edge detection produced clean single-pixel
     outlines and that <code>findContours</code>/<code>drawContours</code>
     correctly traced the boundary of each shape.</li>
-  <li><span class="fillin">[Add any additional observations from your SSH-machine
-    / Postman testing here — e.g. response times, differences from local testing,
-    any errors encountered.]</span></li>
+  <li>On the allocated lab machine, the application port (3269) was not directly
+    reachable from an external client despite being bound to <code>0.0.0.0</code>
+    inside the container — <code>curl</code> to the public IP failed even from the
+    machine itself, indicating the port is not forwarded through the host's
+    NAT/firewall the way the SSH port is. This was resolved with SSH local port
+    forwarding (<code>ssh -p 2269 -L 3269:localhost:3269 student@10.1.75.53</code>),
+    after which Postman on the client machine could reach
+    <code>http://localhost:3269</code> and all four routes responded normally
+    with response times of 30–80&nbsp;ms.</li>
 </ul>
 
 <footer>
