@@ -3,7 +3,7 @@
 # Three services in P0 — the ones the API cannot start without. TiTiler, Martin,
 # MinIO and the Celery worker are added by the phase that first needs them
 # (P1/P2), so that every service in this file is one whose purpose can be
-# explained on demand. See Docs/adr/0004-service-topology.md.
+# explained on demand. See docs/adr/0004-service-topology.md.
 
 name: pond-planner
 

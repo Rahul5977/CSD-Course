@@ -50,7 +50,7 @@ class Settings(BaseSettings):
     # -- analysis defaults ------------------------------------------------
     # Deliberately *defaults*, not constants: every one of these can be
     # overridden per request, and none of them is specific to any one input
-    # map. See ROADMAP.md §6, "derive everything from the input".
+    # map. See docs/ROADMAP.md §6, "derive everything from the input".
     max_upload_mb: int = Field(default=64, ge=1, le=512)
     pour_point_snap_radius_m: float = Field(default=150.0, gt=0)
 

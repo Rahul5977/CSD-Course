@@ -4,7 +4,7 @@
 
 ## Context
 
-`Docs/PLAN.md` P0 specifies a compose file with nine services: postgres+postgis
+`docs/PLAN.md` P0 specifies a compose file with nine services: postgres+postgis
 +timescale, redis, minio, api, worker, titiler, martin and nginx. All of them
 are genuinely part of the target architecture.
 

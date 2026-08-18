@@ -10,7 +10,7 @@ authors = [{ name = "Rahul Raj", email = "rahul.raj9237@gmail.com" }]
 # pysheds, richdem, numba) lags the newest CPython by 1-2 releases, and numba
 # in particular gates on the CPython bytecode it supports. 3.12 has wheels for
 # everything in the P2/P3 dependency set; 3.14 (the interpreter on the dev
-# machine) does not. See Docs/adr/0002-python-and-dependency-pinning.md.
+# machine) does not. See docs/adr/0002-python-and-dependency-pinning.md.
 requires-python = ">=3.12,<3.13"
 
 dependencies = [

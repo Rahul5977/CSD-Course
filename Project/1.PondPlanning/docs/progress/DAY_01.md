@@ -64,7 +64,7 @@ contract endpoints on the page.
 
 ## Decisions made
 
-Mirrored into the `PROGRESS.md` decision log, and each has an ADR:
+Mirrored into the `docs/PROGRESS.md` decision log, and each has an ADR:
 
 - Layered architecture **enforced by an executable test**, not by convention (ADR 0001).
 - **Python 3.12**, not the 3.14 on this machine — numba/pysheds/rasterio wheels
@@ -88,5 +88,5 @@ Mirrored into the `PROGRESS.md` decision log, and each has an ADR:
    parallelism unlock; skipping it blocks the frontend until P4.
 2. Write ADRs 0005–0012, and capture the Swagger screenshot once the routes are
    on the page (evidence register rows 3 and 5).
-3. **Choose the village** (`PROGRESS.md` blocker 2). P1 cannot start without a
+3. **Choose the village** (`docs/PROGRESS.md` blocker 2). P1 cannot start without a
    boundary, and FR7 validation needs an existing pond nearby to compare against.

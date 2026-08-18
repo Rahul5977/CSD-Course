@@ -36,7 +36,7 @@ docs(adr): record why D8 was chosen over D-infinity
 ```
 
 The body carries the reasoning. A commit that makes a non-obvious modelling
-choice must also add a row to the `PROGRESS.md` decision log in the same commit —
+choice must also add a row to the `docs/PROGRESS.md` decision log in the same commit —
 that log is the source for the report and the viva.
 
 ## Branches

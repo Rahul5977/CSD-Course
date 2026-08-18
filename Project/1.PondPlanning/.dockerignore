@@ -6,8 +6,7 @@
 __pycache__/
 htmlcov/
 .coverage
-Docs/
-Plan/
+docs/
 data/
 *.md
 !README.md
