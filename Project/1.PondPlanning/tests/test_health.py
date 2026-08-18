@@ -46,6 +46,16 @@ def test_ready_is_503_when_a_dependency_is_down(
     assert body["dependencies"][0]["detail"] == "connection refused"
 
 
+def test_probes_are_not_marked_as_fixture_data(client: TestClient) -> None:
+    """The probes are genuinely implemented, so they must not carry the marker.
+
+    Asserted here rather than in the contract suite because /ready's status code
+    depends on whether a database happens to be reachable.
+    """
+    for path in ("/health", "/ready"):
+        assert "X-Fixture-Data" not in client.get(path).headers, path
+
+
 def test_openapi_schema_is_served(client: TestClient) -> None:
     """The OpenAPI document is a graded deliverable (Docs: API documentation, 2 marks)."""
     response = client.get("/openapi.json")

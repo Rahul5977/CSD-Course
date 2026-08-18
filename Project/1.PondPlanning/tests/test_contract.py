@@ -26,7 +26,10 @@ UUID_ = "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93"
 #: so that deleting a route breaks a test instead of silently shrinking the suite.
 CONTRACT: list[tuple[str, str, int]] = [
     ("GET", "/health", 200),
-    ("GET", "/ready", 200),
+    # /ready is deliberately absent: it answers 200 or 503 depending on whether
+    # postgres is reachable, which is environment-dependent and therefore not a
+    # property of the contract. It is tested in test_health.py with the
+    # dependency check stubbed, in both directions.
     ("GET", "/api/v1/villages", 200),
     ("GET", f"/api/v1/villages/{UUID_}", 200),
     ("GET", f"/api/v1/villages/{UUID_}/summary", 200),

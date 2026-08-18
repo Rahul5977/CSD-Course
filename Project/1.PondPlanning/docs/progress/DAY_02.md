@@ -59,6 +59,13 @@ make check                     -> ruff clean · mypy clean (43 files) · 102 pas
   Both were real: the second would have let an invalid runoff method through the
   default path. Fixed with `get_args(RunoffMethod)`.
 - **Starlette deprecation:** `HTTP_422_UNPROCESSABLE_ENTITY` → `..._CONTENT`.
+- **CI caught a test that only passed on my machine.** I had put `/ready` in the
+  contract list expecting `200`; it answers `503` when postgres is unreachable,
+  which is correct behaviour and exactly what CI's environment is. Removed it
+  from the contract suite — a status that depends on whether a database happens
+  to be running is not a property of the contract — and it stays tested in
+  `test_health.py` with the dependency stubbed in both directions. This is the
+  argument for CI in one incident: a green local run is not evidence.
 
 ## Screenshot
 
