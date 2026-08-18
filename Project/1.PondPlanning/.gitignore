@@ -1,0 +1,34 @@
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Environment / secrets — never commit
+.env
+*.pem
+*.key
+
+# Generated geodata (large binaries; regenerate with `make seed`)
+data/cache/
+data/dem/
+data/cogs/
+*.tif
+*.tiff
+!data/samples/**
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+
+# Local agent settings
+.the assistant/settings.local.json
