@@ -1,0 +1,212 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "catchment_area": {
+    "value": 214.6,
+    "unit": "ha",
+    "uncertainty_pct": 15,
+    "low": 182.41,
+    "high": 246.79,
+    "method": "Upslope BFS over the D8 flow-direction grid",
+    "display": "214.60 ha (\u00b115 %)"
+  },
+  "results": [
+    {
+      "method": "scs_cn",
+      "annual_runoff_volume": {
+        "value": 628956.118,
+        "unit": "m3",
+        "uncertainty_pct": 30,
+        "low": 440269.2826,
+        "high": 817642.9534,
+        "method": "scs_cn on the 75 % dependable rainfall",
+        "display": "628,956.12 m\u00b3 (\u00b130 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.281,
+        "unit": "ratio",
+        "uncertainty_pct": 25,
+        "low": 0.2108,
+        "high": 0.3513,
+        "method": "Runoff depth / rainfall depth",
+        "display": "0.28 ratio (\u00b125 %)"
+      },
+      "parameters": {
+        "curve_number": {
+          "value": 75,
+          "unit": "count",
+          "uncertainty_pct": 10,
+          "low": 67.5,
+          "high": 82.5,
+          "method": "AMC II, sandy loam over cropland",
+          "display": "75.00 count (\u00b110 %)"
+        },
+        "initial_abstraction_ratio": {
+          "value": 0.2,
+          "unit": "ratio",
+          "uncertainty_pct": null,
+          "low": 0.2,
+          "high": 0.2,
+          "method": "Ia = 0.2S, standard TR-55",
+          "display": "0.20 ratio"
+        },
+        "potential_retention_S": {
+          "value": 84.7,
+          "unit": "mm",
+          "uncertainty_pct": 10,
+          "low": 76.23,
+          "high": 93.17,
+          "method": "S = 25400/CN - 254",
+          "display": "84.70 mm (\u00b110 %)"
+        }
+      },
+      "reference": "USDA SCS (1972), TR-55"
+    },
+    {
+      "method": "rational",
+      "annual_runoff_volume": {
+        "value": 698342.736,
+        "unit": "m3",
+        "uncertainty_pct": 30,
+        "low": 488839.9152,
+        "high": 907845.5568,
+        "method": "rational on the 75 % dependable rainfall",
+        "display": "698,342.74 m\u00b3 (\u00b130 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.312,
+        "unit": "ratio",
+        "uncertainty_pct": 25,
+        "low": 0.234,
+        "high": 0.39,
+        "method": "Runoff depth / rainfall depth",
+        "display": "0.31 ratio (\u00b125 %)"
+      },
+      "parameters": {
+        "runoff_coefficient_C": {
+          "value": 0.312,
+          "unit": "ratio",
+          "uncertainty_pct": 25,
+          "low": 0.234,
+          "high": 0.39,
+          "method": "Cultivated land, 2-5 % slope",
+          "display": "0.31 ratio (\u00b125 %)"
+        },
+        "time_of_concentration": {
+          "value": 28.4,
+          "unit": "d",
+          "uncertainty_pct": 20,
+          "low": 22.72,
+          "high": 34.08,
+          "method": "Kirpich (1940)",
+          "display": "28.40 d (\u00b120 %)"
+        }
+      },
+      "reference": "Kuichling (1889); IS 4410"
+    },
+    {
+      "method": "empirical_strange",
+      "annual_runoff_volume": {
+        "value": 550616.388,
+        "unit": "m3",
+        "uncertainty_pct": 30,
+        "low": 385431.4716,
+        "high": 715801.3044,
+        "method": "empirical_strange on the 75 % dependable rainfall",
+        "display": "550,616.39 m\u00b3 (\u00b130 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.246,
+        "unit": "ratio",
+        "uncertainty_pct": 25,
+        "low": 0.1845,
+        "high": 0.3075,
+        "method": "Runoff depth / rainfall depth",
+        "display": "0.25 ratio (\u00b125 %)"
+      },
+      "parameters": {
+        "catchment_class": {
+          "value": 2,
+          "unit": "count",
+          "uncertainty_pct": null,
+          "low": 2,
+          "high": 2,
+          "method": "'Average' catchment yield class",
+          "display": "2.00 count"
+        }
+      },
+      "reference": "Strange's table, Maharashtra PWD"
+    }
+  ],
+  "recommended": {
+    "method": "scs_cn",
+    "annual_runoff_volume": {
+      "value": 628956.118,
+      "unit": "m3",
+      "uncertainty_pct": 30,
+      "low": 440269.2826,
+      "high": 817642.9534,
+      "method": "scs_cn on the 75 % dependable rainfall",
+      "display": "628,956.12 m\u00b3 (\u00b130 %)"
+    },
+    "runoff_coefficient": {
+      "value": 0.281,
+      "unit": "ratio",
+      "uncertainty_pct": 25,
+      "low": 0.2108,
+      "high": 0.3513,
+      "method": "Runoff depth / rainfall depth",
+      "display": "0.28 ratio (\u00b125 %)"
+    },
+    "parameters": {
+      "curve_number": {
+        "value": 75,
+        "unit": "count",
+        "uncertainty_pct": 10,
+        "low": 67.5,
+        "high": 82.5,
+        "method": "AMC II, sandy loam over cropland",
+        "display": "75.00 count (\u00b110 %)"
+      },
+      "initial_abstraction_ratio": {
+        "value": 0.2,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 0.2,
+        "high": 0.2,
+        "method": "Ia = 0.2S, standard TR-55",
+        "display": "0.20 ratio"
+      },
+      "potential_retention_S": {
+        "value": 84.7,
+        "unit": "mm",
+        "uncertainty_pct": 10,
+        "low": 76.23,
+        "high": 93.17,
+        "method": "S = 25400/CN - 254",
+        "display": "84.70 mm (\u00b110 %)"
+      }
+    },
+    "reference": "USDA SCS (1972), TR-55"
+  },
+  "spread_pct": {
+    "value": 23.6,
+    "unit": "%",
+    "uncertainty_pct": null,
+    "low": 23.6,
+    "high": 23.6,
+    "method": "(max - min) / mean across the three methods",
+    "display": "23.60 %"
+  },
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "method_spread",
+      "message": "The three methods disagree by roughly a quarter. That spread is the honest uncertainty of the estimate; any single figure quoted alone would be false precision.",
+      "severity": "caution"
+    }
+  ]
+}

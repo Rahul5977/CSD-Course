@@ -5,7 +5,7 @@ COMPOSE := docker compose -f infra/docker-compose.yml
 UV      := uv run
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down logs ps shell seed migrate revision test test-cov lint fmt typecheck check clean
+.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -44,6 +44,10 @@ migrate:  ## Apply migrations to the running database
 revision:  ## Autogenerate a migration: make revision M="add rainfall tables"
 	@test -n "$(M)" || (echo 'Usage: make revision M="message"' && exit 1)
 	$(COMPOSE) exec -T api alembic revision --autogenerate -m "$(M)"
+
+openapi:  ## Regenerate docs/api/openapi.json from the app (graded artifact)
+	$(UV) python -c "import json;from app.main import create_app;print(json.dumps(create_app().openapi(), indent=2))" > docs/api/openapi.json
+	@echo "docs/api/openapi.json regenerated — commit it with the change that altered the contract."
 
 test:  ## Run the test suite
 	$(UV) pytest

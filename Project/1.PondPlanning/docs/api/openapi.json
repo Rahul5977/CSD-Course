@@ -1,0 +1,4043 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI-based Village Pond Planning System",
+    "description": "Terrain, catchment and runoff analysis for village pond siting. Analysis routes are asynchronous: they return 202 with a job id to poll.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Liveness probe",
+        "description": "Report that the process is up. Never touches a dependency.",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ready": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Readiness probe",
+        "description": "Report whether every backing service is reachable.\n\nReturns ``503`` when degraded so that a load balancer can act on the status\ncode without parsing the body.",
+        "operationId": "ready_ready_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/villages": {
+      "get": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "List villages",
+        "description": "Return the registered villages, newest first.",
+        "operationId": "list_villages_api_v1_villages_get",
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Case-insensitive name search",
+              "title": "Q"
+            },
+            "description": "Case-insensitive name search"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_VillageOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Create Village",
+        "description": "Register a village from a name and a GeoJSON boundary.\n\nThe UTM zone for every later computation is derived from this boundary's own\ncentroid at creation time \u2014 never configured, never hard-coded.",
+        "operationId": "create_village_api_v1_villages_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VillageCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VillageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/villages/{village_id}": {
+      "get": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Village detail",
+        "description": "Return one village.",
+        "operationId": "get_village_api_v1_villages__village_id__get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VillageOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/villages/{village_id}/summary": {
+      "get": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Get Village Summary",
+        "description": "FR1: area, elevation range and mean slope for the selected village.",
+        "operationId": "get_village_summary_api_v1_villages__village_id__summary_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VillageSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/villages/{village_id}/imagery": {
+      "get": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Get Village Imagery",
+        "description": "FR1: the satellite basemap descriptor, clipped to this village.",
+        "operationId": "get_village_imagery_api_v1_villages__village_id__imagery_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImageryLayer"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/villages/{village_id}/available-land": {
+      "get": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Get Available Land",
+        "description": "FR3: land eligible for excavation, with the constraints that produced it.",
+        "operationId": "get_available_land_api_v1_villages__village_id__available_land_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          },
+          {
+            "name": "max_slope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 45,
+              "minimum": 0,
+              "default": 5.0,
+              "title": "Max Slope"
+            }
+          },
+          {
+            "name": "min_area_ha",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "default": 0.5,
+              "title": "Min Area Ha"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AvailableLandResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/villages/{village_id}/parcels:import": {
+      "post": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Import Parcels",
+        "description": "Import cadastral parcels from a zipped Shapefile or GeoJSON.\n\nAsynchronous because a district parcel set is large. Upload hardening\n(driver whitelist, zip-entry validation, size cap) lands with the engine in\nP4; the contract is fixed here.",
+        "operationId": "import_parcels_api_v1_villages__village_id__parcels_import_post",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_import_parcels_api_v1_villages__village_id__parcels_import_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terrain/{village_id}/layers": {
+      "get": {
+        "tags": [
+          "terrain"
+        ],
+        "summary": "List Layers",
+        "description": "Every toggleable layer for this village \u2014 the source of FR8's overlay list.",
+        "operationId": "list_layers_api_v1_terrain__village_id__layers_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerrainLayers"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terrain/{village_id}/dem": {
+      "get": {
+        "tags": [
+          "terrain"
+        ],
+        "summary": "Get Dem Asset",
+        "description": "Provenance and accuracy of the elevation model underneath every terrain figure.\n\nA first-class endpoint rather than a footnote: the credibility of the storage\nestimate depends on the reader knowing the source is 30 m.",
+        "operationId": "get_dem_asset_api_v1_terrain__village_id__dem_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DEMAsset"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terrain/{village_id}/contours": {
+      "get": {
+        "tags": [
+          "terrain"
+        ],
+        "summary": "Get Contours",
+        "description": "FR2: contours generated from the DEM pipeline at the requested interval.",
+        "operationId": "get_contours_api_v1_terrain__village_id__contours_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          },
+          {
+            "name": "interval",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 50,
+              "exclusiveMinimum": 0,
+              "description": "Contour interval in metres",
+              "default": 2.0,
+              "title": "Interval"
+            },
+            "description": "Contour interval in metres"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContourResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terrain/{village_id}/streams": {
+      "get": {
+        "tags": [
+          "terrain"
+        ],
+        "summary": "Get Streams",
+        "description": "The modelled drainage network, with the threshold that produced it.",
+        "operationId": "get_streams_api_v1_terrain__village_id__streams_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          },
+          {
+            "name": "threshold",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "exclusiveMinimum": 0
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Flow-accumulation cells",
+              "title": "Threshold"
+            },
+            "description": "Flow-accumulation cells"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StreamNetwork"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/terrain/{village_id}/derived/{surface}": {
+      "get": {
+        "tags": [
+          "terrain"
+        ],
+        "summary": "Get Derived Surface",
+        "description": "Slope, aspect, curvature, TWI, hillshade or flow accumulation.",
+        "operationId": "get_derived_surface_api_v1_terrain__village_id__derived__surface__get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          },
+          {
+            "name": "surface",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "slope",
+                "aspect",
+                "curvature",
+                "twi",
+                "hillshade",
+                "flow_accumulation"
+              ],
+              "type": "string",
+              "description": "Which surface to return",
+              "title": "Surface"
+            },
+            "description": "Which surface to return"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DerivedSurfaceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rainfall/statistics": {
+      "get": {
+        "tags": [
+          "rainfall"
+        ],
+        "summary": "Get Statistics",
+        "description": "FR5: statistics computed from the record \u2014 not a raw dump.\n\nThe design figure is ``dependable_75``, the annual rainfall equalled or\nexceeded in 75 % of years. Sizing to the mean produces a pond that fails in\nroughly half of them.",
+        "operationId": "get_statistics_api_v1_rainfall_statistics_get",
+        "parameters": [
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180,
+              "minimum": -180,
+              "description": "Longitude, EPSG:4326",
+              "title": "Lon"
+            },
+            "description": "Longitude, EPSG:4326"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90,
+              "minimum": -90,
+              "description": "Latitude, EPSG:4326",
+              "title": "Lat"
+            },
+            "description": "Latitude, EPSG:4326"
+          },
+          {
+            "name": "years",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 5,
+              "description": "Length of record to analyse",
+              "default": 20,
+              "title": "Years"
+            },
+            "description": "Length of record to analyse"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RainfallStatistics"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/rainfall/series": {
+      "get": {
+        "tags": [
+          "rainfall"
+        ],
+        "summary": "Get Series",
+        "description": "The daily record.\n\nExposed because SCS-CN must be applied per day and then summed; applied to an\nannual total it overestimates runoff two- to three-fold.",
+        "operationId": "get_series_api_v1_rainfall_series_get",
+        "parameters": [
+          {
+            "name": "lon",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 180,
+              "minimum": -180,
+              "description": "Longitude, EPSG:4326",
+              "title": "Lon"
+            },
+            "description": "Longitude, EPSG:4326"
+          },
+          {
+            "name": "lat",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "maximum": 90,
+              "minimum": -90,
+              "description": "Latitude, EPSG:4326",
+              "title": "Lat"
+            },
+            "description": "Latitude, EPSG:4326"
+          },
+          {
+            "name": "start",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO date, inclusive",
+              "title": "Start"
+            },
+            "description": "ISO date, inclusive"
+          },
+          {
+            "name": "end",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "ISO date, inclusive",
+              "title": "End"
+            },
+            "description": "ISO date, inclusive"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RainfallSeries"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "List recommendations",
+        "description": "Return saved pond recommendations.",
+        "operationId": "list_recommendations_api_v1_recommendations_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Page_RecommendationOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Get Recommendation",
+        "description": "Return one recommendation.",
+        "operationId": "get_recommendation_api_v1_recommendations__recommendation_id__get",
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}/status": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Change Status",
+        "description": "Approve or reject a recommendation.\n\nRole-gated in P6: a viewer receives ``403``. Every transition writes an\n``audit_log`` row, and that table is append-only in the database \u2014 the rules\nare already in migration 0001, so the trail cannot be rewritten later.",
+        "operationId": "change_status_api_v1_recommendations__recommendation_id__status_post",
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StatusChangeRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}/exports": {
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Create Export",
+        "description": "Generate a PDF, GeoJSON or CSV export and return a link to it.",
+        "operationId": "create_export_api_v1_recommendations__recommendation_id__exports_post",
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recommendation Id"
+            }
+          },
+          {
+            "name": "export_format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "pdf",
+              "title": "Export Format"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportDescriptor"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Poll job status",
+        "description": "Return progress for one job.\n\n``stage`` is returned alongside ``progress`` because a percentage alone is\nuninformative during a 25-second pipeline; \"filling sinks\" tells the user\nsomething is happening and roughly what.",
+        "operationId": "get_job_api_v1_jobs__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatus"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Cancel a job",
+        "description": "Request cancellation. Idempotent: cancelling a finished job is not an error.",
+        "operationId": "cancel_job_api_v1_jobs__job_id__delete",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/jobs/{job_id}/result": {
+      "get": {
+        "tags": [
+          "jobs"
+        ],
+        "summary": "Fetch a finished job's result",
+        "description": "Return the payload of a succeeded job.\n\nUntyped on purpose: the shape depends on ``kind``. The concrete payloads are\ndocumented under ``/analysis/results/*``, which is what a client should read.",
+        "operationId": "get_job_result_api_v1_jobs__job_id__result_get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Job Result Api V1 Jobs  Job Id  Result Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta/errors": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "Error catalogue",
+        "description": "Every domain error this API can return, with its stable code and status.\n\nGenerated from the handler table rather than written by hand, so the\ndocumentation cannot drift from the behaviour.",
+        "operationId": "error_catalogue_api_v1_meta_errors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "items": {
+                      "additionalProperties": true,
+                      "type": "object"
+                    },
+                    "type": "array"
+                  },
+                  "type": "object",
+                  "title": "Response Error Catalogue Api V1 Meta Errors Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/meta/implementation-status": {
+      "get": {
+        "tags": [
+          "meta"
+        ],
+        "summary": "What is real and what is a fixture",
+        "description": "Report which parts of the contract are backed by engines.\n\nExists so \"not built yet\" is a documented state rather than something a\ncaller has to infer. Every fixture-backed response also carries the\n``X-Fixture-Data: true`` header and a ``fixture_data`` warning.",
+        "operationId": "implementation_status_api_v1_meta_implementation_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Implementation Status Api V1 Meta Implementation Status Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/catchment": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse Catchment",
+        "description": "FR4: delineate the upstream contributing area of a clicked point.\n\nResult shape: :class:`~app.schemas.analysis.CatchmentResult`.",
+        "operationId": "analyse_catchment_api_v1_analysis_catchment_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CatchmentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/runoff": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse Runoff",
+        "description": "FR6: runoff volume by three methods, reported as a range.\n\nResult shape: :class:`~app.schemas.analysis.RunoffResult`.",
+        "operationId": "analyse_runoff_api_v1_analysis_runoff_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunoffRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/pond-design": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse Pond Design",
+        "description": "FR7: the complete pond design payload \u2014 the project's headline result.\n\nResult shape: :class:`~app.schemas.analysis.PondDesignResult`, which assembles\ncatchment, rainfall, runoff, dimensions, EAV curve, reliability, bill of\nquantities and a confidence label.",
+        "operationId": "analyse_pond_design_api_v1_analysis_pond_design_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PondDesignRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/suitability": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse Suitability",
+        "description": "FR3: rank candidate pond sites by AHP-weighted criteria.\n\nResult shape: :class:`~app.schemas.analysis.SuitabilityResult`.",
+        "operationId": "analyse_suitability_api_v1_analysis_suitability_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuitabilityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/results/catchment/{job_id}": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Catchment Result",
+        "description": "FR4 result payload.",
+        "operationId": "catchment_result_api_v1_analysis_results_catchment__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatchmentResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/results/runoff/{job_id}": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Runoff Result",
+        "description": "FR6 result payload.",
+        "operationId": "runoff_result_api_v1_analysis_results_runoff__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunoffResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/results/pond-design/{job_id}": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Pond Design Result",
+        "description": "FR7 result payload.",
+        "operationId": "pond_design_result_api_v1_analysis_results_pond_design__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PondDesignResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/results/suitability/{job_id}": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Suitability Result",
+        "description": "FR3 result payload.",
+        "operationId": "suitability_result_api_v1_analysis_results_suitability__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SuitabilityResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analysis/results/contour/{job_id}": {
+      "get": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Contour Result",
+        "description": "Phase 2 result payload.",
+        "operationId": "contour_result_api_v1_analysis_results_contour__job_id__get",
+        "parameters": [
+          {
+            "name": "job_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Job Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContourAnalysisResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analyzeContour": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse an uploaded contour map (KML/KMZ)",
+        "description": "Derive a pond location and its catchment from an uploaded contour map.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe pour point from its own modelled drainage. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nResult shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.",
+        "operationId": "analyze_contour_api_v1_analyzeContour_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_analyze_contour_api_v1_analyzeContour_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AvailableLandResponse": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "constraints_applied": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Constraints Applied"
+          },
+          "total_eligible_area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "parcels": {
+            "items": {
+              "$ref": "#/components/schemas/LandParcel"
+            },
+            "type": "array",
+            "title": "Parcels"
+          },
+          "geojson": {
+            "$ref": "#/components/schemas/GeoJSONFeatureCollection"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "constraints_applied",
+          "total_eligible_area",
+          "parcels",
+          "geojson"
+        ],
+        "title": "AvailableLandResponse",
+        "description": "FR3: eligible excavation land, with the constraint set that produced it."
+      },
+      "BillOfQuantities": {
+        "properties": {
+          "excavation_volume": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "embankment_volume": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "indicative_cost": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "cost_basis": {
+            "type": "string",
+            "title": "Cost Basis",
+            "description": "Schedule of rates used, and its year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "excavation_volume",
+          "embankment_volume",
+          "indicative_cost",
+          "cost_basis"
+        ],
+        "title": "BillOfQuantities",
+        "description": "Excavation quantities and an indicative cost."
+      },
+      "Body_analyze_contour_api_v1_analyzeContour_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "description": "Contour map, KML or KMZ"
+          },
+          "target_interval": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Interval"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_analyze_contour_api_v1_analyzeContour_post"
+      },
+      "Body_import_parcels_api_v1_villages__village_id__parcels_import_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_import_parcels_api_v1_villages__village_id__parcels_import_post"
+      },
+      "CatchmentRequest": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "pour_point": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "snap_to_drainage": {
+            "type": "boolean",
+            "title": "Snap To Drainage",
+            "description": "Move the pour point onto the nearest modelled channel before tracing upstream. Without it, a click one cell off the channel returns a hillslope catchment orders of magnitude too small.",
+            "default": true
+          },
+          "snap_radius": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Snap Radius",
+            "description": "Metres. Defaults to the configured radius."
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "pour_point"
+        ],
+        "title": "CatchmentRequest",
+        "description": "FR4: delineate the upstream contributing area of a clicked point."
+      },
+      "CatchmentResult": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "requested_point": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "snapped_point": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "snap_distance": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "How far the pour point moved. Surfaced in the UI \u2014 a large snap distance is the signal that the result should be questioned."
+          },
+          "area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "perimeter": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "longest_flow_path": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "mean_slope": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "relief": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "outlet_elevation": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "flow_routing": {
+            "type": "string",
+            "title": "Flow Routing",
+            "description": "e.g. 'D8 (O'Callaghan & Mark 1984)'"
+          },
+          "cell_size": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "geojson": {
+            "$ref": "#/components/schemas/GeoJSONFeatureCollection"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "requested_point",
+          "snapped_point",
+          "snap_distance",
+          "area",
+          "perimeter",
+          "longest_flow_path",
+          "mean_slope",
+          "relief",
+          "outlet_elevation",
+          "flow_routing",
+          "cell_size",
+          "geojson"
+        ],
+        "title": "CatchmentResult",
+        "description": "FR4: the delineated catchment, and enough context to trust it."
+      },
+      "ContourAnalysisResult": {
+        "properties": {
+          "source_file": {
+            "type": "string",
+            "title": "Source File"
+          },
+          "contour_count": {
+            "type": "integer",
+            "title": "Contour Count"
+          },
+          "elevation_source": {
+            "type": "string",
+            "enum": [
+              "z_coordinate",
+              "extended_data",
+              "placemark_name"
+            ],
+            "title": "Elevation Source",
+            "description": "Which parsing strategy succeeded, so the result is auditable"
+          },
+          "elevation_range": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QuantityOut"
+            },
+            "type": "object",
+            "title": "Elevation Range"
+          },
+          "contour_interval": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "bounds": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Bounds",
+            "description": "[min_lon, min_lat, max_lon, max_lat]"
+          },
+          "utm_epsg": {
+            "type": "integer",
+            "title": "Utm Epsg",
+            "description": "Derived from the uploaded file's centroid"
+          },
+          "grid_resolution": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Derived from mean contour spacing, floored at the source resolution"
+          },
+          "suggested_pond_location": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "location_rationale": {
+            "type": "string",
+            "title": "Location Rationale"
+          },
+          "catchment": {
+            "$ref": "#/components/schemas/CatchmentResult"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source_file",
+          "contour_count",
+          "elevation_source",
+          "elevation_range",
+          "contour_interval",
+          "bounds",
+          "utm_epsg",
+          "grid_resolution",
+          "suggested_pond_location",
+          "location_rationale",
+          "catchment"
+        ],
+        "title": "ContourAnalysisResult",
+        "description": "The Phase 2 submission payload: catchment derived from an uploaded contour map.\n\nEverything here is derived from the upload. The UTM zone comes from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nand the pour point from its own modelled drainage \u2014 nothing is configured per\nmap, which is exactly what the assignment's anti-hard-coding rule requires."
+      },
+      "ContourResponse": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "interval": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "levels": {
+            "type": "integer",
+            "title": "Levels",
+            "description": "Number of distinct elevation levels returned"
+          },
+          "vertices_before_simplification": {
+            "type": "integer",
+            "title": "Vertices Before Simplification"
+          },
+          "vertices_after_simplification": {
+            "type": "integer",
+            "title": "Vertices After Simplification"
+          },
+          "simplification_tolerance": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "geojson": {
+            "$ref": "#/components/schemas/GeoJSONFeatureCollection"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "interval",
+          "levels",
+          "vertices_before_simplification",
+          "vertices_after_simplification",
+          "simplification_tolerance",
+          "geojson"
+        ],
+        "title": "ContourResponse",
+        "description": "FR2: contours generated from the DEM pipeline at a requested interval."
+      },
+      "CriterionScore": {
+        "properties": {
+          "criterion": {
+            "type": "string",
+            "title": "Criterion"
+          },
+          "raw_value": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "normalised_score": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "weight": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "contribution": {
+            "$ref": "#/components/schemas/QuantityOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "criterion",
+          "raw_value",
+          "normalised_score",
+          "weight",
+          "contribution"
+        ],
+        "title": "CriterionScore",
+        "description": "One criterion's contribution to a site's score."
+      },
+      "DEMAsset": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "native_resolution": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "working_resolution": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "vertical_accuracy_relative": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "vertical_accuracy_absolute": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "crs": {
+            "type": "string",
+            "title": "Crs"
+          },
+          "acquired": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Acquired"
+          },
+          "attribution": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Attribution"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "source",
+          "native_resolution",
+          "working_resolution",
+          "vertical_accuracy_relative",
+          "vertical_accuracy_absolute",
+          "crs",
+          "attribution"
+        ],
+        "title": "DEMAsset",
+        "description": "Provenance of the elevation model every terrain number rests on.\n\nExposed as an endpoint rather than buried in a log because the honesty of\nevery downstream figure depends on it: a 1 m contour interval interpolated\nfrom a 30 m source is interpolated precision, not measured accuracy."
+      },
+      "DependencyStatus": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "reachable": {
+            "type": "boolean",
+            "title": "Reachable"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail",
+            "description": "Error text when unreachable"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "reachable"
+        ],
+        "title": "DependencyStatus",
+        "description": "Reachability of one backing service."
+      },
+      "DerivedSurfaceResponse": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "surface": {
+            "type": "string",
+            "enum": [
+              "slope",
+              "aspect",
+              "curvature",
+              "twi",
+              "hillshade",
+              "flow_accumulation"
+            ],
+            "title": "Surface"
+          },
+          "algorithm": {
+            "type": "string",
+            "title": "Algorithm",
+            "description": "e.g. 'Horn (1981) 3x3 finite difference'"
+          },
+          "statistics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QuantityOut"
+            },
+            "type": "object",
+            "title": "Statistics"
+          },
+          "layer": {
+            "$ref": "#/components/schemas/LayerDescriptor"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "surface",
+          "algorithm",
+          "statistics",
+          "layer"
+        ],
+        "title": "DerivedSurfaceResponse",
+        "description": "Slope, aspect, curvature, TWI, hillshade or flow accumulation as a layer."
+      },
+      "EAVPoint": {
+        "properties": {
+          "elevation": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "surface_area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "cumulative_volume": {
+            "$ref": "#/components/schemas/QuantityOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "elevation",
+          "surface_area",
+          "cumulative_volume"
+        ],
+        "title": "EAVPoint",
+        "description": "One row of the elevation-area-volume curve."
+      },
+      "ElevationSummary": {
+        "properties": {
+          "minimum": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "maximum": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "mean": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "relief": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "maximum - minimum"
+          }
+        },
+        "type": "object",
+        "required": [
+          "minimum",
+          "maximum",
+          "mean",
+          "relief"
+        ],
+        "title": "ElevationSummary",
+        "description": "Elevation statistics over the village boundary."
+      },
+      "ExportDescriptor": {
+        "properties": {
+          "export_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Export Id"
+          },
+          "recommendation_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Recommendation Id"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "pdf",
+              "geojson",
+              "csv"
+            ],
+            "title": "Format"
+          },
+          "url": {
+            "type": "string",
+            "title": "Url"
+          },
+          "size_bytes": {
+            "type": "integer",
+            "title": "Size Bytes"
+          },
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Expires At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "export_id",
+          "recommendation_id",
+          "format",
+          "url",
+          "size_bytes",
+          "expires_at"
+        ],
+        "title": "ExportDescriptor",
+        "description": "A generated export artifact.\n\nReturns a URL rather than bytes so that a large PDF or GeoJSON does not\noccupy an application worker while it streams, and so the link can be shared."
+      },
+      "GeoJSONFeature": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Feature",
+            "title": "Type",
+            "default": "Feature"
+          },
+          "geometry": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Geometry"
+          },
+          "properties": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Properties"
+          }
+        },
+        "type": "object",
+        "required": [
+          "geometry"
+        ],
+        "title": "GeoJSONFeature",
+        "description": "A GeoJSON Feature, loosely typed.\n\nGeometry is not modelled field-by-field on purpose: the map client consumes\nit directly, and a hand-written GeoJSON type is a large surface that adds no\nsafety the client actually uses. Geometry validity is enforced in PostGIS and\nin the engines, where it matters."
+      },
+      "GeoJSONFeatureCollection": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "FeatureCollection",
+            "title": "Type",
+            "default": "FeatureCollection"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/GeoJSONFeature"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "crs": {
+            "type": "string",
+            "title": "Crs",
+            "description": "Always EPSG:4326 on the wire",
+            "default": "EPSG:4326"
+          }
+        },
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "GeoJSONFeatureCollection",
+        "description": "A GeoJSON FeatureCollection, always in EPSG:4326 on the wire.\n\nEvery computation happens in the UTM zone derived from the data's own\ncentroid; 4326 is the interchange format only. ``crs`` is stated explicitly\nso no consumer has to assume."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HealthResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "const": "ok",
+            "title": "Status",
+            "default": "ok"
+          },
+          "app": {
+            "type": "string",
+            "title": "App",
+            "description": "Human-readable application name"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version",
+            "description": "Application version, semver"
+          },
+          "env": {
+            "type": "string",
+            "title": "Env",
+            "description": "Deployment environment this process believes it is in"
+          }
+        },
+        "type": "object",
+        "required": [
+          "app",
+          "version",
+          "env"
+        ],
+        "title": "HealthResponse",
+        "description": "Liveness answer: the process is up and serving."
+      },
+      "ImageryLayer": {
+        "properties": {
+          "layer_id": {
+            "type": "string",
+            "title": "Layer Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "tile_url_template": {
+            "type": "string",
+            "title": "Tile Url Template",
+            "description": "XYZ template for the map client"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          },
+          "captured": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Captured",
+            "description": "Acquisition date or range, if known"
+          },
+          "max_zoom": {
+            "type": "integer",
+            "title": "Max Zoom"
+          }
+        },
+        "type": "object",
+        "required": [
+          "layer_id",
+          "provider",
+          "tile_url_template",
+          "attribution",
+          "max_zoom"
+        ],
+        "title": "ImageryLayer",
+        "description": "FR1: a satellite basemap clipped to the village boundary."
+      },
+      "JobAccepted": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "status": {
+            "type": "string",
+            "const": "queued",
+            "title": "Status",
+            "default": "queued"
+          },
+          "poll_url": {
+            "type": "string",
+            "title": "Poll Url",
+            "description": "GET this until status is succeeded or failed"
+          },
+          "estimated_seconds": {
+            "type": "integer",
+            "title": "Estimated Seconds",
+            "description": "Rough expectation, for the progress UI"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "poll_url",
+          "estimated_seconds"
+        ],
+        "title": "JobAccepted",
+        "description": "``202`` response for every long-running analysis.\n\nTerrain analysis takes tens of seconds. Rather than hold a connection open\nand hope no proxy times it out, every analysis route returns this immediately\nand the client polls ``poll_url``."
+      },
+      "JobStatus": {
+        "properties": {
+          "job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Job Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "succeeded",
+              "failed",
+              "cancelled"
+            ],
+            "title": "Status"
+          },
+          "progress": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Progress"
+          },
+          "stage": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Stage",
+            "description": "Current pipeline stage, for the UI"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finished At"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProblemDetail"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "result_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "job_id",
+          "kind",
+          "status",
+          "progress",
+          "created_at"
+        ],
+        "title": "JobStatus",
+        "description": "Progress of an asynchronous job."
+      },
+      "LandParcel": {
+        "properties": {
+          "parcel_id": {
+            "type": "string",
+            "title": "Parcel Id"
+          },
+          "ownership_class": {
+            "type": "string",
+            "enum": [
+              "government",
+              "community",
+              "private",
+              "unknown"
+            ],
+            "title": "Ownership Class",
+            "description": "Ownership *class*, never an owner's name \u2014 personal data under the DPDP Act 2023. See ADR 0012."
+          },
+          "area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "mean_slope": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "lulc_class": {
+            "type": "string",
+            "title": "Lulc Class"
+          },
+          "excluded_by": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Excluded By",
+            "description": "Constraints that rejected this parcel, if any"
+          },
+          "eligible": {
+            "type": "boolean",
+            "title": "Eligible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "parcel_id",
+          "ownership_class",
+          "area",
+          "mean_slope",
+          "lulc_class",
+          "eligible"
+        ],
+        "title": "LandParcel",
+        "description": "FR3: one polygon of land judged available for excavation."
+      },
+      "LayerDescriptor": {
+        "properties": {
+          "layer_id": {
+            "type": "string",
+            "title": "Layer Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "raster",
+              "vector"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "tile_url_template": {
+            "type": "string",
+            "title": "Tile Url Template"
+          },
+          "legend_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Legend Url"
+          },
+          "units": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Units"
+          },
+          "value_range": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "number"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Range",
+            "description": "[min, max] for the legend"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source",
+            "description": "What this layer was derived from"
+          }
+        },
+        "type": "object",
+        "required": [
+          "layer_id",
+          "kind",
+          "title",
+          "tile_url_template",
+          "source"
+        ],
+        "title": "LayerDescriptor",
+        "description": "Everything the map client needs to add one layer and label it honestly."
+      },
+      "MonthlyNormal": {
+        "properties": {
+          "month": {
+            "type": "integer",
+            "maximum": 12.0,
+            "minimum": 1.0,
+            "title": "Month"
+          },
+          "mean_rainfall": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "rainy_days": {
+            "$ref": "#/components/schemas/QuantityOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "month",
+          "mean_rainfall",
+          "rainy_days"
+        ],
+        "title": "MonthlyNormal",
+        "description": "Long-term mean for one calendar month."
+      },
+      "Page_RecommendationOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/RecommendationOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[RecommendationOut]"
+      },
+      "Page_VillageOut_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VillageOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "limit": {
+            "type": "integer",
+            "title": "Limit"
+          },
+          "offset": {
+            "type": "integer",
+            "title": "Offset"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total",
+          "limit",
+          "offset"
+        ],
+        "title": "Page[VillageOut]"
+      },
+      "PondDesignRequest": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "pour_point": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "target_reliability": {
+            "type": "number",
+            "maximum": 0.95,
+            "minimum": 0.5,
+            "title": "Target Reliability",
+            "description": "Fraction of years the pond should fill. 0.75 is the dependability standard used in Indian minor-irrigation practice.",
+            "default": 0.75
+          },
+          "max_depth": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Depth",
+            "description": "Metres. Site or safety limit."
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "pour_point"
+        ],
+        "title": "PondDesignRequest",
+        "description": "FR7: size a pond for a location."
+      },
+      "PondDesignResult": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "catchment": {
+            "$ref": "#/components/schemas/CatchmentResult"
+          },
+          "rainfall_summary": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QuantityOut"
+            },
+            "type": "object",
+            "title": "Rainfall Summary"
+          },
+          "runoff": {
+            "$ref": "#/components/schemas/RunoffResult"
+          },
+          "dimensions": {
+            "$ref": "#/components/schemas/PondDimensions"
+          },
+          "gross_storage": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "live_storage": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "dead_storage": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "eav_curve": {
+            "items": {
+              "$ref": "#/components/schemas/EAVPoint"
+            },
+            "type": "array",
+            "title": "Eav Curve"
+          },
+          "reliability": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Fraction of years the pond fills"
+          },
+          "bill_of_quantities": {
+            "$ref": "#/components/schemas/BillOfQuantities"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "moderate",
+              "high"
+            ],
+            "title": "Confidence"
+          },
+          "confidence_rationale": {
+            "type": "string",
+            "title": "Confidence Rationale"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "catchment",
+          "rainfall_summary",
+          "runoff",
+          "dimensions",
+          "gross_storage",
+          "live_storage",
+          "dead_storage",
+          "eav_curve",
+          "reliability",
+          "bill_of_quantities",
+          "confidence",
+          "confidence_rationale"
+        ],
+        "title": "PondDesignResult",
+        "description": "FR7 \u2014 the full payload, and the single most important contract here.\n\nDeliberately assembled from every upstream stage rather than returned as a\nbare storage figure: catchment, rainfall, runoff, geometry, reliability,\nquantities, caveats and an overall confidence label. The confidence label is\nwhat stops a 30 m-DEM result being read as a survey."
+      },
+      "PondDimensions": {
+        "properties": {
+          "depth": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "top_length": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "top_width": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "bottom_length": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "bottom_width": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "side_slope": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Horizontal:vertical, as a ratio"
+          },
+          "freeboard": {
+            "$ref": "#/components/schemas/QuantityOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "depth",
+          "top_length",
+          "top_width",
+          "bottom_length",
+          "bottom_width",
+          "side_slope",
+          "freeboard"
+        ],
+        "title": "PondDimensions",
+        "description": "The excavation, in numbers a contractor can act on."
+      },
+      "PourPoint": {
+        "properties": {
+          "lon": {
+            "type": "number",
+            "maximum": 180.0,
+            "minimum": -180.0,
+            "title": "Lon"
+          },
+          "lat": {
+            "type": "number",
+            "maximum": 90.0,
+            "minimum": -90.0,
+            "title": "Lat"
+          }
+        },
+        "type": "object",
+        "required": [
+          "lon",
+          "lat"
+        ],
+        "title": "PourPoint",
+        "description": "The location a catchment is delineated for."
+      },
+      "ProblemDetail": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "description": "URI identifying the error class"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "description": "Short human-readable summary"
+          },
+          "status": {
+            "type": "integer",
+            "title": "Status",
+            "description": "HTTP status code, repeated for clients that only read the body"
+          },
+          "code": {
+            "type": "string",
+            "title": "Code",
+            "description": "Stable machine-readable identifier; see the error catalogue"
+          },
+          "detail": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Detail",
+            "description": "Structured context"
+          },
+          "instance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance",
+            "description": "The request path that failed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "title",
+          "status",
+          "code"
+        ],
+        "title": "ProblemDetail",
+        "description": "RFC 9457 problem details \u2014 the single error shape for every route.\n\nOne documented error envelope, rather than FastAPI's default bare\n``{\"detail\": ...}``, is what makes an error catalogue possible: ``code`` is\nstable and machine-readable, ``status`` matches the HTTP status, and\n``detail`` carries structured context such as which field failed.",
+        "example": {
+          "code": "elevation_not_found",
+          "detail": {
+            "strategies_tried": [
+              "z_coordinate",
+              "extended_data",
+              "placemark_name"
+            ]
+          },
+          "instance": "/api/v1/analyzeContour",
+          "status": 422,
+          "title": "No elevation could be read from the uploaded contour map",
+          "type": "https://github.com/Rahul5977/AI-BasedPondAnalysis/docs/errors#elevation_not_found"
+        }
+      },
+      "QuantityOut": {
+        "properties": {
+          "value": {
+            "type": "number",
+            "title": "Value"
+          },
+          "unit": {
+            "$ref": "#/components/schemas/Unit"
+          },
+          "uncertainty_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uncertainty Pct",
+            "description": "Symmetric relative uncertainty in percent. null means exact by construction."
+          },
+          "low": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low",
+            "description": "Lower bound of the uncertainty band"
+          },
+          "high": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High",
+            "description": "Upper bound of the uncertainty band"
+          },
+          "method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Method",
+            "description": "How the value was derived"
+          },
+          "display": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display",
+            "description": "Preformatted for direct rendering"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "unit"
+        ],
+        "title": "QuantityOut",
+        "description": "A number with its unit, uncertainty band and provenance.\n\nThe wire counterpart of :class:`app.domain.units.Quantity`. ``display`` is\nincluded deliberately: it removes any chance of the frontend rendering\n\"18950\" because someone forgot to append the unit, and it is what appears in\nreport screenshots.",
+        "example": {
+          "display": "18,950.00 m\u00b3 (\u00b120 %)",
+          "high": 22740.0,
+          "low": 15160.0,
+          "method": "EAV curve integrated over the filled depression",
+          "uncertainty_pct": 20.0,
+          "unit": "m3",
+          "value": 18950.0
+        }
+      },
+      "RainfallDaily": {
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date",
+            "title": "Day"
+          },
+          "rainfall": {
+            "$ref": "#/components/schemas/QuantityOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "day",
+          "rainfall"
+        ],
+        "title": "RainfallDaily",
+        "description": "One day of the record.\n\nThe daily series is exposed, not only the annual totals, because SCS-CN must\nbe applied per day and then summed. Applied to an annual total it\noverestimates runoff by two to three times \u2014 a common and very visible error."
+      },
+      "RainfallSeries": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "station_or_grid": {
+            "type": "string",
+            "title": "Station Or Grid"
+          },
+          "latitude": {
+            "type": "number",
+            "title": "Latitude"
+          },
+          "longitude": {
+            "type": "number",
+            "title": "Longitude"
+          },
+          "start": {
+            "type": "string",
+            "format": "date",
+            "title": "Start"
+          },
+          "end": {
+            "type": "string",
+            "format": "date",
+            "title": "End"
+          },
+          "days": {
+            "type": "integer",
+            "title": "Days"
+          },
+          "series": {
+            "items": {
+              "$ref": "#/components/schemas/RainfallDaily"
+            },
+            "type": "array",
+            "title": "Series"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "station_or_grid",
+          "latitude",
+          "longitude",
+          "start",
+          "end",
+          "days",
+          "series"
+        ],
+        "title": "RainfallSeries",
+        "description": "The daily record backing every rainfall statistic."
+      },
+      "RainfallStatistics": {
+        "properties": {
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "years_of_record": {
+            "type": "integer",
+            "title": "Years Of Record"
+          },
+          "start_year": {
+            "type": "integer",
+            "title": "Start Year"
+          },
+          "end_year": {
+            "type": "integer",
+            "title": "End Year"
+          },
+          "mean_annual": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "median_annual": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "dependable_75": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "coefficient_of_variation": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "monsoon_share": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Fraction of annual rainfall in Jun-Sep"
+          },
+          "max_daily_recorded": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "rainy_days_mean": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "monthly_normals": {
+            "items": {
+              "$ref": "#/components/schemas/MonthlyNormal"
+            },
+            "type": "array",
+            "title": "Monthly Normals"
+          },
+          "data_completeness": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "fallback_used": {
+            "type": "string",
+            "enum": [
+              "none",
+              "cache",
+              "secondary_provider"
+            ],
+            "title": "Fallback Used",
+            "description": "How the data was obtained. 'cache' means the live API was unreachable.",
+            "default": "none"
+          },
+          "attribution": {
+            "type": "string",
+            "title": "Attribution"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "source",
+          "years_of_record",
+          "start_year",
+          "end_year",
+          "mean_annual",
+          "median_annual",
+          "dependable_75",
+          "coefficient_of_variation",
+          "monsoon_share",
+          "max_daily_recorded",
+          "rainy_days_mean",
+          "monthly_normals",
+          "data_completeness",
+          "attribution"
+        ],
+        "title": "RainfallStatistics",
+        "description": "FR5: statistics computed from the record, not a raw dump.\n\n``dependable_75`` is the design figure: the annual rainfall equalled or\nexceeded in 75 % of years. Designing to the mean produces a pond that fails\nroughly half the time, which is why practice uses the 75 % dependable value."
+      },
+      "ReadinessResponse": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "degraded"
+            ],
+            "title": "Status"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/DependencyStatus"
+            },
+            "type": "array",
+            "title": "Dependencies"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "dependencies"
+        ],
+        "title": "ReadinessResponse",
+        "description": "Readiness answer: every dependency needed to serve real traffic is reachable.\n\nKept distinct from liveness on purpose \u2014 an orchestrator should restart a\nprocess that fails liveness, but only stop routing traffic to one that fails\nreadiness. Conflating them turns a slow database into a restart loop."
+      },
+      "RecommendationOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "village_name": {
+            "type": "string",
+            "title": "Village Name"
+          },
+          "location": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Location",
+            "description": "[lon, lat] in EPSG:4326"
+          },
+          "catchment_area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "gross_storage": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "depth": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "indicative_cost": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "confidence": {
+            "type": "string",
+            "enum": [
+              "low",
+              "moderate",
+              "high"
+            ],
+            "title": "Confidence"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status"
+          },
+          "created_by": {
+            "type": "string",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "village_id",
+          "village_name",
+          "location",
+          "catchment_area",
+          "gross_storage",
+          "depth",
+          "indicative_cost",
+          "confidence",
+          "status",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "RecommendationOut",
+        "description": "A saved pond recommendation, in its current lifecycle state."
+      },
+      "ResultWarning": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "severity": {
+            "type": "string",
+            "enum": [
+              "info",
+              "caution",
+              "critical"
+            ],
+            "title": "Severity",
+            "default": "caution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ResultWarning",
+        "description": "A caveat attached to an otherwise successful result.\n\nWarnings are how this system avoids presenting a number more confidently than\nit deserves \u2014 \"the source DEM is 30 m, so relief below ~5 m is interpolated,\nnot measured\" belongs next to the storage estimate, not buried in a report."
+      },
+      "RunoffMethodResult": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "scs_cn",
+              "rational",
+              "empirical_strange"
+            ],
+            "title": "Method"
+          },
+          "annual_runoff_volume": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "runoff_coefficient": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QuantityOut"
+            },
+            "type": "object",
+            "title": "Parameters"
+          },
+          "reference": {
+            "type": "string",
+            "title": "Reference",
+            "description": "Citation for the method"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method",
+          "annual_runoff_volume",
+          "runoff_coefficient",
+          "parameters",
+          "reference"
+        ],
+        "title": "RunoffMethodResult",
+        "description": "One method's answer, with the assumptions that produced it."
+      },
+      "RunoffRequest": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "catchment_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Catchment Job Id",
+            "description": "The catchment this runoff is computed on"
+          },
+          "methods": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "scs_cn",
+                "rational",
+                "empirical_strange"
+              ]
+            },
+            "type": "array",
+            "title": "Methods",
+            "description": "Runs every requested method so the answer is a range, not a point."
+          },
+          "curve_number": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 100.0,
+                "minimum": 30.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curve Number",
+            "description": "Override the derived CN"
+          },
+          "years": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 5.0,
+            "title": "Years",
+            "default": 20
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "catchment_job_id"
+        ],
+        "title": "RunoffRequest",
+        "description": "FR6: convert rainfall over a catchment into a runoff volume."
+      },
+      "RunoffResult": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "catchment_area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/RunoffMethodResult"
+            },
+            "type": "array",
+            "title": "Results"
+          },
+          "recommended": {
+            "$ref": "#/components/schemas/RunoffMethodResult"
+          },
+          "spread_pct": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Disagreement between the methods"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "catchment_area",
+          "results",
+          "recommended",
+          "spread_pct"
+        ],
+        "title": "RunoffResult",
+        "description": "FR6: three methods, reported as a range.\n\nThree methods rather than one because they disagree, and the disagreement is\ninformation. A single number here would be false precision."
+      },
+      "StatusChangeRequest": {
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted",
+              "approved",
+              "rejected"
+            ],
+            "title": "Status"
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "reason"
+        ],
+        "title": "StatusChangeRequest",
+        "description": "Approve or reject a recommendation.\n\nRole-gated: a viewer receives ``403``. Every transition writes an\n``audit_log`` row, which is append-only in the database \u2014 both are G6 exit\ncriteria, and the reason field is what makes the trail worth reading."
+      },
+      "StreamNetwork": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "accumulation_threshold": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "total_length": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "strahler_max_order": {
+            "type": "integer",
+            "title": "Strahler Max Order"
+          },
+          "geojson": {
+            "$ref": "#/components/schemas/GeoJSONFeatureCollection"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "accumulation_threshold",
+          "total_length",
+          "strahler_max_order",
+          "geojson"
+        ],
+        "title": "StreamNetwork",
+        "description": "Extracted drainage network, with the threshold that produced it.\n\n``accumulation_threshold`` is surfaced because it is the one knob that\nvisibly changes the answer: too high and tributaries vanish, too low and the\nhillsides fill with spurious channels."
+      },
+      "SuitabilityRequest": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "top_n": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Top N",
+            "default": 10
+          },
+          "weights": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Weights",
+            "description": "AHP criterion weights. Derived if omitted."
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id"
+        ],
+        "title": "SuitabilityRequest",
+        "description": "FR3/P4: rank candidate pond sites across a village."
+      },
+      "SuitabilityResult": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/SuitableSite"
+            },
+            "type": "array",
+            "title": "Sites"
+          },
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights"
+          },
+          "consistency_ratio": {
+            "type": "number",
+            "title": "Consistency Ratio",
+            "description": "AHP CR; must be < 0.10 to be valid"
+          },
+          "consistency_acceptable": {
+            "type": "boolean",
+            "title": "Consistency Acceptable"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "sites",
+          "weights",
+          "consistency_ratio",
+          "consistency_acceptable"
+        ],
+        "title": "SuitabilityResult",
+        "description": "FR3/P4: ranked sites, with the AHP matrix that ranked them.\n\n``consistency_ratio`` is returned, not just computed. AHP weights are only\nmeaningful when CR < 0.10; publishing the value is what makes the ranking\ncheckable rather than asserted."
+      },
+      "SuitableSite": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "location": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "total_score": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "criteria": {
+            "items": {
+              "$ref": "#/components/schemas/CriterionScore"
+            },
+            "type": "array",
+            "title": "Criteria"
+          },
+          "catchment_area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "estimated_storage": {
+            "$ref": "#/components/schemas/QuantityOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "location",
+          "total_score",
+          "criteria",
+          "catchment_area",
+          "estimated_storage"
+        ],
+        "title": "SuitableSite",
+        "description": "One ranked candidate location."
+      },
+      "TerrainLayers": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "layers": {
+            "items": {
+              "$ref": "#/components/schemas/LayerDescriptor"
+            },
+            "type": "array",
+            "title": "Layers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "layers"
+        ],
+        "title": "TerrainLayers",
+        "description": "The full toggleable layer set for a village \u2014 FR8's six overlays live here."
+      },
+      "Unit": {
+        "type": "string",
+        "enum": [
+          "m",
+          "m2",
+          "ha",
+          "km2",
+          "m3",
+          "mm",
+          "mm/yr",
+          "deg",
+          "%",
+          "ratio",
+          "count",
+          "yr",
+          "d",
+          "INR"
+        ],
+        "title": "Unit",
+        "description": "Units used anywhere in the system. SI, except where the domain differs.\n\nIndian minor-irrigation practice reports catchment in hectares and storage in\ncubic metres, so those are the reporting units even though the engine\ncomputes in square metres."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "VillageCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "state_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 8
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Code"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "boundary": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Boundary",
+            "description": "GeoJSON MultiPolygon or Polygon, EPSG:4326"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "boundary"
+        ],
+        "title": "VillageCreate",
+        "description": "Register a village by name and boundary."
+      },
+      "VillageOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "state_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "State Code"
+          },
+          "district": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District"
+          },
+          "centroid": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Centroid",
+            "description": "[lon, lat] in EPSG:4326"
+          },
+          "utm_epsg": {
+            "type": "integer",
+            "title": "Utm Epsg",
+            "description": "Projected CRS used for every area and distance computation, derived at runtime from this village's own centroid \u2014 never configured, never hard-coded."
+          },
+          "area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "state_code",
+          "district",
+          "centroid",
+          "utm_epsg",
+          "area",
+          "created_at"
+        ],
+        "title": "VillageOut",
+        "description": "A registered village."
+      },
+      "VillageSummary": {
+        "properties": {
+          "village": {
+            "$ref": "#/components/schemas/VillageOut"
+          },
+          "elevation": {
+            "$ref": "#/components/schemas/ElevationSummary"
+          },
+          "mean_slope": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "dem_source": {
+            "type": "string",
+            "title": "Dem Source",
+            "description": "Provider and native resolution, for attribution"
+          },
+          "dem_vertical_accuracy": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village",
+          "elevation",
+          "mean_slope",
+          "dem_source",
+          "dem_vertical_accuracy"
+        ],
+        "title": "VillageSummary",
+        "description": "FR1: the headline card shown when a village is selected.\n\nEvery field is a :class:`QuantityOut`, so the panel cannot render a bare\nnumber even by accident."
+      }
+    }
+  }
+}

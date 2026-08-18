@@ -13,7 +13,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 
 from app import __version__
-from app.api.routers import health
+from app.api.errors import register_exception_handlers
+from app.api.routers import (
+    analysis,
+    health,
+    jobs,
+    meta,
+    rainfall,
+    recommendations,
+    terrain,
+    villages,
+)
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 
@@ -54,8 +64,20 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    register_exception_handlers(app)
+
     # Probes stay unversioned — infrastructure consumes them, not clients.
     app.include_router(health.router)
+
+    # Everything else is versioned from the first commit. Adding a version prefix
+    # after clients exist is a breaking change; starting with one costs nothing.
+    prefix = settings.api_v1_prefix
+    for module in (villages, terrain, rainfall, recommendations, jobs, meta):
+        app.include_router(module.router, prefix=prefix)
+    app.include_router(analysis.router, prefix=prefix)
+    app.include_router(analysis.results_router, prefix=prefix)
+    # The Phase 2 brief names this path; it is mounted where the brief puts it.
+    app.include_router(analysis.contour_router, prefix=prefix)
 
     return app
 

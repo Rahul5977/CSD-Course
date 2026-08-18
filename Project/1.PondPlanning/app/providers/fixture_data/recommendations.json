@@ -1,0 +1,57 @@
+{
+  "items": [
+    {
+      "id": "8c4d2e91-7a3b-4f6c-b8d1-9e5a2c7f4b60",
+      "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+      "village_name": "Demo Village",
+      "location": [
+        81.742,
+        21.1927
+      ],
+      "catchment_area": {
+        "value": 214.6,
+        "unit": "ha",
+        "uncertainty_pct": 15,
+        "low": 182.41,
+        "high": 246.79,
+        "method": null,
+        "display": "214.60 ha (\u00b115 %)"
+      },
+      "gross_storage": {
+        "value": 20906.0,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 16724.8,
+        "high": 25087.2,
+        "method": null,
+        "display": "20,906.00 m\u00b3 (\u00b120 %)"
+      },
+      "depth": {
+        "value": 3.5,
+        "unit": "m",
+        "uncertainty_pct": 20,
+        "low": 2.8,
+        "high": 4.2,
+        "method": null,
+        "display": "3.50 m (\u00b120 %)"
+      },
+      "indicative_cost": {
+        "value": 2664261.0,
+        "unit": "INR",
+        "uncertainty_pct": 30,
+        "low": 1864982.7,
+        "high": 3463539.3,
+        "method": null,
+        "display": "2,664,261.00 INR (\u00b130 %)"
+      },
+      "confidence": "moderate",
+      "status": "submitted",
+      "created_by": "planner@example.org",
+      "created_at": "2026-08-18T07:12:00Z",
+      "updated_at": "2026-08-18T07:12:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}

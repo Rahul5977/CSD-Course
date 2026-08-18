@@ -1,0 +1,237 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "requested_point": {
+    "lon": 81.7423,
+    "lat": 21.1924
+  },
+  "snapped_point": {
+    "lon": 81.742,
+    "lat": 21.1927
+  },
+  "snap_distance": {
+    "value": 41.7,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 41.7,
+    "high": 41.7,
+    "method": "Distance to the nearest modelled channel cell",
+    "display": "41.70 m"
+  },
+  "area": {
+    "value": 214.6,
+    "unit": "ha",
+    "uncertainty_pct": 15,
+    "low": 182.41,
+    "high": 246.79,
+    "method": "Upslope BFS over the D8 flow-direction grid",
+    "display": "214.60 ha (\u00b115 %)"
+  },
+  "perimeter": {
+    "value": 7420.0,
+    "unit": "m",
+    "uncertainty_pct": 15,
+    "low": 6307.0,
+    "high": 8533.0,
+    "method": "Boundary of the traced cell set",
+    "display": "7,420.00 m (\u00b115 %)"
+  },
+  "longest_flow_path": {
+    "value": 2310.0,
+    "unit": "m",
+    "uncertainty_pct": 15,
+    "low": 1963.5,
+    "high": 2656.5,
+    "method": "Longest upstream path to the outlet",
+    "display": "2,310.00 m (\u00b115 %)"
+  },
+  "mean_slope": {
+    "value": 3.1,
+    "unit": "deg",
+    "uncertainty_pct": 15,
+    "low": 2.635,
+    "high": 3.565,
+    "method": "Zonal mean of the slope raster",
+    "display": "3.10 \u00b0 (\u00b115 %)"
+  },
+  "relief": {
+    "value": 24.0,
+    "unit": "m",
+    "uncertainty_pct": 25,
+    "low": 18.0,
+    "high": 30.0,
+    "method": "Catchment max elevation - outlet elevation",
+    "display": "24.00 m (\u00b125 %)"
+  },
+  "outlet_elevation": {
+    "value": 271.0,
+    "unit": "m",
+    "uncertainty_pct": 6,
+    "low": 254.74,
+    "high": 287.26,
+    "method": "DEM value at the snapped pour point",
+    "display": "271.00 m (\u00b16 %)"
+  },
+  "flow_routing": "D8 (O'Callaghan & Mark 1984)",
+  "cell_size": {
+    "value": 30.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 30.0,
+    "high": 30.0,
+    "method": null,
+    "display": "30.00 m"
+  },
+  "geojson": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.7545,
+                21.1954
+              ],
+              [
+                81.755098,
+                21.197744
+              ],
+              [
+                81.75458,
+                21.20015
+              ],
+              [
+                81.75283,
+                21.202171
+              ],
+              [
+                81.750199,
+                21.203461
+              ],
+              [
+                81.747279,
+                21.203994
+              ],
+              [
+                81.744521,
+                21.204058
+              ],
+              [
+                81.742,
+                21.204024
+              ],
+              [
+                81.739479,
+                21.204058
+              ],
+              [
+                81.736721,
+                21.203994
+              ],
+              [
+                81.733801,
+                21.203461
+              ],
+              [
+                81.73117,
+                21.202171
+              ],
+              [
+                81.72942,
+                21.20015
+              ],
+              [
+                81.728902,
+                21.197744
+              ],
+              [
+                81.7295,
+                21.1954
+              ],
+              [
+                81.730725,
+                21.193382
+              ],
+              [
+                81.732055,
+                21.191645
+              ],
+              [
+                81.733284,
+                21.18995
+              ],
+              [
+                81.734612,
+                21.188137
+              ],
+              [
+                81.736432,
+                21.186335
+              ],
+              [
+                81.738958,
+                21.184949
+              ],
+              [
+                81.742,
+                21.184424
+              ],
+              [
+                81.745042,
+                21.184949
+              ],
+              [
+                81.747568,
+                21.186335
+              ],
+              [
+                81.749388,
+                21.188137
+              ],
+              [
+                81.750716,
+                21.18995
+              ],
+              [
+                81.751945,
+                21.191645
+              ],
+              [
+                81.753275,
+                21.193382
+              ],
+              [
+                81.7545,
+                21.1954
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "area_ha": 214.6,
+          "flow_routing": "D8"
+        }
+      }
+    ],
+    "crs": "EPSG:4326"
+  },
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "interpolated_precision",
+      "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+      "severity": "caution"
+    },
+    {
+      "code": "snap_applied",
+      "message": "The pour point was moved 41.7 m onto the nearest modelled channel. Without snapping this click would have returned a hillslope catchment roughly 40x smaller.",
+      "severity": "info"
+    }
+  ]
+}

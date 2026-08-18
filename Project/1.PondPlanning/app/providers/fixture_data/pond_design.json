@@ -1,0 +1,865 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "catchment": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "requested_point": {
+      "lon": 81.7423,
+      "lat": 21.1924
+    },
+    "snapped_point": {
+      "lon": 81.742,
+      "lat": 21.1927
+    },
+    "snap_distance": {
+      "value": 41.7,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 41.7,
+      "high": 41.7,
+      "method": "Distance to the nearest modelled channel cell",
+      "display": "41.70 m"
+    },
+    "area": {
+      "value": 214.6,
+      "unit": "ha",
+      "uncertainty_pct": 15,
+      "low": 182.41,
+      "high": 246.79,
+      "method": "Upslope BFS over the D8 flow-direction grid",
+      "display": "214.60 ha (\u00b115 %)"
+    },
+    "perimeter": {
+      "value": 7420.0,
+      "unit": "m",
+      "uncertainty_pct": 15,
+      "low": 6307.0,
+      "high": 8533.0,
+      "method": "Boundary of the traced cell set",
+      "display": "7,420.00 m (\u00b115 %)"
+    },
+    "longest_flow_path": {
+      "value": 2310.0,
+      "unit": "m",
+      "uncertainty_pct": 15,
+      "low": 1963.5,
+      "high": 2656.5,
+      "method": "Longest upstream path to the outlet",
+      "display": "2,310.00 m (\u00b115 %)"
+    },
+    "mean_slope": {
+      "value": 3.1,
+      "unit": "deg",
+      "uncertainty_pct": 15,
+      "low": 2.635,
+      "high": 3.565,
+      "method": "Zonal mean of the slope raster",
+      "display": "3.10 \u00b0 (\u00b115 %)"
+    },
+    "relief": {
+      "value": 24.0,
+      "unit": "m",
+      "uncertainty_pct": 25,
+      "low": 18.0,
+      "high": 30.0,
+      "method": "Catchment max elevation - outlet elevation",
+      "display": "24.00 m (\u00b125 %)"
+    },
+    "outlet_elevation": {
+      "value": 271.0,
+      "unit": "m",
+      "uncertainty_pct": 6,
+      "low": 254.74,
+      "high": 287.26,
+      "method": "DEM value at the snapped pour point",
+      "display": "271.00 m (\u00b16 %)"
+    },
+    "flow_routing": "D8 (O'Callaghan & Mark 1984)",
+    "cell_size": {
+      "value": 30.0,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 30.0,
+      "high": 30.0,
+      "method": null,
+      "display": "30.00 m"
+    },
+    "geojson": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  81.7545,
+                  21.1954
+                ],
+                [
+                  81.755098,
+                  21.197744
+                ],
+                [
+                  81.75458,
+                  21.20015
+                ],
+                [
+                  81.75283,
+                  21.202171
+                ],
+                [
+                  81.750199,
+                  21.203461
+                ],
+                [
+                  81.747279,
+                  21.203994
+                ],
+                [
+                  81.744521,
+                  21.204058
+                ],
+                [
+                  81.742,
+                  21.204024
+                ],
+                [
+                  81.739479,
+                  21.204058
+                ],
+                [
+                  81.736721,
+                  21.203994
+                ],
+                [
+                  81.733801,
+                  21.203461
+                ],
+                [
+                  81.73117,
+                  21.202171
+                ],
+                [
+                  81.72942,
+                  21.20015
+                ],
+                [
+                  81.728902,
+                  21.197744
+                ],
+                [
+                  81.7295,
+                  21.1954
+                ],
+                [
+                  81.730725,
+                  21.193382
+                ],
+                [
+                  81.732055,
+                  21.191645
+                ],
+                [
+                  81.733284,
+                  21.18995
+                ],
+                [
+                  81.734612,
+                  21.188137
+                ],
+                [
+                  81.736432,
+                  21.186335
+                ],
+                [
+                  81.738958,
+                  21.184949
+                ],
+                [
+                  81.742,
+                  21.184424
+                ],
+                [
+                  81.745042,
+                  21.184949
+                ],
+                [
+                  81.747568,
+                  21.186335
+                ],
+                [
+                  81.749388,
+                  21.188137
+                ],
+                [
+                  81.750716,
+                  21.18995
+                ],
+                [
+                  81.751945,
+                  21.191645
+                ],
+                [
+                  81.753275,
+                  21.193382
+                ],
+                [
+                  81.7545,
+                  21.1954
+                ]
+              ]
+            ]
+          },
+          "properties": {
+            "area_ha": 214.6,
+            "flow_routing": "D8"
+          }
+        }
+      ],
+      "crs": "EPSG:4326"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      },
+      {
+        "code": "snap_applied",
+        "message": "The pour point was moved 41.7 m onto the nearest modelled channel. Without snapping this click would have returned a hillslope catchment roughly 40x smaller.",
+        "severity": "info"
+      }
+    ]
+  },
+  "rainfall_summary": {
+    "mean_annual": {
+      "value": 1284.0,
+      "unit": "mm/yr",
+      "uncertainty_pct": 8,
+      "low": 1181.28,
+      "high": 1386.72,
+      "method": null,
+      "display": "1,284.00 mm/yr (\u00b18 %)"
+    },
+    "dependable_75": {
+      "value": 1043.0,
+      "unit": "mm/yr",
+      "uncertainty_pct": 10,
+      "low": 938.7,
+      "high": 1147.3,
+      "method": null,
+      "display": "1,043.00 mm/yr (\u00b110 %)"
+    },
+    "monsoon_share": {
+      "value": 87.4,
+      "unit": "%",
+      "uncertainty_pct": 3,
+      "low": 84.778,
+      "high": 90.022,
+      "method": null,
+      "display": "87.40 % (\u00b13 %)"
+    }
+  },
+  "runoff": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "catchment_area": {
+      "value": 214.6,
+      "unit": "ha",
+      "uncertainty_pct": 15,
+      "low": 182.41,
+      "high": 246.79,
+      "method": "Upslope BFS over the D8 flow-direction grid",
+      "display": "214.60 ha (\u00b115 %)"
+    },
+    "results": [
+      {
+        "method": "scs_cn",
+        "annual_runoff_volume": {
+          "value": 628956.118,
+          "unit": "m3",
+          "uncertainty_pct": 30,
+          "low": 440269.2826,
+          "high": 817642.9534,
+          "method": "scs_cn on the 75 % dependable rainfall",
+          "display": "628,956.12 m\u00b3 (\u00b130 %)"
+        },
+        "runoff_coefficient": {
+          "value": 0.281,
+          "unit": "ratio",
+          "uncertainty_pct": 25,
+          "low": 0.2108,
+          "high": 0.3513,
+          "method": "Runoff depth / rainfall depth",
+          "display": "0.28 ratio (\u00b125 %)"
+        },
+        "parameters": {
+          "curve_number": {
+            "value": 75,
+            "unit": "count",
+            "uncertainty_pct": 10,
+            "low": 67.5,
+            "high": 82.5,
+            "method": "AMC II, sandy loam over cropland",
+            "display": "75.00 count (\u00b110 %)"
+          },
+          "initial_abstraction_ratio": {
+            "value": 0.2,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.2,
+            "high": 0.2,
+            "method": "Ia = 0.2S, standard TR-55",
+            "display": "0.20 ratio"
+          },
+          "potential_retention_S": {
+            "value": 84.7,
+            "unit": "mm",
+            "uncertainty_pct": 10,
+            "low": 76.23,
+            "high": 93.17,
+            "method": "S = 25400/CN - 254",
+            "display": "84.70 mm (\u00b110 %)"
+          }
+        },
+        "reference": "USDA SCS (1972), TR-55"
+      },
+      {
+        "method": "rational",
+        "annual_runoff_volume": {
+          "value": 698342.736,
+          "unit": "m3",
+          "uncertainty_pct": 30,
+          "low": 488839.9152,
+          "high": 907845.5568,
+          "method": "rational on the 75 % dependable rainfall",
+          "display": "698,342.74 m\u00b3 (\u00b130 %)"
+        },
+        "runoff_coefficient": {
+          "value": 0.312,
+          "unit": "ratio",
+          "uncertainty_pct": 25,
+          "low": 0.234,
+          "high": 0.39,
+          "method": "Runoff depth / rainfall depth",
+          "display": "0.31 ratio (\u00b125 %)"
+        },
+        "parameters": {
+          "runoff_coefficient_C": {
+            "value": 0.312,
+            "unit": "ratio",
+            "uncertainty_pct": 25,
+            "low": 0.234,
+            "high": 0.39,
+            "method": "Cultivated land, 2-5 % slope",
+            "display": "0.31 ratio (\u00b125 %)"
+          },
+          "time_of_concentration": {
+            "value": 28.4,
+            "unit": "d",
+            "uncertainty_pct": 20,
+            "low": 22.72,
+            "high": 34.08,
+            "method": "Kirpich (1940)",
+            "display": "28.40 d (\u00b120 %)"
+          }
+        },
+        "reference": "Kuichling (1889); IS 4410"
+      },
+      {
+        "method": "empirical_strange",
+        "annual_runoff_volume": {
+          "value": 550616.388,
+          "unit": "m3",
+          "uncertainty_pct": 30,
+          "low": 385431.4716,
+          "high": 715801.3044,
+          "method": "empirical_strange on the 75 % dependable rainfall",
+          "display": "550,616.39 m\u00b3 (\u00b130 %)"
+        },
+        "runoff_coefficient": {
+          "value": 0.246,
+          "unit": "ratio",
+          "uncertainty_pct": 25,
+          "low": 0.1845,
+          "high": 0.3075,
+          "method": "Runoff depth / rainfall depth",
+          "display": "0.25 ratio (\u00b125 %)"
+        },
+        "parameters": {
+          "catchment_class": {
+            "value": 2,
+            "unit": "count",
+            "uncertainty_pct": null,
+            "low": 2,
+            "high": 2,
+            "method": "'Average' catchment yield class",
+            "display": "2.00 count"
+          }
+        },
+        "reference": "Strange's table, Maharashtra PWD"
+      }
+    ],
+    "recommended": {
+      "method": "scs_cn",
+      "annual_runoff_volume": {
+        "value": 628956.118,
+        "unit": "m3",
+        "uncertainty_pct": 30,
+        "low": 440269.2826,
+        "high": 817642.9534,
+        "method": "scs_cn on the 75 % dependable rainfall",
+        "display": "628,956.12 m\u00b3 (\u00b130 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.281,
+        "unit": "ratio",
+        "uncertainty_pct": 25,
+        "low": 0.2108,
+        "high": 0.3513,
+        "method": "Runoff depth / rainfall depth",
+        "display": "0.28 ratio (\u00b125 %)"
+      },
+      "parameters": {
+        "curve_number": {
+          "value": 75,
+          "unit": "count",
+          "uncertainty_pct": 10,
+          "low": 67.5,
+          "high": 82.5,
+          "method": "AMC II, sandy loam over cropland",
+          "display": "75.00 count (\u00b110 %)"
+        },
+        "initial_abstraction_ratio": {
+          "value": 0.2,
+          "unit": "ratio",
+          "uncertainty_pct": null,
+          "low": 0.2,
+          "high": 0.2,
+          "method": "Ia = 0.2S, standard TR-55",
+          "display": "0.20 ratio"
+        },
+        "potential_retention_S": {
+          "value": 84.7,
+          "unit": "mm",
+          "uncertainty_pct": 10,
+          "low": 76.23,
+          "high": 93.17,
+          "method": "S = 25400/CN - 254",
+          "display": "84.70 mm (\u00b110 %)"
+        }
+      },
+      "reference": "USDA SCS (1972), TR-55"
+    },
+    "spread_pct": {
+      "value": 23.6,
+      "unit": "%",
+      "uncertainty_pct": null,
+      "low": 23.6,
+      "high": 23.6,
+      "method": "(max - min) / mean across the three methods",
+      "display": "23.60 %"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "method_spread",
+        "message": "The three methods disagree by roughly a quarter. That spread is the honest uncertainty of the estimate; any single figure quoted alone would be false precision.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "dimensions": {
+    "depth": {
+      "value": 3.5,
+      "unit": "m",
+      "uncertainty_pct": 20,
+      "low": 2.8,
+      "high": 4.2,
+      "method": "Optimised against the EAV curve and the 3.5 m safe excavation limit",
+      "display": "3.50 m (\u00b120 %)"
+    },
+    "top_length": {
+      "value": 92.0,
+      "unit": "m",
+      "uncertainty_pct": 15,
+      "low": 78.2,
+      "high": 105.8,
+      "method": null,
+      "display": "92.00 m (\u00b115 %)"
+    },
+    "top_width": {
+      "value": 74.0,
+      "unit": "m",
+      "uncertainty_pct": 15,
+      "low": 62.9,
+      "high": 85.1,
+      "method": null,
+      "display": "74.00 m (\u00b115 %)"
+    },
+    "bottom_length": {
+      "value": 81.5,
+      "unit": "m",
+      "uncertainty_pct": 15,
+      "low": 69.275,
+      "high": 93.725,
+      "method": null,
+      "display": "81.50 m (\u00b115 %)"
+    },
+    "bottom_width": {
+      "value": 63.5,
+      "unit": "m",
+      "uncertainty_pct": 15,
+      "low": 53.975,
+      "high": 73.025,
+      "method": null,
+      "display": "63.50 m (\u00b115 %)"
+    },
+    "side_slope": {
+      "value": 1.5,
+      "unit": "ratio",
+      "uncertainty_pct": null,
+      "low": 1.5,
+      "high": 1.5,
+      "method": "1.5H:1V \u2014 stable in sandy loam without lining",
+      "display": "1.50 ratio"
+    },
+    "freeboard": {
+      "value": 0.5,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 0.5,
+      "high": 0.5,
+      "method": "IS 5912 minimum for a minor storage tank",
+      "display": "0.50 m"
+    }
+  },
+  "gross_storage": {
+    "value": 20906.0,
+    "unit": "m3",
+    "uncertainty_pct": 20,
+    "low": 16724.8,
+    "high": 25087.2,
+    "method": "Prismoidal integration of the EAV curve",
+    "display": "20,906.00 m\u00b3 (\u00b120 %)"
+  },
+  "live_storage": {
+    "value": 18397.0,
+    "unit": "m3",
+    "uncertainty_pct": 20,
+    "low": 14717.6,
+    "high": 22076.4,
+    "method": "Gross less dead storage",
+    "display": "18,397.00 m\u00b3 (\u00b120 %)"
+  },
+  "dead_storage": {
+    "value": 2509.0,
+    "unit": "m3",
+    "uncertainty_pct": 30,
+    "low": 1756.3,
+    "high": 3261.7,
+    "method": "Assumed 12 % for silt accumulation over 10 years",
+    "display": "2,509.00 m\u00b3 (\u00b130 %)"
+  },
+  "eav_curve": [
+    {
+      "elevation": {
+        "value": 271.0,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 254.74,
+        "high": 287.26,
+        "method": null,
+        "display": "271.00 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 5175.2,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 4398.92,
+        "high": 5951.48,
+        "method": null,
+        "display": "5,175.20 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 0.0,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 271.5,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 255.21,
+        "high": 287.79,
+        "method": null,
+        "display": "271.50 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 5395.0,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 4585.75,
+        "high": 6204.25,
+        "method": null,
+        "display": "5,395.00 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 2642.4,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 2113.92,
+        "high": 3170.88,
+        "method": null,
+        "display": "2,642.40 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 272.0,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 255.68,
+        "high": 288.32,
+        "method": null,
+        "display": "272.00 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 5619.2,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 4776.32,
+        "high": 6462.08,
+        "method": null,
+        "display": "5,619.20 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 5395.7,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 4316.56,
+        "high": 6474.84,
+        "method": null,
+        "display": "5,395.70 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 272.5,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 256.15,
+        "high": 288.85,
+        "method": null,
+        "display": "272.50 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 5848.0,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 4970.8,
+        "high": 6725.2,
+        "method": null,
+        "display": "5,848.00 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 8262.4,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 6609.92,
+        "high": 9914.88,
+        "method": null,
+        "display": "8,262.40 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 273.0,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 256.62,
+        "high": 289.38,
+        "method": null,
+        "display": "273.00 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 6081.2,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 5169.02,
+        "high": 6993.38,
+        "method": null,
+        "display": "6,081.20 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 11244.5,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 8995.6,
+        "high": 13493.4,
+        "method": null,
+        "display": "11,244.50 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 273.5,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 257.09,
+        "high": 289.91,
+        "method": null,
+        "display": "273.50 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 6319.0,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 5371.15,
+        "high": 7266.85,
+        "method": null,
+        "display": "6,319.00 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 14344.4,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 11475.52,
+        "high": 17213.28,
+        "method": null,
+        "display": "14,344.40 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 274.0,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 257.56,
+        "high": 290.44,
+        "method": null,
+        "display": "274.00 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 6561.2,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 5577.02,
+        "high": 7545.38,
+        "method": null,
+        "display": "6,561.20 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 17564.2,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 14051.36,
+        "high": 21077.04,
+        "method": null,
+        "display": "17,564.20 m\u00b3 (\u00b120 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 274.5,
+        "unit": "m",
+        "uncertainty_pct": 6,
+        "low": 258.03,
+        "high": 290.97,
+        "method": null,
+        "display": "274.50 m (\u00b16 %)"
+      },
+      "surface_area": {
+        "value": 6808.0,
+        "unit": "m2",
+        "uncertainty_pct": 15,
+        "low": 5786.8,
+        "high": 7829.2,
+        "method": null,
+        "display": "6,808.00 m\u00b2 (\u00b115 %)"
+      },
+      "cumulative_volume": {
+        "value": 20906.4,
+        "unit": "m3",
+        "uncertainty_pct": 20,
+        "low": 16725.12,
+        "high": 25087.68,
+        "method": null,
+        "display": "20,906.40 m\u00b3 (\u00b120 %)"
+      }
+    }
+  ],
+  "reliability": {
+    "value": 0.78,
+    "unit": "ratio",
+    "uncertainty_pct": 15,
+    "low": 0.663,
+    "high": 0.897,
+    "method": "Fraction of the 24-year record in which inflow fills the pond",
+    "display": "0.78 ratio (\u00b115 %)"
+  },
+  "bill_of_quantities": {
+    "excavation_volume": {
+      "value": 22578.0,
+      "unit": "m3",
+      "uncertainty_pct": 20,
+      "low": 18062.4,
+      "high": 27093.6,
+      "method": "Gross storage plus freeboard cut",
+      "display": "22,578.00 m\u00b3 (\u00b120 %)"
+    },
+    "embankment_volume": {
+      "value": 4599.0,
+      "unit": "m3",
+      "uncertainty_pct": 25,
+      "low": 3449.25,
+      "high": 5748.75,
+      "method": "Spoil reused for the bund",
+      "display": "4,599.00 m\u00b3 (\u00b125 %)"
+    },
+    "indicative_cost": {
+      "value": 2664261.0,
+      "unit": "INR",
+      "uncertainty_pct": 30,
+      "low": 1864982.7,
+      "high": 3463539.3,
+      "method": "Excavation rate x volume",
+      "display": "2,664,261.00 INR (\u00b130 %)"
+    },
+    "cost_basis": "CG PWD Schedule of Rates 2024-25, earthwork in ordinary soil"
+  },
+  "confidence": "moderate",
+  "confidence_rationale": "Catchment delineation is sound and the rainfall record is 24 years long, but the elevation model is SRTM at ~30 m. Storage is the integral of a surface whose vertical error is several metres, so the +/-20 % band is the honest figure. A total-station survey of the chosen site would narrow it to about +/-5 %.",
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "interpolated_precision",
+      "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+      "severity": "caution"
+    },
+    {
+      "code": "survey_required",
+      "message": "These dimensions are a planning estimate, not a construction drawing. Ground survey and a soil percolation test are required before excavation.",
+      "severity": "critical"
+    }
+  ]
+}

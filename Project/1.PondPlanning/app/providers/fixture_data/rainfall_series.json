@@ -1,0 +1,743 @@
+{
+  "source": "NASA POWER daily",
+  "station_or_grid": "POWER grid 21.25N 81.75E",
+  "latitude": 21.1938,
+  "longitude": 81.7402,
+  "start": "2024-06-01",
+  "end": "2024-07-30",
+  "days": 60,
+  "series": [
+    {
+      "day": "2024-06-01",
+      "rainfall": {
+        "value": 8.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 8.2,
+        "high": 8.2,
+        "method": null,
+        "display": "8.20 mm"
+      }
+    },
+    {
+      "day": "2024-06-02",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-03",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-04",
+      "rainfall": {
+        "value": 14.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 14.6,
+        "high": 14.6,
+        "method": null,
+        "display": "14.60 mm"
+      }
+    },
+    {
+      "day": "2024-06-05",
+      "rainfall": {
+        "value": 31.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 31.2,
+        "high": 31.2,
+        "method": null,
+        "display": "31.20 mm"
+      }
+    },
+    {
+      "day": "2024-06-06",
+      "rainfall": {
+        "value": 2.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 2.4,
+        "high": 2.4,
+        "method": null,
+        "display": "2.40 mm"
+      }
+    },
+    {
+      "day": "2024-06-07",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-08",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-09",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-10",
+      "rainfall": {
+        "value": 6.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 6.8,
+        "high": 6.8,
+        "method": null,
+        "display": "6.80 mm"
+      }
+    },
+    {
+      "day": "2024-06-11",
+      "rainfall": {
+        "value": 22.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 22.4,
+        "high": 22.4,
+        "method": null,
+        "display": "22.40 mm"
+      }
+    },
+    {
+      "day": "2024-06-12",
+      "rainfall": {
+        "value": 41.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 41.6,
+        "high": 41.6,
+        "method": null,
+        "display": "41.60 mm"
+      }
+    },
+    {
+      "day": "2024-06-13",
+      "rainfall": {
+        "value": 18.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 18.2,
+        "high": 18.2,
+        "method": null,
+        "display": "18.20 mm"
+      }
+    },
+    {
+      "day": "2024-06-14",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-15",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-16",
+      "rainfall": {
+        "value": 3.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 3.2,
+        "high": 3.2,
+        "method": null,
+        "display": "3.20 mm"
+      }
+    },
+    {
+      "day": "2024-06-17",
+      "rainfall": {
+        "value": 12.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 12.8,
+        "high": 12.8,
+        "method": null,
+        "display": "12.80 mm"
+      }
+    },
+    {
+      "day": "2024-06-18",
+      "rainfall": {
+        "value": 64.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 64.2,
+        "high": 64.2,
+        "method": null,
+        "display": "64.20 mm"
+      }
+    },
+    {
+      "day": "2024-06-19",
+      "rainfall": {
+        "value": 38.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 38.4,
+        "high": 38.4,
+        "method": null,
+        "display": "38.40 mm"
+      }
+    },
+    {
+      "day": "2024-06-20",
+      "rainfall": {
+        "value": 9.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 9.6,
+        "high": 9.6,
+        "method": null,
+        "display": "9.60 mm"
+      }
+    },
+    {
+      "day": "2024-06-21",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-22",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-23",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-24",
+      "rainfall": {
+        "value": 2.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 2.8,
+        "high": 2.8,
+        "method": null,
+        "display": "2.80 mm"
+      }
+    },
+    {
+      "day": "2024-06-25",
+      "rainfall": {
+        "value": 16.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 16.4,
+        "high": 16.4,
+        "method": null,
+        "display": "16.40 mm"
+      }
+    },
+    {
+      "day": "2024-06-26",
+      "rainfall": {
+        "value": 28.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 28.6,
+        "high": 28.6,
+        "method": null,
+        "display": "28.60 mm"
+      }
+    },
+    {
+      "day": "2024-06-27",
+      "rainfall": {
+        "value": 51.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 51.2,
+        "high": 51.2,
+        "method": null,
+        "display": "51.20 mm"
+      }
+    },
+    {
+      "day": "2024-06-28",
+      "rainfall": {
+        "value": 12.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 12.4,
+        "high": 12.4,
+        "method": null,
+        "display": "12.40 mm"
+      }
+    },
+    {
+      "day": "2024-06-29",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-06-30",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-01",
+      "rainfall": {
+        "value": 4.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 4.6,
+        "high": 4.6,
+        "method": null,
+        "display": "4.60 mm"
+      }
+    },
+    {
+      "day": "2024-07-02",
+      "rainfall": {
+        "value": 19.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 19.8,
+        "high": 19.8,
+        "method": null,
+        "display": "19.80 mm"
+      }
+    },
+    {
+      "day": "2024-07-03",
+      "rainfall": {
+        "value": 86.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 86.4,
+        "high": 86.4,
+        "method": null,
+        "display": "86.40 mm"
+      }
+    },
+    {
+      "day": "2024-07-04",
+      "rainfall": {
+        "value": 42.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 42.2,
+        "high": 42.2,
+        "method": null,
+        "display": "42.20 mm"
+      }
+    },
+    {
+      "day": "2024-07-05",
+      "rainfall": {
+        "value": 17.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 17.6,
+        "high": 17.6,
+        "method": null,
+        "display": "17.60 mm"
+      }
+    },
+    {
+      "day": "2024-07-06",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-07",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-08",
+      "rainfall": {
+        "value": 8.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 8.2,
+        "high": 8.2,
+        "method": null,
+        "display": "8.20 mm"
+      }
+    },
+    {
+      "day": "2024-07-09",
+      "rainfall": {
+        "value": 24.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 24.6,
+        "high": 24.6,
+        "method": null,
+        "display": "24.60 mm"
+      }
+    },
+    {
+      "day": "2024-07-10",
+      "rainfall": {
+        "value": 58.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 58.8,
+        "high": 58.8,
+        "method": null,
+        "display": "58.80 mm"
+      }
+    },
+    {
+      "day": "2024-07-11",
+      "rainfall": {
+        "value": 31.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 31.4,
+        "high": 31.4,
+        "method": null,
+        "display": "31.40 mm"
+      }
+    },
+    {
+      "day": "2024-07-12",
+      "rainfall": {
+        "value": 11.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 11.2,
+        "high": 11.2,
+        "method": null,
+        "display": "11.20 mm"
+      }
+    },
+    {
+      "day": "2024-07-13",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-14",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-15",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-16",
+      "rainfall": {
+        "value": 6.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 6.4,
+        "high": 6.4,
+        "method": null,
+        "display": "6.40 mm"
+      }
+    },
+    {
+      "day": "2024-07-17",
+      "rainfall": {
+        "value": 18.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 18.2,
+        "high": 18.2,
+        "method": null,
+        "display": "18.20 mm"
+      }
+    },
+    {
+      "day": "2024-07-18",
+      "rainfall": {
+        "value": 44.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 44.6,
+        "high": 44.6,
+        "method": null,
+        "display": "44.60 mm"
+      }
+    },
+    {
+      "day": "2024-07-19",
+      "rainfall": {
+        "value": 92.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 92.8,
+        "high": 92.8,
+        "method": null,
+        "display": "92.80 mm"
+      }
+    },
+    {
+      "day": "2024-07-20",
+      "rainfall": {
+        "value": 26.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 26.4,
+        "high": 26.4,
+        "method": null,
+        "display": "26.40 mm"
+      }
+    },
+    {
+      "day": "2024-07-21",
+      "rainfall": {
+        "value": 13.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 13.8,
+        "high": 13.8,
+        "method": null,
+        "display": "13.80 mm"
+      }
+    },
+    {
+      "day": "2024-07-22",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-23",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-24",
+      "rainfall": {
+        "value": 2.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 2.2,
+        "high": 2.2,
+        "method": null,
+        "display": "2.20 mm"
+      }
+    },
+    {
+      "day": "2024-07-25",
+      "rainfall": {
+        "value": 14.8,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 14.8,
+        "high": 14.8,
+        "method": null,
+        "display": "14.80 mm"
+      }
+    },
+    {
+      "day": "2024-07-26",
+      "rainfall": {
+        "value": 36.2,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 36.2,
+        "high": 36.2,
+        "method": null,
+        "display": "36.20 mm"
+      }
+    },
+    {
+      "day": "2024-07-27",
+      "rainfall": {
+        "value": 21.4,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 21.4,
+        "high": 21.4,
+        "method": null,
+        "display": "21.40 mm"
+      }
+    },
+    {
+      "day": "2024-07-28",
+      "rainfall": {
+        "value": 8.6,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 8.6,
+        "high": 8.6,
+        "method": null,
+        "display": "8.60 mm"
+      }
+    },
+    {
+      "day": "2024-07-29",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    },
+    {
+      "day": "2024-07-30",
+      "rainfall": {
+        "value": 0.0,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 mm"
+      }
+    }
+  ],
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "series_truncated",
+      "message": "Truncated to 60 monsoon days for the fixture. The real endpoint returns the full daily record, because SCS-CN must run per day and then be summed.",
+      "severity": "info"
+    }
+  ]
+}

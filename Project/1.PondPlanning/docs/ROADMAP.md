@@ -1,18 +1,18 @@
 # ROADMAP — AI-based Village Pond Planning System
 
-**Operational tracker distilled from `Docs/PLAN.md`.** The plan is the authority; this file is the day-to-day checklist and checkpoint gate. When they disagree, `Docs/PLAN.md` wins — and fix this file.
+**Operational tracker distilled from `docs/PLAN.md`.** The plan is the authority; this file is the day-to-day checklist and checkpoint gate. When they disagree, `docs/PLAN.md` wins — and fix this file.
 
 ### Authority chain
 
-1. `Docs/Assignment.pdf` — the specification and the rubric. Non-negotiable.
-2. `Plan/Phase{1,2,3}.txt` — what each submission must contain.
-3. `Docs/PLAN.md` — the 707-line marks-driven execution plan (P0–P7, evidence register, contingency ladder).
-4. `ROADMAP.md` (this file) — condensed phase gates and checkpoints.
-5. `PROGRESS.md` — where we actually are right now.
+1. `docs/assignment/Assignment.pdf` — the specification and the rubric. Non-negotiable.
+2. `docs/assignment/Phase{1,2,3}.txt` — what each submission must contain.
+3. `docs/PLAN.md` — the 707-line marks-driven execution plan (P0–P7, evidence register, contingency ladder).
+4. `docs/ROADMAP.md` (this file) — condensed phase gates and checkpoints.
+5. `docs/PROGRESS.md` — where we actually are right now.
 
 **Target: 100/100.** Final submission and live demonstration: **5 September** — the one fixed date.
 
-Work is tracked by **phase and gate, not by calendar**. `Docs/PLAN.md` carries a day-by-day allocation; treat it as the intended *ordering and relative effort*, not a schedule to feel behind on. What matters is that gates close in order and none closes without evidence.
+Work is tracked by **phase and gate, not by calendar**. `docs/PLAN.md` carries a day-by-day allocation; treat it as the intended *ordering and relative effort*, not a schedule to feel behind on. What matters is that gates close in order and none closes without evidence.
 
 ---
 
@@ -35,13 +35,15 @@ Work is tracked by **phase and gate, not by calendar**. `Docs/PLAN.md` carries a
 
 ## 2. Checkpoint gates
 
-A gate is closed until **every** box has evidence a third party can see. Do not start the next phase on an open gate — `Docs/PLAN.md` §7.3 is explicit that a broken catchment engine invalidates FR6 and FR7 downstream.
+A gate is closed until **every** box has evidence a third party can see. Do not start the next phase on an open gate — `docs/PLAN.md` §7.3 is explicit that a broken catchment engine invalidates FR6 and FR7 downstream.
 
-### G0 — Foundations
-- [ ] Fresh clone → `make up` → Swagger at `/docs` lists all ~25 endpoints returning fixtures
-- [ ] CI green on main (`ruff` + `mypy --strict app/domain` + `pytest`)
-- [ ] 12 ADR files committed
-- [ ] Fixture JSON ready to hand to the AI design tool so the frontend can start in parallel
+### G0 — Foundations ✅ **closed 2026-08-18**
+- [x] Fresh clone → `make up` → Swagger at `/docs` lists **35 operations across 33 paths**, all returning fixtures
+- [x] CI green on main (`ruff` + `mypy --strict app/domain` + `pytest`, plus an image build)
+- [x] 12 ADR files committed
+- [x] Fixture JSON ready to hand to the AI design tool — 17 payloads in `app/providers/fixture_data/`, mirrored in `docs/api/openapi.json`
+- [x] *Added:* every fixture route is labelled `X-Fixture-Data: true`, and `GET /api/v1/meta/implementation-status` reports what is real
+- **11 marks secured**
 
 ### G1 — Walking skeleton
 - [ ] Browser shows real satellite imagery + hillshade from your own pipeline — **FR1 banked**
@@ -136,9 +138,9 @@ Attribution owed in the report's licence register: NASA/USGS SRTM · USGS GMTED2
 
 ### The gap
 
-`Plan/Phase2.txt` requires a route that **accepts an uploaded KML/KMZ contour map** (`POST /analyzeContour` or `/findCatchment`) and returns catchment JSON, demonstrated on this sample. It is graded on "Working API endpoint" and "Catchment identification/estimation".
+`docs/assignment/Phase2.txt` requires a route that **accepts an uploaded KML/KMZ contour map** (`POST /analyzeContour` or `/findCatchment`) and returns catchment JSON, demonstrated on this sample. It is graded on "Working API endpoint" and "Catchment identification/estimation".
 
-`Docs/PLAN.md` builds terrain from **provider DEM tiles** (Copernicus/ALOS) and treats contours as an FR2 *output*. Its only upload path is parcel import in P4. **As written, the plan does not produce the Phase 2 submission artifact.**
+`docs/PLAN.md` builds terrain from **provider DEM tiles** (Copernicus/ALOS) and treats contours as an FR2 *output*. Its only upload path is parcel import in P4. **As written, the plan does not produce the Phase 2 submission artifact.**
 
 Reconciliation — cheap, because the hydrology engine is shared:
 
@@ -152,7 +154,7 @@ Roughly one day of work, and it belongs **early in P2** — right after the DEM 
 
 ## 5. Non-negotiables
 
-**Never cut** (`Docs/PLAN.md` §6.1): any of FR1–FR8 · the async job architecture · the GRASS validation · the installation guide · hydrology golden tests · the chaos test.
+**Never cut** (`docs/PLAN.md` §6.1): any of FR1–FR8 · the async job architecture · the GRASS validation · the installation guide · hydrology golden tests · the chaos test.
 
 **Cut in this order if behind:** cascade correction → water-balance simulation → ML scoring (ship AHP α=1.0) → site comparison → Hindi depth → D-∞ routing.
 
@@ -164,8 +166,8 @@ Roughly one day of work, and it belongs **early in P2** — right after the DEM 
 - **Graded from the browser.** A feature that passes pytest but has no visible control scores near zero on functionality.
 - **Units and uncertainty on every number.** "18,950 m³ (±20 %)" beats "18950".
 - **SCS-CN runs on the daily series, then sums.** Applying it to annual totals overestimates 2–3×.
-- **Log the decision when you make it.** `PROGRESS.md` decision log feeds the report and the viva.
-- **Daily ritual (15 min, non-negotiable):** commit and push · write `Docs/progress/DAY_NN.md` · list tomorrow's three tasks.
+- **Log the decision when you make it.** `docs/PROGRESS.md` decision log feeds the report and the viva.
+- **Daily ritual (15 min, non-negotiable):** commit and push · write `docs/progress/DAY_NN.md` · list tomorrow's three tasks.
 
 ## 7. Trackers
 
@@ -173,15 +175,15 @@ See `the working agreement` § Repository map for what every file in the repo is
 
 ## 8. Evidence register
 
-Every mark needs an artifact an evaluator can see (`Docs/PLAN.md` Part 5). Figures → `Docs/figures/`, videos → `Docs/media/`. Tick as produced.
+Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figures → `docs/figures/`, videos → `docs/media/`. Tick as produced.
 
 | # | Artifact | Defends | Phase | ✓ |
 |---|---|---|---|---|
 | 1 | Repo tree + routers with zero business logic (enforced by `tests/test_layering.py`) | Code layering 3 | P0 | ☑ |
 | 2 | `docker-compose.yml` + `Makefile` (clean `make up` → 15 s → migration applied) | DevOps 2 + install 2 | P0 | ☑ |
-| 3 | 12 ADR files | SysDes 1 + Docs 1 | P0 | ◐ 4/12 |
+| 3 | 12 ADR files | SysDes 1 + Docs 1 | P0 | ☑ 12/12 |
 | 4 | CI badge (ruff + mypy + pytest + image build) — green on main | Code 3 | P0 | ☑ |
-| 5 | `openapi.json` + Swagger screenshot | Docs API 2 | P0 | ☐ |
+| 5 | `docs/api/openapi.json` + Swagger screenshots + error catalogue | Docs API 2 | P0 | ☑ |
 | 6 | Sink fill before/after raster figure | Terrain 3 | P2 | ☐ |
 | 7 | Flow-accumulation raster image | Terrain 4 | P2 | ☐ |
 | 8 | Streams overlaid on satellite (visual match) | Terrain 4 | P2 | ☐ |
@@ -210,7 +212,7 @@ Every mark needs an artifact an evaluator can see (`Docs/PLAN.md` Part 5). Figur
 | 31 | API cookbook + error catalogue | Docs API 2 | P7 | ☐ |
 | 32 | Technical report with citations | Docs report 3 | P7 | ☐ |
 | 33 | Clean `git log` + conventional commits + v1.0 tag | Code Git 2 | P7 | ☐ |
-| 34 | `Docs/progress/DAY_NN.md` series | Feeds report | Daily | ☐ |
+| 34 | `docs/progress/DAY_NN.md` series | Feeds report | Daily | ☐ |
 
 Added for the **Phase 2 submission**, which is graded separately (§4):
 

@@ -15,5 +15,5 @@ make check     # ruff + mypy + pytest, exactly what CI runs
 make help      # every target
 ```
 
-See `CONTRIBUTING.md` for conventions, `Docs/adr/` for architecture decisions,
-and `PROGRESS.md` for current state.
+See `CONTRIBUTING.md` for conventions, `docs/adr/` for architecture decisions,
+and `docs/PROGRESS.md` for current state.
