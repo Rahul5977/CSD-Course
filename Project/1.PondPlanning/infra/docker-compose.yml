@@ -1,0 +1,69 @@
+# Development stack.
+#
+# Three services in P0 — the ones the API cannot start without. TiTiler, Martin,
+# MinIO and the Celery worker are added by the phase that first needs them
+# (P1/P2), so that every service in this file is one whose purpose can be
+# explained on demand. See Docs/adr/0004-service-topology.md.
+
+name: pond-planner
+
+services:
+  postgres:
+    # PostGIS 3.4 on Postgres 16. TimescaleDB is added in P3, when the daily
+    # rainfall series arrives and a hypertable actually earns its keep.
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ${POND_POSTGRES_USER:-pond}
+      POSTGRES_PASSWORD: ${POND_POSTGRES_PASSWORD:-pond}
+      POSTGRES_DB: ${POND_POSTGRES_DB:-pond}
+    ports:
+      - "${POND_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # The database name matters: without -d, pg_isready reports on the
+      # default database and the API can start against a half-created one.
+      test: ["CMD-SHELL", "pg_isready -U ${POND_POSTGRES_USER:-pond} -d ${POND_POSTGRES_DB:-pond}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "${POND_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    environment:
+      POND_ENV: docker
+      POND_LOG_FORMAT: json
+      POND_POSTGRES_HOST: postgres
+      POND_POSTGRES_USER: ${POND_POSTGRES_USER:-pond}
+      POND_POSTGRES_PASSWORD: ${POND_POSTGRES_PASSWORD:-pond}
+      POND_POSTGRES_DB: ${POND_POSTGRES_DB:-pond}
+      POND_REDIS_HOST: redis
+    ports:
+      - "${POND_API_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:

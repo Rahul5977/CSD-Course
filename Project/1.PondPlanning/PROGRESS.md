@@ -12,7 +12,7 @@ the assistant reads this at the start of every session and updates it at the end
 - **Current phase:** P0 — Foundations & Contract
 - **Active gate:** G0 — open, nothing started
 - **Marks secured:** 0 / 100 · next 11 are in P0
-- **Next action:** P0 task group 1 — repo tree, `docker-compose.yml`, `Makefile`, Pydantic `Settings`, Alembic init, `.gitignore` (done) and conventional-commit convention
+- **Next action:** P0 chunk 2 — the ~25 contract endpoints as fixture routes, ADRs 0005–0012, Swagger screenshot, CI badge in `README.md`
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `Docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
 ## Phase status
@@ -30,17 +30,35 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☐ |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
 
-Gate checklists: `ROADMAP.md` §2. Evidence register: `ROADMAP.md` §8 (0 of 38 ticked).
+Gate checklists: `ROADMAP.md` §2. Evidence register: `ROADMAP.md` §8 — 2 of 38 ticked (rows 1, 2), row 3 at 4/12 ADRs.
 
 ## What exists today
 
+**Planning**
 - `Docs/Assignment.pdf` — specification and rubric
 - `Docs/PLAN.md` — the 707-line marks-driven execution plan (authoritative)
 - `Plan/Phase{1,2,3}.txt` — phase briefs; Phase 1 (HLD) submitted and done
 - `data/samples/contours_1m.kml` — the provided sample, 6.4 MB (analysed; see `ROADMAP.md` §4)
-- `the working agreement`, `ROADMAP.md`, `PROGRESS.md`, `.gitignore`
-- `README.md` — **empty**, and it is a graded deliverable
-- **No source code, no `docker-compose.yml`, no `Makefile`, no ADRs, no CI.**
+- `the working agreement`, `ROADMAP.md`, `PROGRESS.md`, `CONTRIBUTING.md`, `.gitignore`
+
+**Code — P0 chunk 1, landed and verified 2026-08-18**
+- `app/` — layered tree (`api schemas engines domain providers repositories jobs reports core`).
+  Only `/health`, `/ready`, `/docs`, `/openapi.json` are live; `engines/`, `domain/` and
+  `providers/` are declared but empty.
+- `tests/` — 15 tests passing, including `test_layering.py`, which fails the build on a
+  framework import in the pure core, an outward layer import, or a router over 25 statements
+- `infra/docker-compose.yml` (postgres+postgis · redis · api) + `Dockerfile.api` (multi-stage, non-root)
+- `migrations/` — revision `0001_initial`: postgis extension, `villages`, `jobs`, `audit_log`
+- `pyproject.toml` + `uv.lock` (Python 3.12) · `Makefile` (15 targets) · `.env.example`
+- `.github/workflows/ci.yml` — format · lint · types · tests · image build
+- `Docs/adr/0001–0004` · `Docs/progress/DAY_01.md`
+
+**Verified on a clean slate:** `make down ARGS=-v && make up` → 15 s → migration applied →
+`/health` 200, `/ready` 200 (postgres reachable), `/docs` 200. `make check` → ruff clean,
+mypy clean on 23 files, 15 passed.
+
+**Still missing:** the ~25 contract endpoints and fixtures · ADRs 0005–0012 · `README.md`
+(empty, and a graded deliverable) · everything from P1 onward.
 
 ## Sample contour map — established facts
 
@@ -73,12 +91,19 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 | 2026-08-18 | Parse elevation with an ordered fallback: Z → whitelisted `ExtendedData` name → placemark `<name>`; reject `ID` | The sample carries elevation only in `<name>` and has a numeric `ID` decoy; a whitelist keeps other contour maps working without hard-coding this file's quirk | Reading the first numeric `ExtendedData` field — silently wrong on this exact sample |
 | 2026-08-18 | DEM grid resolution derived from mean contour spacing, floored at the source resolution | Contours are SRTM-30 m derived; interpolating to 1–2 m would manufacture detail the source does not contain | A fixed fine grid — false precision, and slow |
 | 2026-08-18 | Repo trimmed to four working `.md` files + `README.md` | `evidence.md` folded into `ROADMAP.md` §8, daily template inlined into `the working agreement`; every remaining file has one job, listed in the the working agreement repository map | Keeping a separate file per concern — drift between overlapping trackers |
+| 2026-08-18 | `Docs/`, `Plan/`, `data/`, `the working agreement`, `PROGRESS.md` stay **tracked** in Git | An uncommitted `.gitignore` change would have excluded them. The already-tracked files would have survived, but every *new* `Docs/adr/*.md`, `Docs/progress/DAY_NN.md` and `Docs/figures/*` would be dropped silently — that is the graded evidence trail (Docs 10, evidence register §8) in the repo the report links | Keeping the planning docs private — the marks live in showing them |
+| 2026-08-18 | Layering enforced by an executable test (`tests/test_layering.py`), not by convention | The 3 layering marks need evidence an evaluator can see; a rule nobody checks decays. AST parse: no framework import in `domain`/`engines`, no outward layer import, no handler over 25 statements | A written-down convention — drifts the first time someone is in a hurry. ADR 0001 |
+| 2026-08-18 | Python **3.12**, not the 3.14 on the dev machine | numba/pysheds/rasterio wheels lag CPython by 1–2 releases; discovering that mid-P2 costs a day at the worst moment. uv + committed `uv.lock` so a fresh clone on another machine resolves identically (G7) | Newest CPython (guaranteed wheel problem later) · pip + requirements.txt (pins direct deps, lets transitive ones drift) · conda (defensible, but ~3× image size for no gain). ADR 0002 |
+| 2026-08-18 | **Synchronous** SQLAlchemy 2.0 on psycopg3 | The expensive work is raster processing in a Celery worker, not database I/O. Async buys nothing measurable and adds a bug class — one blocking call stalls the event loop, presenting as "sometimes slow" rather than as an error. Also a much smaller viva surface | Async SQLAlchemy + asyncpg — the reflexive choice, wrong for this workload. ADR 0003 |
+| 2026-08-18 | Compose starts at **3 services**, not PLAN.md's 9; each later service arrives in the phase that first calls it | Every library must be defensible live. Seven declared-but-uncalled services read as copied scaffolding and are seven things to defend for zero exercised behaviour. The phase→service table is the record, and goes in the report | Declaring the full topology on day one. ADR 0004 |
+| 2026-08-18 | `audit_log` append-only **in the database** (`DO INSTEAD NOTHING` rules), not by convention | A trail the application can rewrite is not evidence, and G6 grades the audit log. Verified: UPDATE and DELETE affect 0 rows, original row survives | Application-level discipline · role grants (bypassed whenever the app connects as owner) |
+| 2026-08-18 | Alembic autogenerate ignores any *reflected* table this metadata does not declare | The `postgis/postgis` image installs the tiger geocoder and topology and puts `tiger` on the search_path; without the filter every revision opens with ~40 `drop_table` calls against extension-owned tables | Naming the tables to exclude — a list that goes stale the moment an extension is added |
 | 2026-08-18 | SCS-CN applied to the daily series then summed | Applying CN to annual totals overestimates runoff 2–3× | Annual-total CN — a common and visible error |
 
 ## Open questions
 
-1. **Where is the provided sample contour map?** Blocks the Phase 2 deliverable.
-2. **What is the Phase 2 submission deadline?** `Plan/Phase2.txt` says it will not be extended for mid-sems but states no date. The KML route (`ROADMAP.md` §4) is the artifact it grades — the tighter the deadline, the earlier that work moves inside P2.
+1. ~~Where is the provided sample contour map?~~ **resolved** — `data/samples/contours_1m.kml`, analysed in `ROADMAP.md` §4.
+2. ~~What is the Phase 2 submission deadline?~~ **resolved 2026-08-18** — the Phase 2 window has passed and it is not scored as a separate submission. Consequence: it no longer drives sequencing, so P0 → P1 → P2 runs in `Docs/PLAN.md` order. **The KML route stays in scope** — G2 still requires it (`ROADMAP.md` §4), Phase 3 is end-to-end over arbitrary contour maps, and the final report must carry a working API route URL.
 3. **When are the lab hours for the prototype demo?** Posture depends on which gate is green when it lands — see the stop-and-fix table (`ROADMAP.md` §3).
 4. **Which village?** See blocker 2 — and is the sample AOI the demo village, or just a test fixture?
 5. **Given the source is SRTM 30 m, is the ALOS 12.5 m download (PLAN P1) still worth the day?** It genuinely improves the demo village, but the graded Phase 2 route must run off the uploaded KML regardless.
@@ -88,6 +113,12 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-18 (session 6)
+**P0 chunk 1 built and verified.** Layered `app/` tree · uv/ruff/mypy-strict/pytest · `Makefile` · 3-service compose + multi-stage non-root `Dockerfile.api` · Alembic revision 0001 (postgis, `villages`, `jobs`, `audit_log`) · GitHub Actions CI · `CONTRIBUTING.md` · ADRs 0001–0004 · `Docs/progress/DAY_01.md`. Clean-slate `make up` brings the stack up in 15 s and applies the migration; `make check` is green (ruff, mypy on 23 files, 15 tests). Four defects found by running it rather than reading it — image build missing `README.md`, ruff isort misconfiguration, autogenerate trying to drop 40 PostGIS extension tables, and ORM/migration drift on the `jobs` CHECK constraints; all fixed, and autogenerate now produces an empty diff. Six decisions logged above. **Next:** P0 chunk 2 — the ~25 contract endpoints as fixture routes (the parallelism unlock), ADRs 0005–0012, Swagger screenshot.
+
+### 2026-08-18 (session 5)
+Status review, no code written. Confirmed toolchain on the dev machine: Python 3.14.6 · Docker 29.1.3 · Compose v5.0.1 · uv 0.9.5 · remote `github.com/Rahul5977/AI-BasedPondAnalysis`. **Caught and reverted an uncommitted `.gitignore` change** that would have excluded `Docs/`, `Plan/`, `data/`, `the working agreement` and `PROGRESS.md` — see the decision log. **Closed open questions 1 and 2:** the Phase 2 window has passed and is not separately scored, so sequencing follows `Docs/PLAN.md` P0 → P1 → P2 unmodified; the KML route remains a G2 exit criterion. **Next:** P0 chunk 1 — repo tree, `pyproject`, ruff/mypy/pytest config, `Makefile`, `Settings`, CI.
 
 ### 2026-08-18 (session 4)
 Reframed both trackers around **phases and gates rather than calendar days** at the user's direction — dropped date columns, replaced the weekly-checkpoint table with state-triggered stop-and-fix rules, and added a phase dependency column so the ordering constraints are explicit rather than implied by dates. `Docs/PLAN.md` keeps its day allocation untouched; it now reads as relative effort. Defined AOI in place. **Next:** P0 in full.

@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  POND_ENV: ci
+
+jobs:
+  check:
+    name: lint · types · tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      # Three separate steps rather than `make check`, so a red build names the
+      # failing tool in the job summary instead of one opaque "make" failure.
+      - name: Format check
+        run: uv run ruff format --check .
+
+      - name: Lint
+        run: uv run ruff check --output-format=github .
+
+      - name: Type check (strict on app/domain and app/engines)
+        run: uv run mypy
+
+      - name: Tests
+        run: uv run pytest --cov --cov-report=term-missing
+
+  build-image:
+    name: api image builds
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The installation guide's `make up` depends on this image building from a
+      # clean checkout. Catching a broken Dockerfile here is cheaper than
+      # catching it on a different machine the day before submission (G7).
+      - name: Build API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.api
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
