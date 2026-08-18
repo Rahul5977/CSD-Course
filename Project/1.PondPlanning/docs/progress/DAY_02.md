@@ -39,7 +39,7 @@ Verified, not assumed:
 
 ```
 make down ARGS=-v && make up   -> clean bring-up, migration applied
-make check                     -> ruff clean · mypy clean (43 files) · 102 passed
+make check                     -> ruff clean · mypy clean (43 files) · 101 passed
 /openapi.json (from container) -> 35 operations / 33 paths
 /analysis/results/pond-design  -> gross storage 20,906.00 m³ (±20 %), x-fixture-data: true
 /meta/implementation-status    -> engines: [], 17 fixture payloads

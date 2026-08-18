@@ -47,7 +47,7 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
 - `app/domain/` — `Quantity` (value + unit + uncertainty + method) and the error hierarchy
   with stable codes. `mypy --strict` clean, 96 % covered.
 - `app/providers/fixture_data/` — 17 internally consistent payloads, generated not hand-typed
-- `tests/` — **102 passing**: architecture enforcement, whole-contract coverage, fixture
+- `tests/` — **101 passing**: architecture enforcement, whole-contract coverage, fixture
   validity, fixture labelling, domain units
 - `infra/` (postgres+postgis · redis · api) · `migrations/0001_initial` · CI · `Makefile` (16 targets)
 - `docs/adr/0001–0012` · `docs/api/{openapi.json,errors.md}` · `docs/figures/p0-swagger-*.jpg`
@@ -56,7 +56,7 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
   `docs/assignment/`, trackers under `docs/`. Root holds only what convention expects.
 
 **Verified:** clean `make up` → migration applied → 35 operations served · `make check` green
-(ruff, mypy on 43 files, 102 tests, green with and without a database) · `/meta/implementation-status` reports `engines: []`.
+(ruff, mypy on 43 files, 101 tests, green with and without a database) · `/meta/implementation-status` reports `engines: []`.
 
 **Still missing:** every engine (P1 onward) · `README.md` is a stub with the CI badge; the
 graded installation guide is written in P7 · the API cookbook (P7).
