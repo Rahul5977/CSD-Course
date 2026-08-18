@@ -30,7 +30,7 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☐ |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
 
-Gate checklists: `ROADMAP.md` §2. Evidence register: `ROADMAP.md` §8 — 2 of 38 ticked (rows 1, 2), row 3 at 4/12 ADRs.
+Gate checklists: `ROADMAP.md` §2. Evidence register: `ROADMAP.md` §8 — 3 of 38 ticked (rows 1, 2, 4), row 3 at 4/12 ADRs.
 
 ## What exists today
 

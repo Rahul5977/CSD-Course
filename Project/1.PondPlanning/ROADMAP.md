@@ -180,7 +180,7 @@ Every mark needs an artifact an evaluator can see (`Docs/PLAN.md` Part 5). Figur
 | 1 | Repo tree + routers with zero business logic (enforced by `tests/test_layering.py`) | Code layering 3 | P0 | ☑ |
 | 2 | `docker-compose.yml` + `Makefile` (clean `make up` → 15 s → migration applied) | DevOps 2 + install 2 | P0 | ☑ |
 | 3 | 12 ADR files | SysDes 1 + Docs 1 | P0 | ◐ 4/12 |
-| 4 | CI badge (ruff + mypy + pytest) | Code 3 | P0 | ☐ |
+| 4 | CI badge (ruff + mypy + pytest + image build) — green on main | Code 3 | P0 | ☑ |
 | 5 | `openapi.json` + Swagger screenshot | Docs API 2 | P0 | ☐ |
 | 6 | Sink fill before/after raster figure | Terrain 3 | P2 | ☐ |
 | 7 | Flow-accumulation raster image | Terrain 4 | P2 | ☐ |
