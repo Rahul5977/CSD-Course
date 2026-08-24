@@ -41,7 +41,7 @@ conf['backends'] = [b for b in all_b if b['id'] in want]
 json.dump(conf, open(conf_path, 'w'), indent=2)
 print('pool ->', [b['id'] for b in conf['backends']])
 EOF"
-  curl -sS -m 5 -X POST "$LB_URL/lb/reload" > /dev/null
+  curl -sS -m 10 --retry 4 --retry-delay 3 --retry-all-errors -X POST "$LB_URL/lb/reload" > /dev/null
   sleep 3
 }
 
@@ -53,7 +53,7 @@ conf = json.load(open(conf_path))
 conf['algorithm'] = '$1'
 json.dump(conf, open(conf_path, 'w'), indent=2)
 EOF"
-  curl -sS -m 5 -X POST "$LB_URL/lb/reload" > /dev/null
+  curl -sS -m 10 --retry 4 --retry-delay 3 --retry-all-errors -X POST "$LB_URL/lb/reload" > /dev/null
   sleep 2
 }
 
