@@ -1,0 +1,12 @@
+# Phase 11 cold-start QA — 2026-08-24T20:03:30+05:30
+stop_all.sh -> exit 0; start_all.sh -> exit 0; sanity:
+== sanity check Mon Aug 24 20:02:53 IST 2026 ==
+✅ LB             http://10.1.75.53:3269/health  {"status":"ok","backend":"sys2","uptime":5,"connections":0,"state_firehose":true}
+✅ LB stats      http://10.1.75.53:3269/lb/stats
+✅ backend sys2 (via ssh localhost:3000)
+✅ backend sys3 (via ssh localhost:3000)
+✅ backend sys4 (via ssh localhost:3000)
+✅ state service sys1:5269
+
+persistence: room project-demo still holds 3 messages after full stack restart;
+session cookie from before the restart still valid (state service JSONL store).
