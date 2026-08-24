@@ -17,8 +17,8 @@ echo "== sanity check $(date) =="
 check "LB           " "$LB_URL/health"
 check "LB stats     " "$LB_URL/lb/stats"
 for s in 2 3 4; do
-  ssh -o BatchMode=yes -o ConnectTimeout=5 lbsys$s "curl -sS -m 4 http://127.0.0.1:32$((68+s))/health" 2>/dev/null \
-    | grep -q '"status":"ok"' && echo "✅ backend sys$s (via ssh localhost)" || echo "❌ backend sys$s"
+  ssh -o BatchMode=yes -o ConnectTimeout=5 lbsys$s "curl -sS -m 4 http://127.0.0.1:3000/health" 2>/dev/null \
+    | grep -q '"status":"ok"' && echo "✅ backend sys$s (via ssh localhost:3000)" || echo "❌ backend sys$s"
 done
 ssh -o BatchMode=yes -o ConnectTimeout=5 lbsys1 "curl -sS -m 4 http://127.0.0.1:5269/health" 2>/dev/null \
   | grep -q '"status":"ok"' && echo "✅ state service sys1:5269" || echo "❌ state service sys1:5269"

@@ -15,7 +15,8 @@ cd "$(dirname "$0")/.."
 
 # host alias / app port per system (macOS bash 3.2: no associative arrays)
 ssh_host() { case "$1" in sys2) echo lbsys2;; sys3) echo lbsys3;; sys4) echo lbsys4;; esac; }
-app_port() { case "$1" in sys2) echo 3270;;  sys3) echo 3271;;  sys4) echo 3272;;  esac; }
+# D-008: every container's app binds 3000 — the lab NAT maps external 32XX -> container 3000.
+app_port() { echo 3000; }
 REMOTE_DIR="~/assignment5"
 # sys1's address as seen from sys2/3/4 (Docker bridge — verified in Phase 0.3)
 STATE_HOST="${STATE_HOST:-172.17.0.70}"
