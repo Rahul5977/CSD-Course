@@ -92,11 +92,16 @@ deploy_lb() {
     set -e
     cd $REMOTE_DIR
     tmux kill-session -t lb 2>/dev/null || true
+    # the LB catches SIGHUP (config reload), so tmux kill alone won't stop it —
+    # kill our loadbalancer.py explicitly. The ^python3 anchor stops pkill -f
+    # from matching this shell's own cmdline (which quotes the same path).
+    pkill -f '^python3 lb/loadbalancer' 2>/dev/null || true
+    for i in 1 2 3 4 5; do ss -tln | grep -q ':3000 ' || break; sleep 1; done
     tmux new-session -d -s lb \
       'cd $REMOTE_DIR && python3 lb/loadbalancer.py lb/lb.conf.json >> lb.log 2>&1'
   "
   for i in $(seq 1 15); do
-    if ssh lbsys1 "curl -sS -m 2 http://127.0.0.1:3269/lb/health" 2>/dev/null | grep -q '"status":"ok"'; then
+    if ssh lbsys1 "curl -sS -m 2 http://127.0.0.1:3000/lb/health" 2>/dev/null | grep -q '"status":"ok"'; then
       echo "   lb healthy ✔"; return 0
     fi
     sleep 1
