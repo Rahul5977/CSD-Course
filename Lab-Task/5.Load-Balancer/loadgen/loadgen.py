@@ -56,7 +56,9 @@ class VUser:
     def __init__(self, idx, base, run_id):
         self.idx = idx
         self.base = urlparse(base)
-        self.name = f"lg_{run_id}_{idx}"[:24].replace("-", "_")
+        # Stable name across runs: register once ever, login thereafter.
+        # (Registration is scrypt-expensive on the 1-core lab containers.)
+        self.name = f"lg_{idx}"
         self.password = "loadgen-pass-12345"
         self.cookie = None
         self.conn = None
@@ -95,8 +97,10 @@ class VUser:
         return resp.status, resp, data
 
     def setup(self):
-        """Register (or login) once. Not measured."""
+        """Register (or login) once. Not measured. scrypt costs ~100 ms of a
+        1-core backend, so callers MUST stagger setup (see setup phase)."""
         self.connect()
+        self.conn.timeout = 30
         st, _, _ = self.request("POST", "/api/register",
                                 {"username": self.name, "password": self.password})
         if st == 409:
@@ -105,6 +109,7 @@ class VUser:
         if st != 200:
             raise RuntimeError(f"user {self.name} setup failed: HTTP {st}")
         self.request("POST", "/api/rooms", {"id": self.room})
+        self.conn.timeout = 10
 
     def one(self, kind):
         """Execute one request of the mix; returns (status, backend_id)."""
@@ -154,13 +159,22 @@ def main():
     # ── setup phase (not measured) ──────────────────────────────────────────
     users = [VUser(i, args.url, run_id) for i in range(args.concurrency)]
     setup_errors = 0
+    # Stagger setup: at most 8 concurrent registrations/logins, so the scrypt
+    # cost doesn't saturate a 1-core backend and trip its health checks.
+    sem = threading.Semaphore(8)
     def setup_worker(u):
         nonlocal setup_errors
-        try:
-            u.setup()
-        except Exception as e:
-            setup_errors += 1
-            print(f"[loadgen] setup failed for {u.name}: {e}", file=sys.stderr)
+        with sem:
+            for attempt in (1, 2):
+                try:
+                    u.setup()
+                    return
+                except Exception as e:
+                    if attempt == 2:
+                        setup_errors += 1
+                        print(f"[loadgen] setup failed for {u.name}: {e}", file=sys.stderr)
+                    else:
+                        time.sleep(1)
     threads = [threading.Thread(target=setup_worker, args=(u,)) for u in users]
     for t in threads: t.start()
     for t in threads: t.join()

@@ -84,9 +84,15 @@ one_run() {  # $1 config, $2 url, $3 conc, $4 rep
   fi
   echo "== RUN $rid  ($(date +%T)) =="
   sample_sysmetrics "$rid"
-  python3 loadgen/loadgen.py --url "$url" --concurrency "$c" \
+  # a single failed run must not kill the sweep — log it and move on
+  if ! python3 loadgen/loadgen.py --url "$url" --concurrency "$c" \
       --duration "$DUR" --warmup "$WARM" --run-id "$rid" \
-      > "logs/loadgen_${rid}.log" 2>&1 || { echo "   RUN FAILED — see logs/loadgen_${rid}.log"; return 1; }
+      > "logs/loadgen_${rid}.log" 2>&1; then
+    echo "   RUN FAILED — see logs/loadgen_${rid}.log (continuing sweep)"
+    wait || true
+    sleep "$COOL"
+    return 0
+  fi
   wait || true
   local tput=$(python3 -c "import json;print(json.load(open('results/raw/${rid}.json'))['summary']['throughput_rps'])")
   printf "| %s | %s | %s | %s | %s | %s rps |\n" "$rid" "$cfg" "$c" "$rep" "$(date -Iseconds)" "$tput" >> "$MANIFEST"
