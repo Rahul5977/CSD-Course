@@ -1,0 +1,7 @@
+$ bash scripts/ssh_all.sh 'ss -tlnp | grep :3000'
+== lbsys2 ==
+LISTEN 0      511          0.0.0.0:3000      0.0.0.0:*    users:(("node",pid=20141,fd=18))
+== lbsys3 ==
+LISTEN 0      511          0.0.0.0:3000      0.0.0.0:*    users:(("node",pid=18704,fd=18))
+== lbsys4 ==
+LISTEN 0      511          0.0.0.0:3000      0.0.0.0:*    users:(("node",pid=18680,fd=18))

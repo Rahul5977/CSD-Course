@@ -1,0 +1,5 @@
+$ ssh lbsys1 'ss -tlnp | grep -E ":3000|:5269"; pgrep -af loadbalancer'
+LISTEN 0      511          0.0.0.0:5269      0.0.0.0:*    users:(("node",pid=55958,fd=19))  
+LISTEN 0      512          0.0.0.0:3000      0.0.0.0:*    users:(("python3",pid=55984,fd=5))
+55982 bash -c cd ~/assignment5 && python3 lb/loadbalancer.py lb/lb.conf.json >> lb.log 2>&1
+55984 python3 lb/loadbalancer.py lb/lb.conf.json
