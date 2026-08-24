@@ -138055,3 +138055,15 @@ ts,client,method,path,backend,upstream_ms,status,bytes
 1787559229.223,127.0.0.1,GET,/api/rooms,b3,2.0,200,446
 1787559246.240,127.0.0.1,GET,/api/messages?room=vault&since=0,b1,9.9,200,628
 1787559258.297,127.0.0.1,POST,/api/messages,b2,16.0,200,63
+1787561915.481,127.0.0.1,POST,/api/rooms,b3,26.6,200,100
+1787561915.493,127.0.0.1,GET,/api/messages?room=lb-room&since=0,b1,9.3,200,183
+1787561915.505,127.0.0.1,GET,/api/rooms,b2,6.8,200,446
+1787561917.288,127.0.0.1,POST,/api/rooms,b3,3.0,200,106
+1787561917.309,127.0.0.1,GET,/api/messages?room=loadtest&since=0,b1,16.3,200,20531
+1787561917.318,127.0.0.1,GET,/api/rooms,b2,1.7,200,446
+1787561922.672,127.0.0.1,POST,/api/rooms,b3,3.6,200,92
+1787561922.679,127.0.0.1,GET,/api/messages?room=lobby&since=0,b1,2.5,200,494
+1787561922.687,127.0.0.1,GET,/api/rooms,b2,2.2,200,446
+1787561926.153,127.0.0.1,POST,/api/rooms,b3,3.4,200,133
+1787561926.159,127.0.0.1,GET,/api/messages?room=vault&since=0,b1,3.2,200,935
+1787561926.165,127.0.0.1,GET,/api/rooms,b2,2.9,200,446
