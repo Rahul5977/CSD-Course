@@ -34,14 +34,25 @@ deploy_backend() {  # $1 = sys2|sys3|sys4
   echo "== deploy backend -> $sys (${host}, port ${port}) =="
   ssh "$host" "mkdir -p $REMOTE_DIR"
   rsync_app "$host"
+  # sys2-4 have no tmux and no system node: use ~/node/bin (install_node.sh)
+  # and nohup+pidfile supervision. Kill ONLY our own recorded pid.
   ssh "$host" "
     set -e
     cd $REMOTE_DIR
+    export PATH=\"\$HOME/node/bin:\$PATH\"
+    command -v node >/dev/null || { echo 'no node — run scripts/install_node.sh first'; exit 1; }
     printf 'PORT=%s\nBACKEND_ID=%s\nSTATE_URL=http://%s:%s\nLOG_LEVEL=info\n' \
         '$port' '$sys' '$STATE_HOST' '$STATE_PORT' > .env
-    tmux kill-session -t backend 2>/dev/null || true
-    tmux new-session -d -s backend \
-      \"export \$(cat .env | xargs); node app/server.js >> backend.log 2>&1\"
+    if command -v tmux >/dev/null; then
+      tmux kill-session -t backend 2>/dev/null || true
+      tmux new-session -d -s backend \
+        \"export PATH=\$HOME/node/bin:\\\$PATH; export \\\$(cat .env | xargs); node app/server.js >> backend.log 2>&1\"
+    else
+      [ -f backend.pid ] && kill \$(cat backend.pid) 2>/dev/null || true
+      sleep 0.5
+      nohup env \$(cat .env | xargs) node app/server.js >> backend.log 2>&1 < /dev/null &
+      echo \$! > backend.pid
+    fi
   "
   # wait for /health (checked from inside the box — external NAT may be closed)
   for i in $(seq 1 20); do

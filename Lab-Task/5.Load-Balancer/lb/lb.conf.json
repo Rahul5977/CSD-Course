@@ -1,11 +1,14 @@
 {
   "listen_host": "0.0.0.0",
-  "listen_port": 3269,
+  "listen_port": 3000,
   "algorithm": "round_robin",
   "backends": [
-    { "id": "sys2", "host": "REPLACED_BY_DEPLOY", "port": 3270, "weight": 1 },
-    { "id": "sys3", "host": "REPLACED_BY_DEPLOY", "port": 3271, "weight": 1 },
-    { "id": "sys4", "host": "REPLACED_BY_DEPLOY", "port": 3272, "weight": 1 }
+    {
+      "id": "sys2",
+      "host": "172.17.0.71",
+      "port": 3000,
+      "weight": 1
+    }
   ],
   "health_interval_s": 3,
   "health_timeout_s": 2,

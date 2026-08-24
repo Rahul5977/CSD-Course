@@ -1,0 +1,4 @@
+# Integration proof (1-backend stage) — Mon Aug 24 14:16:45 IST 2026
+Public URL http://10.1.75.53:3269 (previous assignment's URL) now serves the LB on sys1:3000.
+Old ChatFat process stopped at cutover (user-approved). Full API flow through the public URL:
+register -> 200 (X-Backend-Id: sys2); /api/me OK; room create OK; send seq=1; fetch returns message via sys2.
