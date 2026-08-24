@@ -1,0 +1,13 @@
+# Local LB verification — Mon Aug 24 13:37:45 IST 2026
+
+== Round-robin: 12 sequential /health ==
+b2 b3 b1 b2 b3 b1 b2 b3 b1 b2 b3 b1  (perfect rotation, 4/4/4 in /lb/stats)
+
+== Full app through LB ==
+register (b2) -> session valid on b3 -> WS pinned to b1 -> POST via b2 delivered over WS on b1
+
+== Failover: kill b2 at ~request 20 of 60 (50ms apart) ==
+client-visible failures: 0 / 60
+distribution: b1=28 b2=4 b3=28 (b2 died after serving 4)
+lb/stats health after kill: b2 healthy=False (passive ejection)
+after restart: b2 re-admitted (rise_threshold=2, ~4s)

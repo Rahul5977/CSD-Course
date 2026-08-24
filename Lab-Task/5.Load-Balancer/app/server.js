@@ -111,13 +111,19 @@ async function sessionFor(req) {
   return rec;
 }
 
-// Login rate limiting: sliding window per IP.
-const loginAttempts = new Map(); // ip -> [timestamps]
-function loginAllowed(ip) {
+// Login rate limiting: sliding window per client IP, counting FAILED
+// sign-ins only (Assignment-4 semantics: AUTH_MAX_ATTEMPTS = failed
+// sign-ins per minute per IP). Successful logins never throttle.
+const loginAttempts = new Map(); // ip -> [timestamps of failures]
+function loginBlocked(ip) {
   const now = Date.now();
   const arr = (loginAttempts.get(ip) || []).filter(t => now - t < 60000);
-  arr.push(now); loginAttempts.set(ip, arr);
-  return arr.length <= LOGIN_MAX_PER_MIN;
+  loginAttempts.set(ip, arr);
+  return arr.length >= LOGIN_MAX_PER_MIN;
+}
+function loginFailed(ip) {
+  if (!loginAttempts.has(ip)) loginAttempts.set(ip, []);
+  loginAttempts.get(ip).push(Date.now());
 }
 setInterval(() => { for (const [ip, arr] of loginAttempts) if (arr.every(t => Date.now() - t > 60000)) loginAttempts.delete(ip); }, 60000).unref();
 
@@ -189,7 +195,8 @@ const server = http.createServer(async (req, res) => {
   res.setHeader('X-Backend-Id', BACKEND_ID);
   res.on('finish', () => { metrics.in_flight--; recordLatency(Date.now() - t0); if (res.statusCode >= 500) metrics.errors_total++; });
   const u = new URL(req.url, 'http://x');
-  const ip = req.socket.remoteAddress || '?';
+  // Behind the LB every socket has the LB's address; trust its X-Real-IP.
+  const ip = req.headers['x-real-ip'] || req.socket.remoteAddress || '?';
   try {
     // ---- infra endpoints -------------------------------------------------
     if (u.pathname === '/health') {
@@ -217,10 +224,13 @@ const server = http.createServer(async (req, res) => {
       return createSession(res, username);
     }
     if (u.pathname === '/api/login' && req.method === 'POST') {
-      if (!loginAllowed(ip)) return json(res, 429, { error: 'Too many attempts. Wait a minute.' });
+      if (loginBlocked(ip)) return json(res, 429, { error: 'Too many attempts. Wait a minute.' });
       const { username, password } = await readBody(req);
       const user = await state('GET', '/kv/users/' + encodeURIComponent(username || ''));
-      if (!user || !(await verifyPassword(password || '', user.hash))) return json(res, 401, { error: 'Wrong username or password.' });
+      if (!user || !(await verifyPassword(password || '', user.hash))) {
+        loginFailed(ip);
+        return json(res, 401, { error: 'Wrong username or password.' });
+      }
       return createSession(res, username);
     }
     if (u.pathname === '/api/logout' && req.method === 'POST') {

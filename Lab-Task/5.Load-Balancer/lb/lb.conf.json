@@ -1,0 +1,17 @@
+{
+  "listen_host": "0.0.0.0",
+  "listen_port": 3269,
+  "algorithm": "round_robin",
+  "backends": [
+    { "id": "sys2", "host": "REPLACED_BY_DEPLOY", "port": 3270, "weight": 1 },
+    { "id": "sys3", "host": "REPLACED_BY_DEPLOY", "port": 3271, "weight": 1 },
+    { "id": "sys4", "host": "REPLACED_BY_DEPLOY", "port": 3272, "weight": 1 }
+  ],
+  "health_interval_s": 3,
+  "health_timeout_s": 2,
+  "fail_threshold": 2,
+  "rise_threshold": 2,
+  "connect_timeout_s": 3,
+  "upstream_timeout_s": 30,
+  "access_log": "logs/lb_access.csv"
+}

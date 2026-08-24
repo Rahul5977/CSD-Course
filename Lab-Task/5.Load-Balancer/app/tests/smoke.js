@@ -21,7 +21,7 @@ const { WebSocket } = require(path.join(__dirname, '..', 'vendor', 'ws'));
 
 const APP = path.join(__dirname, '..');
 const DATA = fs.mkdtempSync(path.join(os.tmpdir(), 'chat-smoke-'));
-const SPORT = 15269, B1 = 18001, B2 = 18003;
+const SPORT = 15290, B1 = 18091, B2 = 18093;   // own ports — never clash with a dev cluster
 const procs = [];
 let failures = 0;
 

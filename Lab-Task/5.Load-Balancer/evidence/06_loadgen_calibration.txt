@@ -1,0 +1,9 @@
+# Load generator calibration — Mon Aug 24 13:40:49 IST 2026
+Target: trivial local echo server (loadgen/echo_server.py, ThreadingHTTPServer)
+Command: loadgen.py --url http://127.0.0.1:19000 --concurrency 100 --duration 20 --warmup 5
+
+Result: 15952.33 req/s, 0.0% errors, p95 = 14.97 ms  (results/raw/calibration_echo.json)
+
+Conclusion: the generator sustains ~16k req/s from this Mac — at least 10x any
+throughput measured against the lab systems, so the generator is not the
+bottleneck in the reported experiments.
