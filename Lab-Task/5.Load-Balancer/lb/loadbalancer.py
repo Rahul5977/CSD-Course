@@ -287,6 +287,10 @@ def pump(src, dst):
                 s.shutdown(socket.SHUT_RDWR)
             except OSError:
                 pass
+            try:
+                s.close()          # shutdown alone leaks the descriptor
+            except OSError:
+                pass
 
 
 def build_upstream_head(first, headers, hmap, client_ip, is_ws):
@@ -430,9 +434,12 @@ def handle_client(client, client_addr):
                              backend.id, ms, status, nbytes)
 
                 if keep_up:                       # return socket to the pool
-                    with backend.lock:
-                        upstream.settimeout(LB_STATE.cfg["upstream_timeout_s"])
-                        backend.pool.append(upstream)
+                    with backend.lock:            # cap idle sockets: an uncapped
+                        if len(backend.pool) < 32:  # pool exhausts ulimit -n under
+                            upstream.settimeout(LB_STATE.cfg["upstream_timeout_s"])
+                            backend.pool.append(upstream)   # high-concurrency bursts
+                        else:
+                            upstream.close()
                 else:
                     upstream.close()
                 if r_clen is None:
@@ -567,7 +574,14 @@ def main():
     print(f"[lb] listening on {LB_STATE.cfg['listen_host']}:"
           f"{LB_STATE.cfg['listen_port']} — dashboard at /lb/")
     while True:
-        client, addr = srv.accept()
+        # accept must survive transient errors (EMFILE under FD pressure once
+        # took the whole LB down) — refuse one connection, not the service.
+        try:
+            client, addr = srv.accept()
+        except OSError as e:
+            print(f"[lb] accept error (surviving): {e}")
+            time.sleep(0.2)
+            continue
         client.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
         threading.Thread(target=handle_client, args=(client, addr),
                          daemon=True).start()

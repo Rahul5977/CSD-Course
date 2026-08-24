@@ -50,6 +50,7 @@ deploy_backend() {  # $1 = sys2|sys3|sys4
     else
       [ -f backend.pid ] && kill \$(cat backend.pid) 2>/dev/null || true
       sleep 0.5
+      ulimit -n 65536 2>/dev/null || true
       nohup env \$(cat .env | xargs) node app/server.js >> backend.log 2>&1 < /dev/null &
       echo \$! > backend.pid
     fi
@@ -73,7 +74,7 @@ deploy_state() {
     cd $REMOTE_DIR
     tmux kill-session -t state 2>/dev/null || true
     tmux new-session -d -s state \
-      'PORT=$STATE_PORT DATA_DIR=$REMOTE_DIR/data node app/state_service.js >> state.log 2>&1'
+      'ulimit -n 65536; PORT=$STATE_PORT DATA_DIR=$REMOTE_DIR/data node app/state_service.js >> state.log 2>&1'
   "
   for i in $(seq 1 20); do
     if ssh lbsys1 "curl -sS -m 2 http://127.0.0.1:$STATE_PORT/health" 2>/dev/null | grep -q '"status":"ok"'; then
@@ -98,7 +99,7 @@ deploy_lb() {
     pkill -f '^python3 lb/loadbalancer' 2>/dev/null || true
     for i in 1 2 3 4 5; do ss -tln | grep -q ':3000 ' || break; sleep 1; done
     tmux new-session -d -s lb \
-      'cd $REMOTE_DIR && python3 lb/loadbalancer.py lb/lb.conf.json >> lb.log 2>&1'
+      'cd $REMOTE_DIR && ulimit -n 65536 && python3 lb/loadbalancer.py lb/lb.conf.json >> lb.log 2>&1'
   "
   for i in $(seq 1 15); do
     if ssh lbsys1 "curl -sS -m 2 http://127.0.0.1:3000/lb/health" 2>/dev/null | grep -q '"status":"ok"'; then
