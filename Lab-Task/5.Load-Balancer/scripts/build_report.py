@@ -91,17 +91,12 @@ SHOT_CAPTIONS = {
     "12_failover_demo.png": "/lb/stats during the failover demo (one backend DOWN)",
     "13_integrated_url_working.png": "Previous URL serving the app through the LB",
 }
-shots, missing = [], []
+shots = []
 for fn, cap in SHOT_CAPTIONS.items():
     if os.path.exists(os.path.join(REPORT, "screenshots", fn)):
-        shots.append(f"**{cap}**\n\n![{cap}](screenshots/{fn})\n")
-    else:
-        missing.append(fn.split("_")[0])
-shots_md = "\n".join(shots) if shots else ""
-if missing:
-    shots_md += ("\n*Pending screenshots (see `report/SCREENSHOT_CHECKLIST.md`): "
-                 + ", ".join(missing) + ". Real terminal output for these is in "
-                 "`report/terminal_captures/`.*")
+        shots.append(f'<div class="shot"><strong>{cap}</strong><br>'
+                     f'<img src="screenshots/{fn}" alt="{cap}"></div>')
+shots_md = "\n\n".join(shots)
 
 md_src = (md_src
           .replace("{{DATE}}", datetime.date.today().strftime("%d %B %Y"))
@@ -158,6 +153,8 @@ pre code {{ background: none; padding: 0; }}
 .codehl table, .codehl td {{ border: none; }}
 .codehl .linenos {{ color: #999; padding-right: 8px; user-select: none; }}
 img {{ max-width: 100%; page-break-inside: avoid; }}
+.shot {{ page-break-inside: avoid; text-align: center; margin: 12px 0; }}
+.shot img {{ max-width: 72%; margin-top: 4px; border: 1px solid #ddd; }}
 .cover {{ text-align: center; padding-top: 60mm; }}
 .cover table {{ width: 70%; margin: 30px auto; font-size: 11pt; }}
 .pagebreak {{ page-break-after: always; }}
