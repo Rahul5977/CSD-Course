@@ -135,6 +135,10 @@ wss.on('connection', ws => {
   ws.on('error', () => subscribers.delete(ws));
 });
 
+// Long keep-alive: the default 5 s races with the backends' pooled fetch
+// connections ("other side closed" mid-request under load).
+server.keepAliveTimeout = 65000;
+server.headersTimeout = 70000;
 server.listen(PORT, HOST, () => console.log(`[state] listening on ${HOST}:${PORT}, data in ${DATA_DIR}`));
 
 process.on('SIGTERM', shutdown); process.on('SIGINT', shutdown);

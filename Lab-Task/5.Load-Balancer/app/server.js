@@ -62,16 +62,33 @@ function pct(arr, p) {
 }
 
 // ── State-service client ────────────────────────────────────────────────────
+// One silent retry for idempotent verbs: a pooled keep-alive connection the
+// state service just closed surfaces as "fetch failed / other side closed".
+// POST /messages is NOT retried (an append must never be duplicated).
 async function state(method, pathName, body) {
-  const res = await fetch(STATE_URL + pathName, {
-    method,
-    headers: body ? { 'Content-Type': 'application/json' } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`state ${method} ${pathName} -> ${res.status}`);
-  return res.json();
+  const attempt = async () => {
+    const res = await fetch(STATE_URL + pathName, {
+      method,
+      headers: body ? { 'Content-Type': 'application/json' } : {},
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error(`state ${method} ${pathName} -> ${res.status}`);
+    return res.json();
+  };
+  try {
+    return await attempt();
+  } catch (e) {
+    if (method === 'POST') throw e;
+    return attempt();
+  }
 }
+
+// Safety net: a stray rejection must never take the whole backend down.
+process.on('unhandledRejection', err => {
+  metrics.errors_total++;
+  log('unhandledRejection (survived):', err && err.message);
+});
 
 // ── Auth: scrypt hashing (restores Assignment 4's original design) ──────────
 function hashPassword(password) {
@@ -221,7 +238,7 @@ const server = http.createServer(async (req, res) => {
       if (typeof password !== 'string' || password.length < 8) return json(res, 400, { error: 'Password: at least 8 characters.' });
       if (await state('GET', '/kv/users/' + encodeURIComponent(username))) return json(res, 409, { error: 'That username is taken.' });
       await state('PUT', '/kv/users/' + encodeURIComponent(username), { username, hash: await hashPassword(password), created: Date.now() });
-      return createSession(res, username);
+      return await createSession(res, username);   // await, or a rejection escapes the catch
     }
     if (u.pathname === '/api/login' && req.method === 'POST') {
       if (loginBlocked(ip)) return json(res, 429, { error: 'Too many attempts. Wait a minute.' });
@@ -231,7 +248,7 @@ const server = http.createServer(async (req, res) => {
         loginFailed(ip);
         return json(res, 401, { error: 'Wrong username or password.' });
       }
-      return createSession(res, username);
+      return await createSession(res, username);
     }
     if (u.pathname === '/api/logout' && req.method === 'POST') {
       const sess = await sessionFor(req);

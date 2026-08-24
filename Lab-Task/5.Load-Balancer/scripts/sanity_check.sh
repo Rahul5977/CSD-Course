@@ -15,7 +15,8 @@ check() {
 }
 echo "== sanity check $(date) =="
 check "LB           " "$LB_URL/health"
-check "LB stats     " "$LB_URL/lb/stats"
+curl -sS -m 5 "$LB_URL/lb/stats" 2>&1 | grep -q '"algorithm"' \
+  && echo "✅ LB stats      $LB_URL/lb/stats" || echo "❌ LB stats      $LB_URL/lb/stats"
 for s in 2 3 4; do
   ssh -o BatchMode=yes -o ConnectTimeout=5 lbsys$s "curl -sS -m 4 http://127.0.0.1:3000/health" 2>/dev/null \
     | grep -q '"status":"ok"' && echo "✅ backend sys$s (via ssh localhost:3000)" || echo "❌ backend sys$s"
