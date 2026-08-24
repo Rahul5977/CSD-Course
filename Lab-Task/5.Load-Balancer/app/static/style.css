@@ -14,6 +14,7 @@
   }
 }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }   /* beat ID-selector display rules */
 html, body { height: 100%; margin: 0; }
 body {
   font: 15px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
