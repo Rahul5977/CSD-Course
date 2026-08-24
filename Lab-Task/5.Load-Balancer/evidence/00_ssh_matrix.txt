@@ -1,0 +1,22 @@
+# SSH reachability matrix — 2026-08-24 (Session 1, from Mac)
+
+TCP reachability (nc -z 10.1.75.53 <port>):
+  2269 (sys1)  OPEN
+  2270 (sys2)  OPEN
+  2271 (sys3)  OPEN
+  2272 (sys4)  OPEN
+
+SSH auth (BatchMode=yes, publickey only):
+  lbsys1 (2269)  OK      -> "stu78_sys1"
+  lbsys2 (2270)  DENIED  -> Permission denied (publickey,password)
+  lbsys3 (2271)  DENIED  -> Permission denied (publickey,password)
+  lbsys4 (2272)  DENIED  -> Permission denied (publickey,password)
+
+Hop attempt sys1 -> sys2/3/4: DENIED (sys1 has authorized_keys only, no private key).
+
+~/.ssh/config entries lbsys1..lbsys4 written with ControlMaster auto, ControlPersist 10m.
+
+PENDING (needs user to run once, with the lab password):
+  ssh-copy-id -p 2270 student@10.1.75.53
+  ssh-copy-id -p 2271 student@10.1.75.53
+  ssh-copy-id -p 2272 student@10.1.75.53

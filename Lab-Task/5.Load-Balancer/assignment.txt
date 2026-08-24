@@ -1,0 +1,44 @@
+Make a Load Balancer on your Sys1.
+Deploy back-end on Sys2, Sys3 and Sys4, Use the messaging app back-end developed in the previous assignment as the back-end for this assignment.
+Make a Load Generator on your local system sending load to your Load Balancer.
+Measure metrics with Load Balancer using only Sys2.
+Measure metrics with Load Balancer using all three back-ends.
+Compare the results and add a comparison table in your report.
+This is an individual assignment.
+PPT already uploaded in an earlier post
+
+Integration with Previous Assignment
+
+After completing this assignment, connect your messaging application's link/back-end from the previous assignment to this new load-balanced back-end. The messaging application will then be accessed through the load balancer.
+
+This integration is required for the evaluation/remaining marking of the previous assignment. Since the previous messaging application was a group assignment, any one group member must complete it and make sure the previous URL is working.
+
+Report Submission
+Student Name
+Roll Number
+Assigned Systems (IP/Hostname + Port)
+Load Balancer Code
+Comparison Table
+Relevant Screenshots
+Submission: Submit a single PDF report in Google Classroom before the deadline.
+
+
+
+// My Systems
+stu78_sys1 2269 ssh -p 2269 student@10.1.75.53 3269, 4269, 5269, 6269, 7269
+stu78_sys2 2270 ssh -p 2270 student@10.1.75.53 3270, 4270, 5270, 6270, 7270
+stu78_sys3 2271 ssh -p 2271 student@10.1.75.53 3271, 4271, 5271, 6271, 7271
+stu78_sys4 2272 ssh -p 2272 student@10.1.75.53 3272, 4272, 5272, 6272, 7272
+
+Hey claude, please read the 5th assignment, make a roadmap of it, and make a phase wise plan for it. First
+  i have to make a simple chat application from scratch, keep the UI simple...add auth and secure login
+  mssg encryption ..see 4th folder ..groupChat enryption...make it as it is...but more cleaner UI is needed
+and fix any bugs if any..after this is done...then read
+  this'/Users/rahulraj/Desktop/7thSemester/CSD-Course/Lab-Task/5.Load-Balancer/assignment.txt' and i have to
+  implement this task..Make a roadmap file and a progress file so that the claude knows where to start
+  after every prompt. After planing start from phase 0 and complete till last phase, also make git
+  repository of this 5.Load-balancer folder ...loop it through all phases ...i have been given some system
+  to work on...if you can access those please do it, loop the complete work make the checkpoints ...and
+  deliver everything which is required in this assignment to get full marks out of it. Simpler UI, clean
+  Chat interface, load balancer execution perfectly. and final report should contain all necessary
+  information to get full points out of it. make a loop
