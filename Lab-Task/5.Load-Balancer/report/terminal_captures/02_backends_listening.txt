@@ -1,0 +1,13 @@
+$ bash scripts/ssh_all.sh 'ss -tlnp | grep :3000'
+===== lbsys1 =====
+[lbsys1] LISTEN 0      512          0.0.0.0:3000      0.0.0.0:*    users:(("python3",pid=70804,fd=4))
+[lbsys1] exit: 0
+===== lbsys2 =====
+[lbsys2] LISTEN 0      511          0.0.0.0:3000      0.0.0.0:*    users:(("node",pid=83320,fd=18))
+[lbsys2] exit: 0
+===== lbsys3 =====
+[lbsys3] LISTEN 0      511          0.0.0.0:3000      0.0.0.0:*    users:(("node",pid=82986,fd=18))
+[lbsys3] exit: 0
+===== lbsys4 =====
+[lbsys4] LISTEN 0      511          0.0.0.0:3000      0.0.0.0:*    users:(("node",pid=82982,fd=18))
+[lbsys4] exit: 0

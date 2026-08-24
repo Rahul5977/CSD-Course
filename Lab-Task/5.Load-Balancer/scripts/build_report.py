@@ -75,6 +75,34 @@ analysis = open(analysis_path).read() if os.path.exists(analysis_path) else "*(a
 failover_path = os.path.join(REPORT, "failover.md")
 failover = open(failover_path).read() if os.path.exists(failover_path) else "*(failover run pending)*"
 
+# ── {{SCREENSHOTS}}: embed the checklist shots that exist, list the rest ────
+SHOT_CAPTIONS = {
+    "01_ssh_all_systems.png": "All four assigned systems answering over SSH",
+    "02_backends_running_ps.png": "Backend listeners on sys2/sys3/sys4 (port 3000)",
+    "03_lb_running.png": "Load balancer running on sys1",
+    "04_lb_stats_dashboard.png": "Live LB dashboard — three healthy backends",
+    "05_chat_ui_login.png": "Messaging app login screen (served through the LB)",
+    "06_chat_ui_conversation.png": "Two users exchanging encrypted messages",
+    "07_ciphertext_in_store.png": "The on-disk store holds ciphertext only",
+    "08_backend_id_badge.png": "X-Backend-Id badge — which instance served you",
+    "09_loadgen_run_1backend.png": "Load generator summary — Config B (LB×1)",
+    "10_loadgen_run_3backends.png": "Load generator summary — Config C (LB×3)",
+    "11_charts.png": "Throughput vs concurrency",
+    "12_failover_demo.png": "/lb/stats during the failover demo (one backend DOWN)",
+    "13_integrated_url_working.png": "Previous URL serving the app through the LB",
+}
+shots, missing = [], []
+for fn, cap in SHOT_CAPTIONS.items():
+    if os.path.exists(os.path.join(REPORT, "screenshots", fn)):
+        shots.append(f"**{cap}**\n\n![{cap}](screenshots/{fn})\n")
+    else:
+        missing.append(fn.split("_")[0])
+shots_md = "\n".join(shots) if shots else ""
+if missing:
+    shots_md += ("\n*Pending screenshots (see `report/SCREENSHOT_CHECKLIST.md`): "
+                 + ", ".join(missing) + ". Real terminal output for these is in "
+                 "`report/terminal_captures/`.*")
+
 md_src = (md_src
           .replace("{{DATE}}", datetime.date.today().strftime("%d %B %Y"))
           .replace("{{LB_CODE}}", "\x00LBCODE\x00")
@@ -84,10 +112,16 @@ md_src = (md_src
                    "\n\n![throughput](../results/charts/throughput_vs_concurrency.png)\n" +
                    "\n![cdf](../results/charts/latency_cdf_c100.png)\n")
           .replace("{{ANALYSIS}}", analysis)
-          .replace("{{FAILOVER}}", failover))
+          .replace("{{FAILOVER}}", failover)
+          .replace("{{SCREENSHOTS}}", shots_md))
 
 body = markdown.markdown(md_src, extensions=["tables", "fenced_code"])
 body = body.replace("\x00LBCODE\x00", lb_html)
+
+# the 15-column comparison table needs a smaller face to fit portrait width
+body = re.sub(
+    r'(Comparison table — LB with one backend[^<]*</h2>\s*(?:<p>.*?</p>\s*)?)<table>',
+    r'\1<table class="cmp">', body, count=1, flags=re.S)
 
 # inline images as data URIs so the HTML is self-contained
 def inline_img(m):
@@ -112,6 +146,8 @@ h3 {{ font-size: 11.5pt; }}
 table {{ border-collapse: collapse; width: 100%; font-size: 8.5pt; margin: 8px 0;
         page-break-inside: avoid; }}
 td, th {{ border: 1px solid #ccc; padding: 3px 6px; text-align: left; }}
+table.cmp {{ font-size: 6.6pt; }}
+table.cmp td, table.cmp th {{ padding: 2px 3px; }}
 th {{ background: #eef1fe; }}
 code {{ background: #f4f4f6; padding: 1px 4px; border-radius: 3px; font-size: 8.5pt; }}
 pre {{ background: #f7f7f9; border: 1px solid #e2e2e8; border-radius: 6px; padding: 10px;
