@@ -1,0 +1,26 @@
+# Ciphertext-only storage proof — generated Mon Aug 24 13:33:08 IST 2026
+# Store file: /var/folders/h2/kcd3pbxs39v9b2xsshy5f1380000gn/T/chat-smoke-mos1Pd/messages.jsonl
+# The 'vault' room is locked; the secret sent was 'the launch code is 0000'.
+
+== grep for plaintext in the store (expect NO matches) ==
+0
+0 matches — plaintext absent ✓
+
+== the stored encrypted entry (envelope only) ==
+{
+    "seq": 2,
+    "room": "vault",
+    "id": "54f79d60-6a22-4b59-adb8-1447f452ade5",
+    "from": "alice",
+    "ts": 1787558575879,
+    "via": "test-b1",
+    "kind": "enc",
+    "env": {
+        "alg": "A256GCM",
+        "kid": 1,
+        "n": "K7X8cxzSjqi4/tBXJGHydQ==",
+        "iv": "54LSg1XaRzHDZObI",
+        "ct": "YrFzM516+QVIKvFgleK2GfT1Qie4QRIdCh8FArsiUNJgTPhgyozvXINNqHVGJpqx3uc=",
+        "aadv": 1
+    }
+}

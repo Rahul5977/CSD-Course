@@ -1,0 +1,8 @@
+# Cross-instance delivery proof — Mon Aug 24 13:33:26 IST 2026
+# Two backend instances (test-b1 :18001, test-b2 :18003) share one state service.
+# A WebSocket client connected to b1 received a message POSTed to b2:
+
+— cross-instance delivery (WS on b1, POST on b2) —
+  ✓ message POSTed to b2 arrived over WS on b1
+  ✓ delivery tagged with serving backend
+— health/metrics —
