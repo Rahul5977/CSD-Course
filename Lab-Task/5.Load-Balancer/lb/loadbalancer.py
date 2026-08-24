@@ -205,14 +205,27 @@ def health_loop():
                 b.consec_fail += 1
                 b.consec_ok = 0
                 if b.healthy and b.consec_fail >= cfg["fail_threshold"]:
-                    b.healthy = False
-                    print(f"[lb] backend {b.id} EJECTED (health check failed)")
+                    # Fail-open: never eject the LAST healthy backend. A slow-
+                    # but-alive upstream serving with high latency beats a pool
+                    # with nothing in it (503 for every client).
+                    others = [x for x in LB_STATE.backends
+                              if x is not b and x.healthy]
+                    if others:
+                        b.healthy = False
+                        print(f"[lb] backend {b.id} EJECTED (health check failed)")
+                    else:
+                        print(f"[lb] backend {b.id} failing health checks but is "
+                              f"the last one — keeping it (fail-open)")
         time.sleep(cfg["health_interval_s"])
 
 
 def eject_now(b):
-    """Passive check: a live proxy attempt failed — eject immediately."""
+    """Passive check: a live proxy attempt failed — eject immediately,
+    unless this is the last healthy backend (fail-open, as above)."""
     if b.healthy:
+        others = [x for x in LB_STATE.backends if x is not b and x.healthy]
+        if not others:
+            return
         b.healthy = False
         b.consec_fail = LB_STATE.cfg["fail_threshold"]
         b.consec_ok = 0

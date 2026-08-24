@@ -41,7 +41,9 @@ deploy_backend() {  # $1 = sys2|sys3|sys4
     cd $REMOTE_DIR
     export PATH=\"\$HOME/node/bin:\$PATH\"
     command -v node >/dev/null || { echo 'no node — run scripts/install_node.sh first'; exit 1; }
-    printf 'PORT=%s\nBACKEND_ID=%s\nSTATE_URL=http://%s:%s\nLOG_LEVEL=info\n' \
+    # UV_THREADPOOL_SIZE=2: on a 1-core container, 4 concurrent scrypt threads
+    # starve the event loop and /health stalls for seconds under load (D-009).
+    printf 'PORT=%s\nBACKEND_ID=%s\nSTATE_URL=http://%s:%s\nLOG_LEVEL=info\nUV_THREADPOOL_SIZE=2\n' \
         '$port' '$sys' '$STATE_HOST' '$STATE_PORT' > .env
     if command -v tmux >/dev/null; then
       tmux kill-session -t backend 2>/dev/null || true

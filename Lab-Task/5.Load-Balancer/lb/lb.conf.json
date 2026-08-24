@@ -11,7 +11,7 @@
     }
   ],
   "health_interval_s": 5,
-  "health_timeout_s": 4,
+  "health_timeout_s": 8,
   "fail_threshold": 3,
   "rise_threshold": 2,
   "connect_timeout_s": 3,
