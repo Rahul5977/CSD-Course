@@ -24,7 +24,7 @@ Five rows in the decision log + ADR 0017 (XGBoost/SHAP deferred by the plan's ow
 OSM tanks are not a training set).
 
 ## Screenshots
-`docs/figures/p4-land-suitability.jpg`, `p4-ndwi-opencv.png`
+`p4-ndwi-opencv.png`; the UI screenshot is deferred to G5 — Chrome throttled the automation window's WebGL frames tonight (frames only on interaction), so the land panel could not be captured cleanly.
 
 ## Tomorrow's three tasks
 1. P5 — FR8: the six PDF overlays toggleable together with a stats panel; loading/empty/error/stale

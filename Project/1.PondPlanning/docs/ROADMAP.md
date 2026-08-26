@@ -201,7 +201,7 @@ Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figur
 | 18 | AHP matrix + CR value | Code patterns 4 | P4 | ☑ default Saaty matrix + CR 0.011 in every suitability response (`ahp_matrix` warning); `app/engines/suitability/ahp.py` |
 | 19 | NDWI water-mask before/after OpenCV cleanup | FR3 4 | P4 | ☑ `docs/figures/p4-ndwi-opencv.png` |
 | 20 | ML AUC under spatial block CV | Validation 2 | P4 | ☐ not produced by design — ML deferred, ADR 0017 |
-| 21 | SHAP explanation panel screenshot | FR3 | P4 | ☑ per-criterion contribution bars in the UI (`p4-land-suitability.jpg`) — SHAP deferred with the ML path |
+| 21 | SHAP explanation panel screenshot | FR3 | P4 | ◐ per-criterion contribution bars in the UI (screenshot at G5; browser throttled at capture time) — SHAP deferred with the ML path |
 | 22 | All-overlays-on screenshot (six layers) | FR8 5 + FE 1 | P5 | ☐ |
 | 23 | Phone-viewport screenshot | FE 1 | P5 | ☐ |
 | 24 | Loading/error/stale state screenshots | FE 1 | P5 | ☐ |
