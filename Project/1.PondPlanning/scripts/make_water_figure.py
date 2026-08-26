@@ -12,9 +12,9 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import cv2  # noqa: E402
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -28,6 +28,7 @@ OUT = ROOT / "docs" / "figures" / "p4-ndwi-opencv.png"
 
 
 def main() -> None:
+    """Render the NDWI / OpenCV water-mask evidence figure from the sample map."""
     contours = parse_contours(SAMPLE.read_bytes(), SAMPLE.name)
     bounds = contours.bounds
     year = 2025
@@ -45,7 +46,9 @@ def main() -> None:
     axes[0].set_title(f"NDWI (Sentinel-2 post-monsoon median, {len(post.scenes)} scenes)")
     fig.colorbar(im, ax=axes[0])
     axes[1].imshow(raw > 0, cmap="Blues")
-    axes[1].set_title(f"Otsu threshold {result.otsu_threshold:.2f} → {result.components_before} components")
+    axes[1].set_title(
+        f"Otsu threshold {result.otsu_threshold:.2f} → {result.components_before} components"
+    )
     axes[2].imshow(result.mask, cmap="Blues")
     axes[2].set_title(
         f"OpenCV open/close + components ≥ 200 m² → {result.components_after} water bodies "
@@ -57,7 +60,11 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(OUT, dpi=130)
     print("scenes:", post.scenes)
-    print(f"otsu {result.otsu_threshold:.3f}; components {result.components_before} -> {result.components_after}; water {result.water_fraction:.1%}")
+    print(
+        f"otsu {result.otsu_threshold:.3f}; "
+        f"components {result.components_before} -> {result.components_after}; "
+        f"water {result.water_fraction:.1%}"
+    )
     print("wrote", OUT.name)
 
 

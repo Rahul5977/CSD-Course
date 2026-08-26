@@ -13,8 +13,8 @@ from pathlib import Path
 import matplotlib
 
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt  # noqa: E402
-import numpy as np  # noqa: E402
+import matplotlib.pyplot as plt
+import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -30,6 +30,7 @@ OUT = ROOT / "docs" / "figures"
 
 
 def main() -> None:
+    """Render the P2 evidence figures from the sample map."""
     OUT.mkdir(parents=True, exist_ok=True)
     contours = parse_contours(SAMPLE.read_bytes(), SAMPLE.name)
     dem = contours_to_dem(contours, floor_m=30.0).raster
@@ -84,7 +85,9 @@ def main() -> None:
         for j, dc in enumerate(offsets):
             r, c = r0 + dr, c0 + dc
             raw[i, j] = delineate(model, r, c, radius_m=1.0, min_area_m2=1.0).area_m2 / 1e4
-            snapped[i, j] = delineate(model, r, c, radius_m=150.0, min_area_m2=20_000.0).area_m2 / 1e4
+            snapped[i, j] = (
+                delineate(model, r, c, radius_m=150.0, min_area_m2=20_000.0).area_m2 / 1e4
+            )
     fig, axes = plt.subplots(1, 2, figsize=(11, 4.6))
     for ax, data, title in (
         (axes[0], raw, "No snapping — area at the clicked cell"),
@@ -96,10 +99,19 @@ def main() -> None:
         ax.set_ylabel("row offset (cells)")
         for i in range(7):
             for j in range(7):
-                ax.text(j - 3, i - 3, f"{data[i, j]:.0f}", ha="center", va="center", fontsize=7, color="w")
+                ax.text(
+                    j - 3,
+                    i - 3,
+                    f"{data[i, j]:.0f}",
+                    ha="center",
+                    va="center",
+                    fontsize=7,
+                    color="w",
+                )
         fig.colorbar(im, ax=ax, label="catchment area (ha)")
     fig.suptitle(
-        f"Pour-point sensitivity around cell ({r0}, {c0}): raw CV {np.nanstd(raw) / np.nanmean(raw):.0%}, "
+        f"Pour-point sensitivity around cell ({r0}, {c0}): "
+        f"raw CV {np.nanstd(raw) / np.nanmean(raw):.0%}, "
         f"snapped CV {np.nanstd(snapped) / np.nanmean(snapped):.0%}"
     )
     fig.tight_layout()
@@ -107,7 +119,8 @@ def main() -> None:
     snap = snap_to_drainage(model, r0 + 2, c0 + 2, radius_m=150.0, min_area_m2=20_000.0)
     print(
         f"sensitivity centre ({r0},{c0}); raw CV {np.nanstd(raw) / np.nanmean(raw):.1%}; "
-        f"snapped CV {np.nanstd(snapped) / np.nanmean(snapped):.1%}; example snap {snap.distance_m:.0f} m"
+        f"snapped CV {np.nanstd(snapped) / np.nanmean(snapped):.1%}; "
+        f"example snap {snap.distance_m:.0f} m"
     )
     print("wrote", sorted(p.name for p in OUT.glob("p2-*.png")))
 

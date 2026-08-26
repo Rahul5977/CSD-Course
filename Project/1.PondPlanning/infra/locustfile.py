@@ -10,7 +10,6 @@ administrator waits — not just the 202.
 
 from __future__ import annotations
 
-import json
 import random
 import time
 import uuid
@@ -37,7 +36,10 @@ class Planner(HttpUser):
     def catchment(self) -> None:
         """Submit and wait for a catchment."""
         w, s, e, n = self.bounds
-        point = {"lon": random.uniform(w + 0.002, e - 0.002), "lat": random.uniform(s + 0.002, n - 0.002)}
+        point = {
+            "lon": random.uniform(w + 0.002, e - 0.002),
+            "lat": random.uniform(s + 0.002, n - 0.002),
+        }
         started = time.perf_counter()
         accepted = self.client.post(
             "/api/v1/analysis/catchment",

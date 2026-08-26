@@ -24,7 +24,12 @@ def upgrade() -> None:
     op.create_table(
         "recommendations",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("village_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("villages.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "village_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("villages.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("village_name", sa.String(128), nullable=False),
         sa.Column("design_job_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("lon", sa.Float(), nullable=False),
@@ -37,9 +42,16 @@ def upgrade() -> None:
         sa.Column("status", sa.String(16), nullable=False, server_default="draft"),
         sa.Column("created_by", sa.String(128), nullable=False),
         sa.Column("payload", sa.JSON(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.CheckConstraint("status IN ('draft','submitted','approved','rejected')", name="ck_recommendations_status"),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.CheckConstraint(
+            "status IN ('draft','submitted','approved','rejected')",
+            name="ck_recommendations_status",
+        ),
     )
     op.create_index("ix_recommendations_village", "recommendations", ["village_id"])
 
@@ -53,7 +65,9 @@ def upgrade() -> None:
         sa.Column("entity_type", sa.String(64), nullable=False),
         sa.Column("entity_id", sa.String(64), nullable=False),
         sa.Column("payload", sa.JSON()),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.Column("processed_at", sa.DateTime(timezone=True)),
     )
     op.create_index("ix_outbox_pending", "outbox", ["processed_at", "created_at"])
