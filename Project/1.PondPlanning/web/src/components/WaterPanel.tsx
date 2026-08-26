@@ -1,9 +1,5 @@
 import type { JobStatus, QuantityOut, ResultWarning } from "../types";
-import { Progress } from "./CatchmentPanel";
-
-function Q({ q }: { q: QuantityOut }) {
-  return <strong title={q.method ?? undefined}>{q.display ?? `${q.value} ${q.unit}`}</strong>;
-}
+import { Badge, Empty, ErrorBox, Facts, Panel, Progress, Q, Qty, Warnings } from "../ui";
 
 export interface RunoffMethodResult {
   method: string;
@@ -41,13 +37,13 @@ const LABEL: Record<string, string> = { scs_cn: "SCS-CN (daily)", rational: "Run
 export function RunoffPanel({ runoff }: { runoff: RunoffResult }) {
   return (
     <>
-      <table className="methods">
+      <table className="table">
         <thead>
           <tr><th>Method</th><th>Annual runoff</th><th>C</th></tr>
         </thead>
         <tbody>
           {runoff.results.map((r) => (
-            <tr key={r.method} className={r.method === runoff.recommended.method ? "recommended" : ""}>
+            <tr key={r.method} style={r.method === runoff.recommended.method ? { fontWeight: 600 } : undefined}>
               <td title={r.reference}>{LABEL[r.method] ?? r.method}</td>
               <td><Q q={r.annual_runoff_volume} /></td>
               <td>{r.runoff_coefficient.value.toFixed(2)}</td>
@@ -56,58 +52,53 @@ export function RunoffPanel({ runoff }: { runoff: RunoffResult }) {
         </tbody>
       </table>
       <p className="muted">Methods disagree by {runoff.spread_pct.display}; SCS-CN on the daily series is the design figure.</p>
-      {runoff.warnings.map((w) => (
-        <p key={w.code} className={`warn warn-${w.severity}`}>{w.message}</p>
-      ))}
+      <Warnings items={runoff.warnings} />
     </>
   );
 }
 
 /** FR7: dimensions, storage, EAV curve, reliability, BoQ, confidence. */
 export function DesignPanel({ design, busy, error, onDesign, canDesign, progress }: { design: PondDesignResult | null; busy: boolean; error: string | null; onDesign: () => void; canDesign: boolean; progress: JobStatus | null }) {
-  const W = 300, H = 120, pad = 24;
+  const W = 320, H = 120, pad = 24;
   const curve = design?.eav_curve ?? [];
   const maxV = Math.max(...curve.map((p) => p.cumulative_volume.value), 1);
   const maxH = Math.max(...curve.map((p) => p.elevation.value), 1);
+  const badge = busy ? <Badge tone="info">running</Badge> : error ? <Badge tone="error">failed</Badge>
+    : design ? <Badge tone={design.confidence === "high" ? "ok" : design.confidence === "moderate" ? "info" : "warn"}>confidence {design.confidence}</Badge> : undefined;
   return (
-    <section className="panel">
-      <h2>Pond design</h2>
-      <div className="row">
-        <button onClick={onDesign} disabled={!canDesign || busy}>{busy ? "Designing…" : "Design a pond at the outlet"}</button>
-      </div>
-      {!canDesign && <p className="muted">Delineate a catchment first (click the map or pick a site).</p>}
-      {busy && <Progress status={progress} />}
-      {error && <p className="error">{error}</p>}
-      {design && (
+    <Panel title="Pond design" badge={badge} footer={<><button className="btn btn-sm btn-primary" onClick={onDesign} disabled={!canDesign || busy}>{busy ? "Designing…" : design ? "Redesign at the outlet" : "Design a pond at the outlet"}</button><span className="muted">heavy queue · ~15 s</span></>}>
+      {!canDesign && !design && <Empty>Delineate a catchment first — click the map or pick a suggested site.</Empty>}
+      {busy && <Progress status={progress} label="queued" />}
+      {error && !busy && <ErrorBox message={error} />}
+      {design && !busy && (
         <>
-          <p className="verdict">
-            Fills in <Q q={design.reliability} /> of years · gross <Q q={design.gross_storage} />
-            <span className={`conf conf-${design.confidence}`} title={design.confidence_rationale}> {design.confidence} confidence</span>
-          </p>
-          <dl>
-            <dt>Depth</dt><dd><Q q={design.dimensions.depth} /></dd>
-            <dt>Top</dt><dd><Q q={design.dimensions.top_length} /> × <Q q={design.dimensions.top_width} /></dd>
-            <dt>Bottom</dt><dd><Q q={design.dimensions.bottom_length} /> × <Q q={design.dimensions.bottom_width} /></dd>
-            <dt>Side slope</dt><dd>{design.dimensions.side_slope.value}:1 · freeboard <Q q={design.dimensions.freeboard} /></dd>
-            <dt>Live / dead</dt><dd><Q q={design.live_storage} /> / <Q q={design.dead_storage} /></dd>
-            <dt>Excavation</dt><dd><Q q={design.bill_of_quantities.excavation_volume} /></dd>
-            <dt>Embankment</dt><dd><Q q={design.bill_of_quantities.embankment_volume} /></dd>
-            <dt>Indicative cost</dt><dd><Q q={design.bill_of_quantities.indicative_cost} /></dd>
-          </dl>
+          <div className="qty-grid">
+            <Qty q={design.gross_storage} label="Gross storage" />
+            <Qty q={design.reliability} label="Fills to 90 %" note="of years" />
+            <Qty q={design.dimensions.depth} label="Depth" note="chosen by cost" />
+            <Qty q={design.bill_of_quantities.indicative_cost} label="Indicative cost" />
+          </div>
+          <p className="small" title={design.confidence_rationale}><span className="muted">Why this confidence:</span> {design.confidence_rationale}</p>
+          <Facts rows={[
+            ["Top", <>{design.dimensions.top_length.value.toFixed(0)} × {design.dimensions.top_width.value.toFixed(0)} m</>],
+            ["Bottom", <>{design.dimensions.bottom_length.value.toFixed(0)} × {design.dimensions.bottom_width.value.toFixed(0)} m</>],
+            ["Side slope", <>{design.dimensions.side_slope.value}:1 · freeboard <Q q={design.dimensions.freeboard} /></>],
+            ["Live / dead", <><Q q={design.live_storage} /> / <Q q={design.dead_storage} /></>],
+            ["Excavation", <Q q={design.bill_of_quantities.excavation_volume} />],
+            ["Embankment", <Q q={design.bill_of_quantities.embankment_volume} />],
+          ]} />
           <svg viewBox={`0 0 ${W} ${H}`} className="chart" role="img" aria-label="Elevation-area-volume curve">
             <polyline fill="none" stroke="#0b6e8f" strokeWidth="2" points={curve.map((p) => `${pad + ((W - 2 * pad) * p.cumulative_volume.value) / maxV},${H - pad - ((H - 2 * pad) * p.elevation.value) / maxH}`).join(" ")} />
-            <text x={pad} y={12} fontSize="9" fill="#5b6770">depth (m) vs stored volume (m³) — EAV curve</text>
-            <text x={W - pad} y={H - 6} fontSize="9" textAnchor="end" fill="#5b6770">{Math.round(maxV).toLocaleString()} m³</text>
+            <text x={pad} y={12} fontSize="9" fill="#5b6770">depth (m) vs stored volume (m³) — EAV curve of the site</text>
+            <text x={W - pad} y={H - 6} fontSize="9" textAnchor="end" fill="#5b6770">{Math.round(maxV).toLocaleString("en-IN")} m³</text>
             <text x={4} y={pad + 4} fontSize="9" fill="#5b6770">{maxH} m</text>
           </svg>
-          <h3 className="sub">Runoff (FR6)</h3>
+          <h3 className="small" style={{ marginTop: 4 }}>Runoff — three methods (FR6)</h3>
           <RunoffPanel runoff={design.runoff} />
           <p className="muted">{design.bill_of_quantities.cost_basis}</p>
-          {design.warnings.map((w) => (
-            <p key={w.code} className={`warn warn-${w.severity}`}>{w.message}</p>
-          ))}
+          <Warnings items={design.warnings} />
         </>
       )}
-    </section>
+    </Panel>
   );
 }

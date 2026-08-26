@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Panel states — one panel, six states</title>
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css">
+<style>body{padding:var(--s-5)} .sheet{display:grid;grid-template-columns:repeat(3,340px);gap:var(--s-4)} .sheet h4{font-size:var(--t-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:var(--s-2)}</style>
+</head>
+<body>
+<h1 style="margin-bottom:16px">Catchment panel — the six named states</h1>
+<div class="sheet">
+  <div><h4>1 · loading</h4><section class="panel"><header><h2>Catchment</h2></header><div class="body"><span class="skel skel-lg"></span><span class="skel" style="width:80%"></span><span class="skel" style="width:55%"></span></div></section></div>
+  <div><h4>2 · empty</h4><section class="panel"><header><h2>Catchment</h2></header><div class="body"><div class="empty"><span>Click anywhere on the map, or pick a suggested site, to delineate the area that drains to it.</span><button class="btn btn-sm btn-secondary">Show suggested sites</button></div></div></section></div>
+  <div><h4>3 · job in progress</h4><section class="panel"><header><h2>Catchment</h2><span class="badge badge-info">running</span></header><div class="body"><div class="job"><div class="meta"><span>Snapping to the channel</span><span>35 %</span></div><div class="bar"><div class="fill" style="width:35%"></div></div></div><div class="row"><button class="btn btn-sm btn-ghost">Cancel</button><span class="muted">interactive queue</span></div></div></section></div>
+  <div><h4>4 · loaded</h4><section class="panel"><header><h2>Catchment</h2><span class="badge badge-ok">done</span></header><div class="body"><div class="qty qty-lg"><span class="label">Area draining to the point</span><span class="value">38.3<small>ha</small></span><span class="band"><b>±26 %</b> · one cell ring · D8</span></div><dl class="facts"><dt>Snapped</dt><dd>21 m to the nearest channel (≥ 2 ha)</dd><dt>Longest flow path</dt><dd>1.4 km</dd><dt>Relief</dt><dd>9 m · outlet 271 m</dd></dl></div><footer><button class="btn btn-primary btn-sm">Design a pond here</button></footer></section></div>
+  <div><h4>5 · error</h4><section class="panel"><header><h2>Catchment</h2><span class="badge badge-error">failed</span></header><div class="body"><div class="callout callout-critical"><b>outside_extent</b> — the point is outside the uploaded map. Click inside the boundary.</div><button class="btn btn-sm btn-secondary" style="justify-self:start">Try again</button></div></section></div>
+  <div><h4>6 · stale / offline</h4><section class="panel"><header><h2>Catchment</h2><span class="badge badge-offline">offline</span></header><div class="body"><div class="qty"><span class="label">Last saved result · 14:02</span><span class="value">38.3<small>ha</small></span><span class="band"><b>±26 %</b></span></div><div class="callout">You are offline. Showing the last saved result; new analyses will run when the connection returns.</div></div></section></div>
+</div>
+</body>
+</html>

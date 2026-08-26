@@ -7,7 +7,7 @@ cover and water mask are stored per village by `make seed`'s follow-up suitabili
 
 | # | Time | Show | Say |
 |---|---|---|---|
-| 1 | 0:30 | Satellite view of the sample area (the Sivnath floodplain, Durg) | "The system takes only a contour map. Everything you will see is derived from that file — the UTM zone, the grid, the source accuracy, the pour point." |
+| 1 | 0:30 | Landing page at `/` — scroll past the hero to *Nothing is a black box*; click *Open the planner* | "The system takes only a contour map. Everything you will see is derived from that file — the UTM zone, the grid, the source accuracy, the pour point. Every algorithm on this page is named and cited." |
 | 2 | 0:45 | Upload `contours_1m.kml`; progress stages; village appears as *Khapri*; contours + streams draw | "Parse → TIN → Priority-Flood → D8. The streams are the modelled network at 5 ha; compare with the river in the imagery. The village name came from reverse-geocoding the centroid." |
 | 3 | 1:00 | Suggested sites panel; hover the criterion bars; *How sites are ranked* | "Four terrain criteria — an upstream-area plateau, a slope plateau, wetness, impoundment efficiency — AHP-weighted, consistency ratio 0.004. Not a black box: every site shows its scores." |
 | 4 | 0:45 | Click site #1 → catchment polygon, snapped outlet, snap distance | "38 ha, ±26 %. Validated against pysheds within 2–3 % on the main outlets; the sensitivity plot in the report shows why snapping matters." |

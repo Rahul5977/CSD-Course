@@ -536,6 +536,40 @@ It is 30 seconds of your demo that proves the architecture is real rather than d
 
 ---
 
+## ⬛ PHASE 8 — Landing page & UI/UX (added 27 Aug at the author's request)
+**After P7 · 2 days · protects Frontend 5 + UX 1 and the first impression of the live demo**
+
+### Objective
+A public landing page and a redesigned workspace, prototyped in **the AI design tool** first, then coded
+in the existing React/MapLibre app. Same visual direction as Phase 5 — government utility tool,
+dense, high contrast, earth/water palette, one accent, Noto Sans/Mukta — now applied consistently
+through a token file instead of ad-hoc CSS.
+
+### Day 1 — prototype
+| # | Task |
+|---|---|
+| 1 | Design brief (`docs/design/BRIEF.md`) with the real payloads from `docs/api/samples/` and the named panel states |
+| 2 | Design system bundle (`web/design/`): tokens, type scale, colour roles, components (buttons, panels, quantities-with-uncertainty, job progress, badges, tables) with `@dsCard` previews |
+| 3 | Landing-page and workspace prototypes as self-contained HTML; pushed to a the AI design tool project with `DesignSync` |
+| 4 | Review the prototypes as artifacts; iterate once |
+
+### Day 2 — code
+| # | Task |
+|---|---|
+| 1 | `web/src/tokens.css` from the design system; every component uses tokens |
+| 2 | Landing page at `/` (hero, how it works, live numbers from `/villages`, methodology + validation highlights, CTA to `/app`, footer with repo/report/API) |
+| 3 | Workspace at `/app`: shell, collapsible panel rail, panel states (loading · empty · error · stale · offline · progress), results overlay |
+| 4 | Lighthouse ≥ 90 accessibility on both routes; 390 px; keyboard focus visible; `lang` on Hindi text |
+| 5 | Screenshots `docs/figures/p8-*.jpg`; `DAY_09.md`; service worker precaches the landing page |
+
+### Exit gate (G8)
+- [ ] Landing page reachable at `/` on the Docker stack and describes the system truthfully (no claimed features that do not exist)
+- [ ] Workspace redesigned on the token system; every panel has its six named states
+- [ ] Prototype-to-code parity screenshot pair in `docs/figures/`
+- [ ] Lighthouse accessibility ≥ 90 · works at 390 px · `make check` + `npm run build` green
+
+---
+
 # PART 4 — PROTOTYPE DEMONSTRATION PLAN
 
 The PDF schedules the prototype demo in lab hours (date unspecified). Prepare for two scenarios.

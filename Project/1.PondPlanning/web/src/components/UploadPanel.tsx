@@ -1,17 +1,20 @@
 import { useRef, useState } from "react";
 import { api } from "../api";
 import type { JobStatus } from "../types";
+import { Badge, Callout, Panel, Progress } from "../ui";
 
 interface Props {
   job: JobStatus | null;
   onSubmitted: (jobId: string) => void;
+  hasVillages: boolean;
 }
 
-/** FR-Phase 2 entry point: upload a KML/KMZ contour map and watch the job. */
-export function UploadPanel({ job, onSubmitted }: Props) {
+/** Phase 2 entry point: upload a KML/KMZ contour map and watch the job. */
+export function UploadPanel({ job, onSubmitted, hasVillages }: Props) {
   const input = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [name, setName] = useState<string | null>(null);
 
   const submit = async () => {
     const file = input.current?.files?.[0];
@@ -19,8 +22,7 @@ export function UploadPanel({ job, onSubmitted }: Props) {
     setBusy(true);
     setError(null);
     try {
-      const accepted = await api.uploadContour(file);
-      onSubmitted(accepted.job_id);
+      onSubmitted((await api.uploadContour(file)).job_id);
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -29,33 +31,19 @@ export function UploadPanel({ job, onSubmitted }: Props) {
   };
 
   const running = job && (job.status === "queued" || job.status === "running");
+  const badge = running ? <Badge tone="info">running</Badge> : job?.status === "succeeded" ? <Badge tone="ok">analysed</Badge> : job?.status === "failed" ? <Badge tone="error">failed</Badge> : undefined;
 
   return (
-    <section className="panel">
-      <h2>Contour map</h2>
-      <p className="muted">Upload a KML or KMZ. Everything on the map is derived from it.</p>
+    <Panel title="Contour map" badge={badge} defaultOpen={!hasVillages || !!job}>
+      <p className="muted">{hasVillages ? "Upload another KML/KMZ to analyse a new area." : "Upload a KML or KMZ. Everything on the map is derived from it."}</p>
       <div className="row">
-        <input ref={input} type="file" accept=".kml,.kmz" aria-label="Contour map file" />
-        <button onClick={submit} disabled={busy || !!running}>
-          {busy ? "Uploading…" : "Analyse"}
-        </button>
+        <input ref={input} type="file" accept=".kml,.kmz" aria-label="Contour map file" onChange={(e) => setName(e.target.files?.[0]?.name ?? null)} style={{ display: "none" }} id="contour-file" />
+        <label htmlFor="contour-file" className="btn btn-sm btn-secondary">{name ?? "Choose file…"}</label>
+        <button className="btn btn-sm btn-primary" onClick={submit} disabled={busy || !!running || !name}>{busy ? "Uploading…" : "Analyse"}</button>
       </div>
-      {error && <p className="error">{error}</p>}
-      {job && (
-        <div className={`job job-${job.status}`} aria-live="polite">
-          <div className="bar">
-            <div className="fill" style={{ width: `${job.progress}%` }} />
-          </div>
-          <span>
-            {job.status} · {job.progress}% {job.stage ? `· ${job.stage}` : ""}
-          </span>
-          {job.error && (
-            <p className="error">
-              {job.error.code}: {job.error.title}
-            </p>
-          )}
-        </div>
-      )}
-    </section>
+      {error && <Callout tone="critical"><b>Upload failed</b> — {error}</Callout>}
+      {job && (running || job.status === "failed") && <Progress status={job} />}
+      {job?.error && <Callout tone="critical"><b>{job.error.code}</b> — {job.error.title}</Callout>}
+    </Panel>
   );
 }

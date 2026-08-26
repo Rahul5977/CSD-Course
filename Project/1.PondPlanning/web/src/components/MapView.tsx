@@ -92,7 +92,8 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
         if (layer.layer_id === "satellite" || layer.kind !== "raster") continue;
         const id = `api-${layer.layer_id}`;
         if (!m.getSource(id)) {
-          m.addSource(id, { type: "raster", tiles: [layer.tile_url_template], tileSize: 256, maxzoom: 18 });
+          // `bounds` keeps MapLibre from requesting tiles outside the COG (TiTiler answers 404 there).
+          m.addSource(id, { type: "raster", tiles: [layer.tile_url_template], tileSize: 256, maxzoom: 18, ...(bounds ? { bounds } : {}) });
           m.addLayer(
             { id, type: "raster", source: id, paint: { "raster-opacity": layer.layer_id === "hillshade" ? 0.55 : 0.75 } },
             m.getLayer("vec-boundary") ? "vec-boundary" : undefined,

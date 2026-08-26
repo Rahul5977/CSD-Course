@@ -269,6 +269,32 @@ alternatives in `docs/adr/` (19 records) and the decision log in `docs/PROGRESS.
 algorithm is named and cited in its module docstring; the author can explain and justify each
 component live.
 
+## Appendix A — Figures
+
+![Sink filling on the sample DEM: 2 141 cells filled, maximum 8.6 m, before/after](../figures/p2-sink-fill-before-after.png)
+
+![D8 flow accumulation (log scale) with the 5 ha stream network](../figures/p2-flow-accumulation.png)
+
+![Pour-point sensitivity: catchment area around a channel cell, raw vs snapped](../figures/p2-pour-point-sensitivity.png)
+
+![Modelled streams over satellite imagery — the Sivnath and its tributaries](../figures/p2-streams-on-satellite.jpg)
+
+![Click-to-catchment in the browser: snapped outlet, snap distance, polygon, area with its band](../figures/p2-click-to-catchment.jpg)
+
+![Rainfall panel: 45 years of ERA5-Land, 75 % dependable year, monthly normals](../figures/p3-rainfall-panel.jpg)
+
+![Pond design panel: dimensions, EAV curve, three runoff methods, fill reliability](../figures/p3-design-panel.jpg)
+
+![NDWI water mask: Otsu threshold, OpenCV morphology, connected components](../figures/p4-ndwi-opencv.png)
+
+![All FR8 overlays on one map](../figures/p5-all-overlays.jpg)
+
+![Grafana dashboard during the load test](../figures/p6-grafana.jpg)
+
+![Offline: results served from cache with the API container stopped](../figures/p6-chaos-offline.jpg)
+
+![Coverage report](../figures/p7-coverage.jpg)
+
 ## References
 
 - Barnes, R., Lehman, C., Mulla, D. (2014). Priority-flood: an optimal depression-filling and watershed-labeling algorithm. *Computers & Geosciences* 62.

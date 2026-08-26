@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
 import type { QuantityOut } from "../types";
+import { Badge, Callout, Empty, Panel } from "../ui";
 
 export interface RecommendationOut {
   id: string;
@@ -39,36 +40,36 @@ export function RecommendationPanel({ designJobId, session, onLogin, onLogout }:
   });
   const exportAs = (fmt: "pdf" | "geojson" | "csv") => run(async () => { if (rec) setExportUrl((await api.createExport(rec.id, fmt)).url); });
 
+  const tone = rec?.status === "approved" ? "ok" : rec?.status === "rejected" ? "error" : rec?.status === "submitted" ? "info" : "warn";
   return (
-    <section className="panel">
-      <h2>Recommendation</h2>
+    <Panel title="Recommendation" badge={rec ? <Badge tone={tone}>{rec.status}</Badge> : undefined} meta={session ? `${session.username} · ${session.role}` : undefined}>
       {!session ? (
         <div className="row">
           <select value={user} onChange={(e) => setUser(e.target.value)} className="inline" aria-label="User">
             <option value="viewer">viewer</option><option value="planner">planner</option><option value="officer">officer</option>
           </select>
           <input type="password" placeholder="password (e.g. planner-demo)" value={password} onChange={(e) => setPassword(e.target.value)} aria-label="Password" />
-          <button onClick={login}>Log in</button>
+          <button className="btn btn-sm btn-secondary" onClick={login}>Sign in</button>
         </div>
       ) : (
-        <p className="muted">Signed in as <strong>{session.username}</strong> ({session.role}) · <button className="linkish" onClick={onLogout}>log out</button></p>
+        <p className="muted">Signed in as <b>{session.username}</b> ({session.role}) · <button className="btn btn-sm btn-ghost" onClick={onLogout}>sign out</button></p>
       )}
-      {error && <p className="error">{error}</p>}
-      {!rec && <div className="row"><button onClick={save} disabled={!designJobId || !session}>Save this design as a recommendation</button></div>}
-      {!designJobId && <p className="muted">Design a pond first.</p>}
+      {error && <Callout tone="critical"><b>Not allowed</b> — {error}</Callout>}
+      {!designJobId && <Empty>Design a pond first; then save it as a recommendation.</Empty>}
+      {!rec && designJobId && <div className="row"><button className="btn btn-sm btn-primary" onClick={save} disabled={!session}>Save this design as a recommendation</button>{!session && <span className="muted">planner or officer</span>}</div>}
       {rec && (
         <>
-          <p className="verdict">{rec.village_name} · <strong>{rec.status}</strong> · {rec.gross_storage.display} · {rec.indicative_cost.display} · created by {rec.created_by}</p>
+          <p className="small">{rec.village_name} · {rec.gross_storage.display} · {rec.indicative_cost.display} · created by {rec.created_by}</p>
           <div className="row">
-            {rec.status === "draft" && <button onClick={() => move("submitted", "ready for review")}>Submit</button>}
-            {rec.status === "submitted" && <button onClick={() => move("approved", "sanctioned")}>Approve (officer)</button>}
-            {rec.status === "submitted" && <button onClick={() => move("rejected", "needs a survey")}>Reject (officer)</button>}
-            {rec.status === "rejected" && <button onClick={() => move("draft", "rework")}>Back to draft</button>}
-            <button onClick={() => exportAs("pdf")}>Export PDF</button>
-            <button onClick={() => exportAs("geojson")}>GeoJSON</button>
-            <button onClick={() => exportAs("csv")}>CSV</button>
+            {rec.status === "draft" && <button className="btn btn-sm btn-primary" onClick={() => move("submitted", "ready for review")}>Submit</button>}
+            {rec.status === "submitted" && <button className="btn btn-sm btn-primary" onClick={() => move("approved", "sanctioned")}>Approve (officer)</button>}
+            {rec.status === "submitted" && <button className="btn btn-sm btn-danger" onClick={() => move("rejected", "needs a survey")}>Reject</button>}
+            {rec.status === "rejected" && <button className="btn btn-sm btn-secondary" onClick={() => move("draft", "rework")}>Back to draft</button>}
+            <button className="btn btn-sm btn-secondary" onClick={() => exportAs("pdf")}>PDF</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => exportAs("geojson")}>GeoJSON</button>
+            <button className="btn btn-sm btn-secondary" onClick={() => exportAs("csv")}>CSV</button>
           </div>
-          {exportUrl && <p><a href={exportUrl} target="_blank" rel="noreferrer">Download export</a></p>}
+          {exportUrl && <p className="small"><a href={exportUrl} target="_blank" rel="noreferrer">Download the export</a></p>}
           {audit.length > 0 && (
             <details open>
               <summary className="muted">Audit trail ({audit.length})</summary>
@@ -77,6 +78,6 @@ export function RecommendationPanel({ designJobId, session, onLogin, onLogout }:
           )}
         </>
       )}
-    </section>
+    </Panel>
   );
 }

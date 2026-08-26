@@ -162,8 +162,8 @@ export const api = {
   availableLand(villageId: string): Promise<AvailableLand | null> {
     return fetch(`${BASE}/villages/${villageId}/available-land`).then((r) => (r.ok ? r.json() : null));
   },
-  rainfallStatistics(lon: number, lat: number): Promise<RainfallStatistics> {
-    return fetch(`${BASE}/rainfall/statistics?lon=${lon}&lat=${lat}`).then(json<RainfallStatistics>);
+  rainfallStatistics(lon: number, lat: number, years = 45): Promise<RainfallStatistics> {
+    return fetch(`${BASE}/rainfall/statistics?lon=${lon}&lat=${lat}&years=${years}`).then(json<RainfallStatistics>);
   },
   /** The latest contour-analysis result for a village, if the session knows one. */
   siting(id: string): Promise<{ candidate_sites: ContourAnalysisResult["candidate_sites"]; siting: ContourAnalysisResult["siting"] } | null> {

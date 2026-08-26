@@ -1,50 +1,42 @@
-import type { CatchmentResult, JobStatus, QuantityOut } from "../types";
+import type { CatchmentResult, JobStatus } from "../types";
+import { Badge, Empty, ErrorBox, Facts, Panel, Progress, Q, Qty, Warnings } from "../ui";
 
-function Q({ q }: { q: QuantityOut }) {
-  return <strong title={q.method ?? undefined}>{q.display ?? `${q.value} ${q.unit}`}</strong>;
-}
+export { Progress } from "../ui";
 
 /** FR4: the delineated catchment, with the snap distance front and centre. */
-export function Progress({ status }: { status: JobStatus | null }) {
-  if (!status) return null;
+export function CatchmentPanel({ catchment, busy, error, progress, onDesign, designBusy, onRetry }: {
+  catchment: CatchmentResult | null; busy: boolean; error: string | null; progress: JobStatus | null;
+  onDesign?: () => void; designBusy?: boolean; onRetry?: () => void;
+}) {
+  const badge = busy ? <Badge tone="info">running</Badge> : error ? <Badge tone="error">failed</Badge> : catchment ? <Badge tone="ok">done</Badge> : undefined;
+  const footer = catchment && onDesign ? (
+    <>
+      <button className="btn btn-sm btn-primary" onClick={onDesign} disabled={designBusy}>{designBusy ? "Designing…" : "Design a pond here"}</button>
+      <span className="muted">rainfall → runoff → storage</span>
+    </>
+  ) : undefined;
   return (
-    <div className="job job-running" aria-live="polite">
-      <div className="bar"><div className="fill" style={{ width: `${status.progress}%` }} /></div>
-      <span>{status.progress}% {status.stage ? `· ${status.stage}` : ""}</span>
-    </div>
-  );
-}
-
-export function CatchmentPanel({ catchment, busy, error, progress }: { catchment: CatchmentResult | null; busy: boolean; error: string | null; progress: JobStatus | null }) {
-  return (
-    <section className="panel">
-      <h2>Catchment</h2>
-      {!catchment && !busy && !error && <p className="muted">Click anywhere on the map to delineate the area draining to that point.</p>}
-      {busy && <Progress status={progress ?? { job_id: "", kind: "catchment", status: "running", progress: 5, stage: "submitting", created_at: new Date().toISOString() }} />}
-      {error && <p className="error">{error}</p>}
-      {catchment && (
+    <Panel title="Catchment" badge={badge} footer={footer}>
+      {!catchment && !busy && !error && <Empty>Click anywhere on the map, or pick a suggested site, to delineate the area that drains to it.</Empty>}
+      {busy && (
         <>
-          <dl>
-            <dt>Area</dt>
-            <dd><Q q={catchment.area} /></dd>
-            <dt>Snap distance</dt>
-            <dd><Q q={catchment.snap_distance} /></dd>
-            <dt>Longest flow path</dt>
-            <dd><Q q={catchment.longest_flow_path} /></dd>
-            <dt>Mean slope</dt>
-            <dd><Q q={catchment.mean_slope} /></dd>
-            <dt>Relief</dt>
-            <dd><Q q={catchment.relief} /></dd>
-            <dt>Outlet elevation</dt>
-            <dd><Q q={catchment.outlet_elevation} /></dd>
-            <dt>Routing</dt>
-            <dd className="muted">{catchment.flow_routing}</dd>
-          </dl>
-          {catchment.warnings.map((w) => (
-            <p key={w.code} className={`warn warn-${w.severity}`}>{w.message}</p>
-          ))}
+          <Progress status={progress} label="submitting" />
+          <span className="muted">interactive queue · usually a few seconds</span>
         </>
       )}
-    </section>
+      {error && !busy && <ErrorBox message={error} onRetry={onRetry} />}
+      {catchment && !busy && (
+        <>
+          <Qty q={catchment.area} label="Area draining to the point" size="lg" note={catchment.flow_routing} />
+          <Facts rows={[
+            ["Snapped", <><Q q={catchment.snap_distance} /> to the nearest channel</>],
+            ["Longest flow path", <Q q={catchment.longest_flow_path} />],
+            ["Mean slope", <Q q={catchment.mean_slope} />],
+            ["Relief", <><Q q={catchment.relief} /> · outlet <Q q={catchment.outlet_elevation} /></>],
+          ]} />
+          <Warnings items={catchment.warnings} />
+        </>
+      )}
+    </Panel>
   );
 }

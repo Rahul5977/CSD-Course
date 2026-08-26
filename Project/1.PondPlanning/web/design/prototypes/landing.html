@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Village Pond Planner — from a contour map to a costed pond</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+.wrap { max-width: 1160px; margin: 0 auto; padding: 0 var(--s-5); }
+.nav { position: sticky; top: 0; z-index: 5; background: rgba(244,241,234,0.94); backdrop-filter: blur(6px); border-bottom: 1px solid var(--line); }
+.nav .wrap { display: flex; align-items: center; gap: var(--s-4); height: 60px; }
+.nav .brand { display: flex; align-items: center; gap: var(--s-2); font-weight: 600; color: var(--ink); text-decoration: none; font-size: var(--t-lg); }
+.nav nav { display: flex; gap: var(--s-4); margin-left: auto; font-size: var(--t-sm); }
+.nav nav a { color: var(--ink-2); text-decoration: none; }
+.nav nav a:hover { color: var(--water); }
+.hero { padding: var(--s-8) 0 var(--s-7); display: grid; grid-template-columns: 1.05fr 1fr; gap: var(--s-7); align-items: center; }
+.eyebrow { font-size: var(--t-xs); text-transform: uppercase; letter-spacing: 0.08em; color: var(--earth); font-weight: 600; }
+.hero h1 { font-size: var(--t-3xl); margin: var(--s-3) 0 var(--s-4); letter-spacing: -0.01em; }
+.hero h1 em { font-style: normal; color: var(--water); }
+.lede { font-size: var(--t-lg); color: var(--ink-2); max-width: 54ch; }
+.cta { display: flex; gap: var(--s-3); margin: var(--s-5) 0 var(--s-3); flex-wrap: wrap; }
+.trust { font-size: var(--t-sm); color: var(--muted); display: flex; gap: var(--s-3); flex-wrap: wrap; }
+.trust span::before { content: "✓ "; color: var(--ok); }
+.screen { position: relative; }
+.screen .frame { border: 1px solid var(--line-strong); border-radius: var(--r-md); overflow: hidden; box-shadow: var(--shadow); background: #000; }
+.screen img { display: block; width: 100%; max-width: 100%; height: auto; }
+.hero > *, .valid > *, .cards > *, .steps > *, .method > *, .strip .wrap > *, footer.foot .wrap > * { min-width: 0; }
+.screen .float { position: absolute; left: -28px; bottom: -22px; width: 260px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow); padding: var(--s-3) var(--s-4); }
+.strip { background: var(--night); color: #fff; }
+.strip .wrap { display: grid; grid-template-columns: repeat(5, 1fr); gap: var(--s-4); padding: var(--s-5) var(--s-5); }
+.strip .qty .label { color: #aebcc4; } .strip .qty .band { color: #aebcc4; } .strip .qty .value small { color: #d5dee3; }
+section.block { padding: var(--s-8) 0; border-bottom: 1px solid var(--line); }
+section.block h2 { font-size: var(--t-2xl); margin-bottom: var(--s-2); }
+section.block .sub { color: var(--muted); max-width: 64ch; margin-bottom: var(--s-6); }
+.steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--s-4); }
+.step { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); display: grid; gap: var(--s-2); }
+.step .n { width: 32px; height: 32px; border-radius: 50%; background: var(--water); color: #fff; display: grid; place-items: center; font-weight: 600; }
+.step h3 { font-size: var(--t-lg); }
+.cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--s-4); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-md); padding: var(--s-4); display: grid; gap: var(--s-2); align-content: start; }
+.card h3 { font-size: var(--t-lg); }
+.card .fr { font-size: var(--t-xs); color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+.method { display: grid; grid-template-columns: repeat(2, 1fr); gap: var(--s-3) var(--s-6); }
+.method div { display: grid; grid-template-columns: 170px 1fr; gap: var(--s-3); padding: var(--s-2) 0; border-bottom: 1px dashed var(--line); font-size: var(--t-sm); }
+.method b { color: var(--water); }
+.valid { display: grid; grid-template-columns: 1.2fr 1fr; gap: var(--s-6); align-items: start; }
+.limits { background: var(--warn-soft); border: 1px solid #e6d3a0; border-radius: var(--r-md); padding: var(--s-4) var(--s-5); display: grid; gap: var(--s-2); }
+.limits h3 { font-size: var(--t-lg); }
+.ctaband { background: var(--water); color: #fff; }
+.ctaband .wrap { padding: var(--s-7) var(--s-5); display: flex; align-items: center; gap: var(--s-5); justify-content: space-between; flex-wrap: wrap; }
+.ctaband h2 { font-size: var(--t-xl); }
+.ctaband .btn-secondary { border-color: transparent; }
+footer.foot { background: var(--night); color: #aebcc4; font-size: var(--t-sm); }
+footer.foot .wrap { width: 100%; padding: var(--s-6) var(--s-5); display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: var(--s-5); }
+footer.foot a { color: #dfe7eb; text-decoration: none; display: block; margin-bottom: 6px; }
+footer.foot h3 { color: #fff; margin-bottom: var(--s-2); font-size: var(--t-sm); text-transform: uppercase; letter-spacing: 0.06em; }
+@media (max-width: 900px) {
+  .hero, .valid, .method, footer.foot .wrap { grid-template-columns: 1fr; }
+  .steps, .cards { grid-template-columns: 1fr 1fr; }
+  .strip .wrap { grid-template-columns: repeat(2, 1fr); }
+  .hero h1 { font-size: var(--t-2xl); }
+  .screen .float { position: static; width: auto; margin-top: var(--s-3); }
+  .nav nav { display: none; }
+}
+@media (max-width: 520px) { .steps, .cards, .strip .wrap { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="nav"><div class="wrap">
+  <a class="brand" href="#"><svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#0b6e8f" stroke-width="1.6"/><ellipse cx="13" cy="14" rx="7.5" ry="5.5" fill="none" stroke="#8a5a2b" stroke-width="1.6"/><ellipse cx="13" cy="15" rx="3.5" ry="2.4" fill="#0b6e8f"/></svg>Village Pond Planner</a>
+  <nav><a href="#how">How it works</a><a href="#get">What you get</a><a href="#method">Methodology</a><a href="#validation">Validation</a><a href="#">API</a><a href="#">Report</a></nav>
+  <a class="btn btn-primary btn-sm" href="#">Open the planner</a>
+</div></div>
+
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Village pond planning · terrain-first</div>
+      <h1>From a contour map to a <em>costed pond</em> — with the reasoning shown.</h1>
+      <p class="lede">Upload a KML/KMZ of a village. Get the terrain, the streams, ranked pond sites, the catchment of any point you click, 45 years of rainfall, runoff by three methods and a pond design with fill reliability. Every number carries its unit and an honest uncertainty band.</p>
+      <div class="cta"><a class="btn btn-primary" href="#">Open the planner</a><a class="btn btn-secondary" href="#">See the sample village</a></div>
+      <div class="trust"><span>Validated against an independent model</span><span>Nothing hard-coded to one map</span><span>Works offline after first load</span></div>
+    </div>
+    <div class="screen">
+      <div class="frame"><img src="../../../docs/figures/p2-streams-on-satellite.jpg" alt="Modelled streams over satellite imagery of the sample village"></div>
+      <div class="float qty">
+        <span class="label">Catchment at the suggested site</span>
+        <span class="value">38.3<small>ha</small></span>
+        <span class="band"><b>±26 %</b> · D8 · snapped to the channel</span>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="strip"><div class="wrap">
+  <div class="qty"><span class="label">Rainfall record</span><span class="value">45<small>years</small></span><span class="band">ERA5-Land, daily</span></div>
+  <div class="qty"><span class="label">Catchment vs pysheds</span><span class="value">2–3<small>%</small></span><span class="band">on the main outlets</span></div>
+  <div class="qty"><span class="label">Runoff methods</span><span class="value">3</span><span class="band">SCS-CN · rational · Strange</span></div>
+  <div class="qty"><span class="label">Map layers</span><span class="value">13</span><span class="band">all on one map</span></div>
+  <div class="qty"><span class="label">Tests</span><span class="value">203</span><span class="band">19 golden hydrology tests</span></div>
+</div></div>
+
+<div class="wrap">
+<section class="block" id="how">
+  <h2>How it works</h2>
+  <p class="sub">Four steps, each one visible on the map. The pipeline is the same for any contour map — the grid, the UTM zone and the source accuracy are derived from the file you upload.</p>
+  <div class="steps">
+    <div class="step"><span class="n">1</span><h3>Upload the contours</h3><p class="small">KML or KMZ. Elevation is read from the geometry, the attributes or the label — and decoy fields are rejected.</p></div>
+    <div class="step"><span class="n">2</span><h3>Terrain and streams</h3><p class="small">A DEM is interpolated, depressions filled, flow routed cell by cell. The streams appear over satellite imagery so you can check them.</p></div>
+    <div class="step"><span class="n">3</span><h3>Pick the site</h3><p class="small">Sites are ranked on four terrain criteria with published weights — or click anywhere for the catchment of that point.</p></div>
+    <div class="step"><span class="n">4</span><h3>Design and decide</h3><p class="small">Rainfall, runoff, a cost-optimised depth, fill reliability, eligible land, then a recommendation with an audit trail and a PDF.</p></div>
+  </div>
+</section>
+
+<section class="block" id="get">
+  <h2>What you get</h2>
+  <p class="sub">The eight things the assignment asks for, on one map, each with its uncertainty stated.</p>
+  <div class="cards">
+    <div class="card"><span class="fr">Satellite · contours</span><h3>The village, seen</h3><p class="small">Imagery, contours at 1–10 m, hillshade, slope, wetness, curvature — thirteen layers you can toggle.</p></div>
+    <div class="card"><span class="fr">Catchment</span><h3>Click a point, get its catchment</h3><p class="small">Snapped to the nearest channel with the distance shown; area, longest flow path, relief, and a flag if the map edge cuts it.</p></div>
+    <div class="card"><span class="fr">Rainfall</span><h3>45 years, in plain words</h3><p class="small">"In 3 of every 4 years, expect at least this much" — the 75 % dependable year, monsoon share, rainy days, the 25-year storm.</p></div>
+    <div class="card"><span class="fr">Runoff</span><h3>A range, not a number</h3><p class="small">SCS-CN on the daily series, the rational method and Strange's table — with the spread between them reported.</p></div>
+    <div class="card"><span class="fr">Pond design</span><h3>Depth chosen by cost</h3><p class="small">Dimensions, gross and live storage, a daily water balance, fill reliability, a spillway and a bill of quantities.</p></div>
+    <div class="card"><span class="fr">Land · recommendation</span><h3>Where digging is allowed</h3><p class="small">Named constraints, a satellite water mask, ownership stated as unknown when it is — then draft → submitted → approved with an audit trail.</p></div>
+  </div>
+</section>
+
+<section class="block" id="method">
+  <h2>Nothing is a black box</h2>
+  <p class="sub">Every step names its algorithm and its source. These are the ones that decide the numbers.</p>
+  <div class="method">
+    <div><b>Priority-Flood + ε</b><span>Depression filling and flat resolution (Barnes et al. 2014)</span></div>
+    <div><b>D8 flow routing</b><span>Steepest descent over eight neighbours (O'Callaghan &amp; Mark 1984)</span></div>
+    <div><b>Nearest-channel snap</b><span>Pour point moved ≤ 150 m to a cell draining ≥ 2 ha; distance shown</span></div>
+    <div><b>AHP site ranking</b><span>Saaty pairwise weights, consistency ratio reported (0.004)</span></div>
+    <div><b>Weibull 75 %</b><span>Dependable rainfall by plotting position, complete years only</span></div>
+    <div><b>SCS-CN, daily</b><span>Curve number from WorldCover × SoilGrids, summed day by day (TR-55)</span></div>
+    <div><b>NDWI + OpenCV</b><span>Sentinel-2 water mask: Otsu threshold, morphology, connected components</span></div>
+    <div><b>Daily water balance</b><span>Inflow, evaporation, seepage, dead storage → fill reliability</span></div>
+  </div>
+</section>
+
+<section class="block" id="validation">
+  <div class="valid">
+    <div>
+      <h2>Validated, and honest about the rest</h2>
+      <p class="sub">Golden tests with analytic answers, a second independent delineation model, and a sensitivity study on the one thing that matters most: where you click.</p>
+      <table class="table">
+        <thead><tr><th>Check</th><th>Method</th><th class="num">Result</th></tr></thead>
+        <tbody>
+          <tr><td>Catchment area</td><td>vs pysheds, snapped outlets</td><td class="num">2.0 % · 3.4 %</td></tr>
+          <tr><td>Pour-point sensitivity</td><td>±3 cells, raw → snapped</td><td class="num">CV 212 % → 48 %</td></tr>
+          <tr><td>Water mask</td><td>NDWI vs WorldCover water class</td><td class="num">9.0 % vs 8.1 %</td></tr>
+          <tr><td>Runoff hand check</td><td>CN 80, 50 mm day</td><td class="num">13.8 mm exact</td></tr>
+          <tr><td>Load</td><td>50 users, 60 s</td><td class="num">p95 560 ms</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="limits">
+      <h3>Planning-grade, not survey-grade</h3>
+      <p class="small">The terrain comes from contours that came from ~30 m satellite elevation. Relief under about 5 m is not real, and storage figures carry ±20 % or more. Land ownership is never assumed. The three runoff methods can disagree by 2× — and the app shows you that instead of hiding it.</p>
+      <p class="small">Use it to shortlist and size; confirm with a survey before you dig.</p>
+    </div>
+  </div>
+</section>
+</div>
+
+<div class="ctaband"><div class="wrap">
+  <div><h2>Try it with the sample village</h2><p>Khapri, Durg district — the provided contour map, already analysed.</p></div>
+  <div class="cta" style="margin:0"><a class="btn btn-secondary" href="#">Open the planner</a><a class="btn btn-ghost" style="color:#fff" href="#">Read the methodology →</a></div>
+</div></div>
+
+<footer class="foot"><div class="wrap">
+  <div><div class="brand" style="color:#fff;font-weight:600;margin-bottom:8px">Village Pond Planner</div><p>A 7th-semester project. Open source, built to be explained: every design decision is an ADR, every algorithm is cited.</p></div>
+  <div><h3>Use</h3><a href="#">Open the planner</a><a href="#">API documentation</a><a href="#">Installation guide</a></div>
+  <div><h3>Read</h3><a href="#">Technical report</a><a href="#">Decision records</a><a href="#">Validation</a></div>
+  <div><h3>Data</h3><a href="#">Licences &amp; attribution</a><a href="#">GitHub repository</a></div>
+</div></footer>
+</body>
+</html>

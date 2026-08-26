@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { api, staleState } from "./api";
 import { ResultsOverlay } from "./components/ResultsOverlay";
 import { t, type Lang } from "./i18n";
+import { Badge, Mark } from "./ui";
 import type { JobStatus } from "./types";
 import { CatchmentPanel } from "./components/CatchmentPanel";
 import { LayerControl } from "./components/LayerControl";
@@ -31,7 +32,7 @@ const DEFAULT_VISIBLE: Record<string, boolean> = {
 
 export default function App() {
   const [villages, setVillages] = useState<VillageOut[]>([]);
-  const [selected, setSelected] = useState<string>("");
+  const [selected, setSelected] = useState<string>(() => new URLSearchParams(window.location.search).get("village") ?? "");
   const [summary, setSummary] = useState<VillageSummary | null>(null);
   const [layers, setLayers] = useState<LayerDescriptor[]>([]);
   const [boundary, setBoundary] = useState<Polygon | MultiPolygon | null>(null);
@@ -185,38 +186,40 @@ export default function App() {
 
   const toggle = (id: string) => setVisible((v) => ({ ...v, [id]: !(v[id] ?? false) }));
 
+  const resetForVillage = (id: string) => { setBounds(null); setCatchment(null); setSites([]); setSiting(null); setRationale(null); setDesign(null); setSelected(id); };
+
   return (
     <div className="app">
-      <header>
-        <h1>{t("title", lang)}</h1>
-        <span className="muted">{t("tagline", lang)}</span>
-        {stale && <span className="badge-offline" role="status">{t("offline", lang)}</span>}
-        <button className="lang" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label="Toggle language">{lang === "en" ? "हिन्दी" : "EN"}</button>
+      <header className="topbar">
+        <a className="brand" href="/" title="Back to the landing page"><Mark light /><span className="brand-text">{t("title", lang)}</span></a>
+        <select value={selected} onChange={(e) => resetForVillage(e.target.value)} aria-label="Select village">
+          <option value="">— select an analysed area —</option>
+          {villages.map((v) => (
+            <option key={v.id} value={v.id}>{v.name}{v.district ? ` · ${v.district}` : ""}</option>
+          ))}
+        </select>
+        {stale && <Badge tone="offline">{t("offline", lang)}</Badge>}
+        {rain?.fallback_used === "cache" && !stale && <Badge tone="stale">rainfall from cache</Badge>}
+        <span className="spacer" />
+        {session && <span className="small" style={{ color: "#cfd8dc" }}>{session.username} · {session.role}</span>}
+        <button className="btn btn-sm lang" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label="Toggle language" lang={lang === "en" ? "hi" : "en"}>{lang === "en" ? "हिन्दी" : "EN"}</button>
       </header>
-      <aside>
-        <UploadPanel job={job} onSubmitted={(id) => { setBounds(null); setCatchment(null); setSites([]); setJobId(id); }} />
-        <section className="panel">
-          <h2>Village</h2>
-          <select value={selected} onChange={(e) => { setBounds(null); setCatchment(null); setSites([]); setSiting(null); setRationale(null); setSelected(e.target.value); }} aria-label="Select village">
-            <option value="">— select an analysed area —</option>
-            {villages.map((v) => (
-              <option key={v.id} value={v.id}>{v.name}</option>
-            ))}
-          </select>
-          {loadError && <p className="error">{loadError}</p>}
-          {!villages.length && <p className="muted">No analysed areas yet. Upload a contour map.</p>}
-        </section>
+      <aside className="rail" aria-label="Analysis panels">
+        <UploadPanel job={job} hasVillages={villages.length > 0} onSubmitted={(id) => { setBounds(null); setCatchment(null); setSites([]); setJobId(id); }} />
+        {loadError && <div className="callout callout-critical"><b>Could not load</b> — {loadError}</div>}
+        {!villages.length && !job && <div className="empty"><span>No analysed areas yet. Upload a contour map to begin.</span></div>}
         {summary && <SummaryCard summary={summary} />}
-        {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} progress={progress.catchment ?? null} />}
+        <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
+        {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} progress={progress.catchment ?? null} onDesign={designPond} designBusy={designBusy} />}
         {selected && <RainfallPanel stats={rain} busy={rainBusy} error={rainError} />}
+        {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} progress={progress.design ?? null} />}
         {selected && <LandPanel land={land} suitability={suitability} busy={landBusy} error={landError} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} progress={progress.land ?? null} />}
         {design && <RecommendationPanel designJobId={design.job_id ?? null} session={session} onLogin={setSession} onLogout={() => setSession(null)} />}
-        {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} progress={progress.design ?? null} />}
-        <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>
       <main className="mapwrap">
         <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} land={land?.geojson ?? null} pond={design && catchment ? { lon: catchment.snapped_point.lon, lat: catchment.snapped_point.lat, lengthM: design.dimensions.top_length.value, widthM: design.dimensions.top_width.value } : null} onClick={delineate} />
+        {selected && !catchment && !catchmentBusy && <span className="hint" role="status">Click anywhere on the map for the catchment of that point</span>}
         <ResultsOverlay site={catchment?.snapped_point ?? null} catchment={catchment} rain={rain} design={design} villageName={summary?.village.name ?? null} />
       </main>
     </div>

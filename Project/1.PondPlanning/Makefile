@@ -5,7 +5,7 @@ COMPOSE := docker compose -f infra/docker-compose.yml
 UV      := uv run
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures loadtest tunnel
+.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures loadtest tunnel report
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -77,6 +77,9 @@ fmt:  ## Auto-format and auto-fix
 
 typecheck:  ## Type-check (strict on app/domain and app/engines)
 	$(UV) mypy
+
+report:  ## Render docs/report/REPORT.md to REPORT.pdf (python-markdown + headless Chrome)
+	uv run python scripts/make_report.py
 
 tunnel:  ## Expose the app on a public URL through ngrok (requires `ngrok config add-authtoken …` once)
 	ngrok http $${POND_WEB_PORT:-3000}

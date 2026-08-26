@@ -50,6 +50,7 @@ dev = [
     "pysheds>=0.5",
     "matplotlib>=3.11.1",
     "locust>=2.46.4",
+    "markdown>=3.10.3",
 ]
 
 [build-system]

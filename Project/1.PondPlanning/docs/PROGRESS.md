@@ -9,10 +9,10 @@ the assistant reads this at the start of every session and updates it at the end
 ## Snapshot
 
 - **Last updated:** 2026-08-26
-- **Current phase:** P7 complete — awaiting the user's review at the G7 checkpoint; then demo-day steps only
-- **Active gate:** G7 — closed 2026-08-27 pending the user's review of the report. **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Current phase:** P8 complete — awaiting the user's review at the G8 checkpoint; then demo-day steps only
+- **Active gate:** G8 — closed 2026-08-27 pending the user's review. **G7 closed 2026-08-27.** **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
 - **Marks secured:** 99 / 100 targeted · the public URL (evidence row 36) is a demo-day step (`make tunnel`)
-- **Next action:** user reviews `docs/report/REPORT.md` and `README.md`; rehearse `docs/DEMO.md` 3×; on demo day `make up && make seed && make tunnel`, paste the public URL into the report and the Phase 2 submission; run `make check` before every commit
+- **Next action:** user runs `/design-sync` to push `web/design/` into the AI design tool (optional iteration there); rehearse `docs/DEMO.md` 3× starting from the landing page; on demo day `make up && make seed && make tunnel`, paste the public URL into the report and the Phase 2 submission; run `make check` before every commit
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -30,6 +30,7 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P5 Frontend Integration | 7 | 84 | G5 | ☑ **done** |
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☑ **done** |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☑ **done** |
+| P8 Landing page & UI/UX | protects FE 5 · UX 1 | 99 | G8 | ☑ **done** |
 
 Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 38 of 40 ticked; row 20 (ML AUC) deliberately not produced — ADR 0017; row 36 (public URL) is `make tunnel` on demo day.
 
@@ -159,6 +160,11 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-08-27 | **Two routes, no router library** (`/` landing, `/app` workspace, resolved in `main.tsx`) | nginx `try_files` already serves both; a router is one more dependency to defend for two static paths | react-router (unneeded surface) |
+| 2026-08-27 | **Design system mirrored into the app, not imported** (`web/design/*.css` copied to `web/src/`) | the AI design tool gets a self-contained bundle; the app has no build-time coupling; drift is caught by eye in the parity screenshots | A shared package (build complexity for one consumer) |
+| 2026-08-27 | **Raster sources declare the village `bounds`** | MapLibre stops requesting tiles outside the COG, removing TiTiler 404s from the console and the tile queue | Leave as is (harmless 404s, noisy console, wasted requests) |
+| 2026-08-27 | **P8 added: landing page + UI/UX pass, the AI design tool first, then code** (user's decision at G7) | The first impression of the live demo and the 6 frontend/UX marks; a token system replaces ad-hoc CSS so the redesign is consistent and cheap to maintain | Polish the existing panels in place (no landing page, no design system) |
+| 2026-08-27 | **Report PDF rendered from the Markdown by `make report`** (python-markdown + headless Chrome) | No pandoc/LaTeX on the machine; one source of truth; figures inlined so the PDF is self-contained | Hand-exported PDF (drifts from the Markdown) |
 | 2026-08-27 | **Postgres healthcheck probes TCP (`pg_isready -h localhost`)**, `make up` retries the migration | On a fresh volume initdb's temporary server answers the unix-socket probe, so the stack reported healthy before the real server restarted — a defect only a clean clone shows | Fixed `sleep` before migrating (masks the cause; slow on slow disks) |
 | 2026-08-27 | **Report lives in the repo as Markdown** (`docs/report/REPORT.md`) with figures linked | Version-controlled, diffable, reviewable at the G7 checkpoint; `pandoc` produces the PDF if the form insists | A separate Word/PDF document (drifts from the code it describes) |
 | 2026-08-27 | **Backup recording = chaos GIF + the captured figure set**, not a fresh screen recording | Every demo beat already has an artifact; a run-through recording is best made by the presenter at rehearsal | A synthetic recording of the automation window (throttled rendering, misleading) |
@@ -242,6 +248,10 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-27 (session 16)
+
+**P8 complete — G8 closed pending review.** Report PDF via `make report`; design brief + design-system bundle + three prototypes in `web/design/`; app rebuilt on tokens with shared primitives and six states per panel; landing page at `/`; Lighthouse 98/96 accessibility; 390 px verified; nginx serves both routes. Defects found by running: a `.site` class collision that collapsed the landing footer, a Vite proxy without WebSocket upgrades that hung job polling in dev, verbose quantity bands. **Next:** G8 checkpoint — the user reviews the landing page and workspace, optionally pushes the bundle to the AI design tool with `/design-sync`.
 
 ### 2026-08-27 (session 15)
 

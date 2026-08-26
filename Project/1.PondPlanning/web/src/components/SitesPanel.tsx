@@ -1,4 +1,5 @@
 import type { SiteCandidate, SitingMethod } from "../types";
+import { Panel } from "../ui";
 
 interface Props {
   sites: SiteCandidate[];
@@ -7,39 +8,36 @@ interface Props {
   onPick: (site: SiteCandidate) => void;
 }
 
-/** Ranked pond sites from the terrain-only siting engine, with per-criterion scores. */
+const ORDER = ["upstream_area", "flatness", "wetness", "impoundment"];
+
+/** Ranked pond sites from the terrain-only siting engine, with per-criterion score bars. */
 export function SitesPanel({ sites, method, rationale, onPick }: Props) {
   if (!sites.length) return null;
   return (
-    <section className="panel">
-      <h2>Suggested pond sites</h2>
+    <Panel title="Suggested sites" meta={method ? `AHP · CR ${(method as unknown as { consistency_ratio?: number }).consistency_ratio?.toFixed(3) ?? ""}`.replace(/ · CR $/, "") : undefined}>
       {rationale && <p className="muted">{rationale}</p>}
-      <ol className="sites">
+      <div>
         {sites.map((s) => (
-          <li key={s.rank}>
-            <button className="linkish" onClick={() => onPick(s)} title="Delineate this site's catchment">
-              #{s.rank} · score {s.score.value.toFixed(2)}
-            </button>
-            <small className="muted">
-              {s.upstream_area.display} upstream · slope {s.local_slope.value.toFixed(1)} % · TWI {s.wetness_index.value.toFixed(1)} · {s.impoundment_volume.display} behind {method?.nominal_rise.display}
-            </small>
-            <div className="bars">
-              {Object.entries(s.criteria).map(([k, v]) => (
-                <span key={k} title={`${k}: ${(v * 100).toFixed(0)} %`} className="bar-mini"><i style={{ width: `${v * 100}%` }} />{k}</span>
-              ))}
+          <div key={s.rank} className="site" role="button" tabIndex={0} onClick={() => onPick(s)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onPick(s); }} title="Delineate this site's catchment">
+            <span className="rank">{s.rank}</span>
+            <div>
+              <div className="small">Upstream {s.upstream_area.display?.split(" (")[0] ?? `${s.upstream_area.value} ${s.upstream_area.unit}`} · slope {s.local_slope.value.toFixed(1)} % · TWI {s.wetness_index.value.toFixed(1)}</div>
+              <div className="bars" aria-label="criterion scores">
+                {ORDER.map((k) => <i key={k} title={`${k}: ${((s.criteria as Record<string, number>)[k] * 100).toFixed(0)} %`}><b style={{ width: `${((s.criteria as Record<string, number>)[k] ?? 0) * 100}%` }} /></i>)}
+              </div>
             </div>
-          </li>
+            <span className="score">{s.score.value.toFixed(2)}</span>
+          </div>
         ))}
-      </ol>
+      </div>
+      <p className="muted">Bars: upstream area · flatness · wetness · impoundment. Click a site to delineate its catchment.</p>
       {method && (
         <details>
           <summary className="muted">How sites are ranked</summary>
           <p className="muted">{method.description}</p>
-          <p className="muted">
-            weights {Object.entries(method.weights).map(([k, v]) => `${k} ${v}`).join(" · ")} · channels ≥ {method.stream_threshold.display} · slope ≤ {method.max_slope.display} · {method.candidates_considered} cells considered
-          </p>
+          <p className="muted">weights {Object.entries(method.weights).map(([k, v]) => `${k} ${v}`).join(" · ")} · channels ≥ {method.stream_threshold.display} · slope ≤ {method.max_slope.display} · {method.candidates_considered} cells considered</p>
         </details>
       )}
-    </section>
+    </Panel>
   );
 }

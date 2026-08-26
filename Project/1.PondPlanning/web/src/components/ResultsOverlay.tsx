@@ -1,12 +1,9 @@
-import type { CatchmentResult, QuantityOut } from "../types";
+import type { CatchmentResult } from "../types";
 import type { PondDesignResult } from "./WaterPanel";
 import type { RainfallStatistics } from "./RainfallPanel";
+import { Badge, Qty } from "../ui";
 
-function Q({ q }: { q: QuantityOut | undefined }) {
-  return q ? <strong title={q.method ?? undefined}>{q.display ?? `${q.value} ${q.unit}`}</strong> : <span className="muted">—</span>;
-}
-
-/** FR8: the six PDF-listed results, together, as one stats panel over the map. */
+/** FR8: the six PDF-listed results, together, as one card over the map. */
 export function ResultsOverlay({ site, catchment, rain, design, villageName }: {
   site: { lon: number; lat: number } | null;
   catchment: CatchmentResult | null;
@@ -18,22 +15,18 @@ export function ResultsOverlay({ site, catchment, rain, design, villageName }: {
   const years = design ? Math.round(design.reliability.value * 25) : null;
   return (
     <aside className="overlay" aria-label="Results overlay">
-      <h3>{villageName}</h3>
-      <dl>
-        <dt>Pond location</dt>
-        <dd>{site ? `${site.lat.toFixed(5)} N, ${site.lon.toFixed(5)} E` : <span className="muted">click the map</span>}</dd>
-        <dt>Catchment area</dt>
-        <dd><Q q={catchment?.area} /></dd>
-        <dt>Annual rainfall (75 %)</dt>
-        <dd><Q q={rain?.dependable_75} /></dd>
-        <dt>Runoff volume (SCS-CN)</dt>
-        <dd><Q q={design?.runoff.recommended.annual_runoff_volume} /></dd>
-        <dt>Pond dimensions</dt>
-        <dd>{design ? `${design.dimensions.top_length.value.toFixed(0)} × ${design.dimensions.top_width.value.toFixed(0)} m, ${design.dimensions.depth.display}` : <span className="muted">—</span>}</dd>
-        <dt>Storage</dt>
-        <dd><Q q={design?.gross_storage} /></dd>
-      </dl>
-      {design && years !== null && <p className="verdict">Fills in about {years} of every 25 years.</p>}
+      <h3>Results · {villageName}</h3>
+      <p className="small">{site ? `Pond location ${site.lat.toFixed(5)} N, ${site.lon.toFixed(5)} E` : <span className="muted">Click the map for a pond location</span>}</p>
+      <div className="qty-grid">
+        <Qty q={catchment?.area} label="Catchment" />
+        <Qty q={rain?.dependable_75} label="Rainfall (75 %)" />
+        <Qty q={design?.runoff.recommended.annual_runoff_volume} label="Runoff (SCS-CN)" />
+        <Qty q={design?.gross_storage} label="Gross storage" />
+      </div>
+      {design && (
+        <p className="small">Pond <b>{design.dimensions.top_length.value.toFixed(0)} × {design.dimensions.top_width.value.toFixed(0)} m</b>, {design.dimensions.depth.display} · fills in about {years} of every 25 years</p>
+      )}
+      {design && <div className="row"><Badge tone={design.confidence === "high" ? "ok" : design.confidence === "moderate" ? "info" : "warn"}>confidence {design.confidence}</Badge></div>}
     </aside>
   );
 }

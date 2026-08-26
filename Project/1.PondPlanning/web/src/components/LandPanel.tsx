@@ -1,5 +1,5 @@
 import type { JobStatus, QuantityOut, ResultWarning } from "../types";
-import { Progress } from "./CatchmentPanel";
+import { Badge, Empty, ErrorBox, Panel, Progress, Warnings } from "../ui";
 
 export interface LandParcel {
   parcel_id: string;
@@ -50,52 +50,50 @@ export function LandPanel({ land, suitability, busy, error, onAssess, onPick, ca
   canAssess: boolean;
   progress: JobStatus | null;
 }) {
+  const badge = busy ? <Badge tone="info">running</Badge> : error ? <Badge tone="error">failed</Badge> : suitability ? <Badge tone="ok">ranked</Badge> : land ? <Badge tone="info">land only</Badge> : undefined;
+  const footer = <><button className="btn btn-sm btn-primary" onClick={onAssess} disabled={!canAssess || busy}>{busy ? "Assessing…" : suitability ? "Re-assess" : "Assess land & rank sites"}</button><span className="muted">reads Sentinel-2 · 60–90 s</span></>;
   return (
-    <section className="panel">
-      <h2>Available land &amp; suitability</h2>
-      <div className="row">
-        <button onClick={onAssess} disabled={!canAssess || busy}>{busy ? "Assessing…" : "Assess land & rank sites"}</button>
-      </div>
-      {error && <p className="error">{error}</p>}
-      {busy && <Progress status={progress} />}
-      {land && (
+    <Panel title="Available land" meta={suitability ? `AHP · CR ${suitability.consistency_ratio.toFixed(3)}` : undefined} badge={badge} footer={footer} defaultOpen={false}>
+      {busy && <Progress status={progress} label="queued" />}
+      {error && !busy && <ErrorBox message={error} onRetry={onAssess} />}
+      {!land && !busy && !error && <Empty>Run the assessment to find land that can be excavated and rank sites on the full criteria set.</Empty>}
+      {land && !busy && (
         <>
-          <p className="verdict">Eligible for excavation: <strong>{land.total_eligible_area.display}</strong> in {land.parcels.length} patches.</p>
+          <p className="small">Eligible for excavation: <b>{land.total_eligible_area.display}</b> in {land.parcels.length} patches.</p>
           <details>
             <summary className="muted">Constraints applied ({land.constraints_applied.length})</summary>
             <ul className="muted small">{land.constraints_applied.map((c) => <li key={c}>{c}</li>)}</ul>
           </details>
-          <ul className="parcels">
-            {land.parcels.slice(0, 6).map((p) => (
-              <li key={p.parcel_id}><strong>{p.area.display}</strong> · {p.lulc_class} · slope {p.mean_slope.value.toFixed(1)} % · ownership {p.ownership_class}</li>
-            ))}
-          </ul>
+          <table className="table">
+            <thead><tr><th>Patch</th><th className="num">Area</th><th>Cover</th><th className="num">Slope</th><th>Ownership</th></tr></thead>
+            <tbody>
+              {land.parcels.slice(0, 6).map((p, i) => (
+                <tr key={p.parcel_id}><td>{i + 1}</td><td className="num">{p.area.display?.split(" (")[0]}</td><td>{p.lulc_class}</td><td className="num">{p.mean_slope.value.toFixed(1)} %</td><td>{p.ownership_class}</td></tr>
+              ))}
+            </tbody>
+          </table>
         </>
       )}
-      {suitability && (
+      {suitability && !busy && (
         <>
-          <h3 className="sub">AHP ranking · CR {suitability.consistency_ratio.toFixed(3)} {suitability.consistency_acceptable ? "✓ < 0.10" : "✗ ≥ 0.10"}</h3>
-          <p className="muted">weights {Object.entries(suitability.weights).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(" · ")}</p>
-          <ol className="sites">
+          <p className="small"><b>Ranked sites</b> · weights {Object.entries(suitability.weights).map(([k, v]) => `${k} ${v.toFixed(2)}`).join(" · ")} · CR {suitability.consistency_ratio.toFixed(3)} {suitability.consistency_acceptable ? "✓" : "✗"}</p>
+          <div>
             {suitability.sites.map((s) => (
-              <li key={s.rank}>
-                <button className="linkish" onClick={() => onPick(s)} title="Delineate this site's catchment">#{s.rank} · score {s.total_score.value.toFixed(2)}</button>
-                <small className="muted">{s.catchment_area.display} upstream · {s.estimated_storage.display}</small>
-                <div className="bars">
-                  {s.criteria.map((c) => (
-                    <span key={c.criterion} className="bar-mini" title={`${c.criterion}: raw ${c.raw_value.display}, score ${c.normalised_score.value.toFixed(2)} × weight ${c.weight.value.toFixed(2)} = ${c.contribution.value.toFixed(3)}`}>
-                      <i style={{ width: `${c.normalised_score.value * 100}%` }} />{c.criterion}
-                    </span>
-                  ))}
+              <div key={s.rank} className="site" role="button" tabIndex={0} onClick={() => onPick(s)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") onPick(s); }} title="Delineate this site's catchment">
+                <span className="rank">{s.rank}</span>
+                <div>
+                  <div className="small">{s.catchment_area.display?.split(" (")[0]} upstream · {s.estimated_storage.display?.split(" (")[0]}</div>
+                  <div className="bars" style={{ gridTemplateColumns: `repeat(${s.criteria.length}, 1fr)` }}>
+                    {s.criteria.map((c) => <i key={c.criterion} title={`${c.criterion}: raw ${c.raw_value.display}, score ${c.normalised_score.value.toFixed(2)} × weight ${c.weight.value.toFixed(2)} = ${c.contribution.value.toFixed(3)}`}><b style={{ width: `${c.normalised_score.value * 100}%` }} /></i>)}
+                  </div>
                 </div>
-              </li>
+                <span className="score">{s.total_score.value.toFixed(2)}</span>
+              </div>
             ))}
-          </ol>
+          </div>
         </>
       )}
-      {(land?.warnings ?? []).concat(suitability?.warnings ?? []).filter((w) => w.code !== "ahp_matrix").map((w) => (
-        <p key={w.code + w.message.slice(0, 12)} className={`warn warn-${w.severity}`}>{w.message}</p>
-      ))}
-    </section>
+      <Warnings items={(land?.warnings ?? []).concat(suitability?.warnings ?? []).filter((w) => w.code !== "ahp_matrix")} />
+    </Panel>
   );
 }

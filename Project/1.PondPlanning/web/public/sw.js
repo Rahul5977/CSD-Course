@@ -5,7 +5,7 @@
 //   * GET /api/...                -> network-first, fall back to the last cached copy
 //     and mark it with the `X-From-Cache` header so the app can show a staleness badge
 //   * everything else             -> network
-const VERSION = "pond-sw-v2";
+const VERSION = "pond-sw-v3";
 const TILE_HOSTS = ["server.arcgisonline.com", "demotiles.maplibre.org"];
 
 self.addEventListener("install", (event) => {
@@ -60,12 +60,12 @@ self.addEventListener("fetch", (event) => {
   if (request.method !== "GET") return;
   const url = new URL(request.url);
   const isTile = TILE_HOSTS.includes(url.host) || url.pathname.startsWith("/tiles/");
-  const isAsset = url.origin === self.location.origin && url.pathname.startsWith("/assets/");
+  const isAsset = url.origin === self.location.origin && url.pathname.startsWith("/assets/") || url.pathname.startsWith("/landing/");
   if (isTile || isAsset) {
     event.respondWith(cacheFirst(request));
   } else if (url.origin === self.location.origin && url.pathname.startsWith("/api/")) {
     event.respondWith(networkFirst(request));
-  } else if (url.origin === self.location.origin && (url.pathname === "/" || url.pathname === "/index.html")) {
+  } else if (url.origin === self.location.origin && (url.pathname === "/" || url.pathname === "/app" || url.pathname === "/index.html")) {
     event.respondWith(networkFirst(request));
   }
 });

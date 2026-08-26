@@ -1,0 +1,44 @@
+/* Pond Planner design tokens — the single source for colour, type, spacing.
+   Government utility tool: dense, high contrast, earth/water palette, one accent. */
+:root {
+  /* colour roles */
+  --paper: #f4f1ea;
+  --panel: #ffffff;
+  --ink: #1b262c;
+  --ink-2: #33424b;
+  --muted: #5b6770;
+  --line: #d9d2c5;
+  --line-strong: #b9b0a0;
+  --water: #0b6e8f;
+  --water-ink: #ffffff;
+  --water-soft: #e3f0f5;
+  --earth: #8a5a2b;
+  --earth-soft: #f1e6d8;
+  --ok: #2f7d32;
+  --ok-soft: #e6f2e6;
+  --warn: #9a6a00;
+  --warn-soft: #fff4d6;
+  --error: #a4262c;
+  --error-soft: #fbe9ea;
+  --info: #3b5b73;
+  --info-soft: #e9eff4;
+  --night: #16232b; /* header / footer ground */
+
+  /* type */
+  --font: "Noto Sans", "Mukta", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "JetBrains Mono", Menlo, Consolas, monospace;
+  --t-xs: 12px; --t-sm: 13px; --t-md: 15px; --t-lg: 17px; --t-xl: 22px; --t-2xl: 32px; --t-3xl: 44px;
+  --lh: 1.45;
+
+  /* space (4-pt grid) */
+  --s-1: 4px; --s-2: 8px; --s-3: 12px; --s-4: 16px; --s-5: 24px; --s-6: 32px; --s-7: 48px; --s-8: 64px;
+
+  /* shape */
+  --r-sm: 4px; --r-md: 8px;
+  --shadow: 0 6px 24px rgba(27, 38, 44, 0.16);
+  --focus: 0 0 0 2px var(--paper), 0 0 0 4px var(--water);
+
+  /* layout */
+  --rail: 380px;
+  --topbar: 52px;
+}
