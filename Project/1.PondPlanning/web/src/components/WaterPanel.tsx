@@ -1,35 +1,5 @@
-import type { JobStatus, QuantityOut, ResultWarning } from "../types";
+import type { JobStatus, PondDesignResult, RunoffResult } from "../types";
 import { Badge, Empty, ErrorBox, Facts, Panel, Progress, Q, Qty, Warnings } from "../ui";
-
-export interface RunoffMethodResult {
-  method: string;
-  annual_runoff_volume: QuantityOut;
-  runoff_coefficient: QuantityOut;
-  parameters: Record<string, QuantityOut>;
-  reference: string;
-}
-export interface RunoffResult {
-  catchment_area: QuantityOut;
-  results: RunoffMethodResult[];
-  recommended: RunoffMethodResult;
-  spread_pct: QuantityOut;
-  warnings: ResultWarning[];
-}
-export interface PondDesignResult {
-  job_id?: string;
-  dimensions: Record<string, QuantityOut>;
-  gross_storage: QuantityOut;
-  live_storage: QuantityOut;
-  dead_storage: QuantityOut;
-  eav_curve: { elevation: QuantityOut; surface_area: QuantityOut; cumulative_volume: QuantityOut }[];
-  reliability: QuantityOut;
-  bill_of_quantities: { excavation_volume: QuantityOut; embankment_volume: QuantityOut; indicative_cost: QuantityOut; cost_basis: string };
-  confidence: "low" | "moderate" | "high";
-  confidence_rationale: string;
-  rainfall_summary: Record<string, QuantityOut>;
-  runoff: RunoffResult;
-  warnings: ResultWarning[];
-}
 
 const LABEL: Record<string, string> = { scs_cn: "SCS-CN (daily)", rational: "Runoff coefficient", empirical_strange: "Strange's table" };
 

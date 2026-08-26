@@ -13,6 +13,23 @@ export type ResultWarning = Schemas["ResultWarning"];
 export type JobAccepted = Schemas["JobAccepted"];
 export type JobStatus = Schemas["JobStatus"];
 
+// FR5–FR7 and FR3 payloads come straight from the generated schema; only the GeoJSON
+// member is re-typed for MapLibre (the wire type is an untyped dict).
+export type MonthlyNormal = Schemas["MonthlyNormal"];
+export type RainfallStatistics = Schemas["RainfallStatistics"];
+export type RunoffMethodResult = Schemas["RunoffMethodResult"];
+export type RunoffResult = Schemas["RunoffResult"];
+/** `job_id` is attached client-side so the recommendation panel can reference the design job. */
+export type PondDesignResult = Schemas["PondDesignResult"] & { job_id?: string };
+export type LandParcel = Schemas["LandParcel"];
+export type AvailableLand = Omit<Schemas["AvailableLandResponse"], "geojson"> & { geojson: FeatureCollection };
+export type CriterionScore = Schemas["CriterionScore"];
+export type SuitableSite = Schemas["SuitableSite"];
+export type SuitabilityResult = Schemas["SuitabilityResult"];
+export type RecommendationOut = Schemas["RecommendationOut"];
+/** A signed-in user: the bearer token plus what the token says about them. */
+export interface Session { username: string; role: string; token: string }
+
 export interface VillageOut {
   id: string;
   name: string;

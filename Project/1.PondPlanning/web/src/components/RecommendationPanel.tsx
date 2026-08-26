@@ -1,19 +1,7 @@
 import { useState } from "react";
 import { api } from "../api";
-import type { QuantityOut } from "../types";
+import type { RecommendationOut, Session } from "../types";
 import { Badge, Callout, Empty, Panel } from "../ui";
-
-export interface RecommendationOut {
-  id: string;
-  village_name: string;
-  status: "draft" | "submitted" | "approved" | "rejected";
-  gross_storage: QuantityOut;
-  depth: QuantityOut;
-  indicative_cost: QuantityOut;
-  confidence: string;
-  created_by: string;
-}
-export interface Session { username: string; role: string; token: string }
 
 /** Save the design, move it through draft → submitted → approved, export it. Role-gated. */
 export function RecommendationPanel({ designJobId, session, onLogin, onLogout }: {

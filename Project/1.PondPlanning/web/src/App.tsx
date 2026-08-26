@@ -1,22 +1,35 @@
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { useCallback, useEffect, useState } from "react";
 import { api, staleState } from "./api";
-import { ResultsOverlay } from "./components/ResultsOverlay";
-import { t, type Lang } from "./i18n";
-import { Badge, Mark } from "./ui";
-import type { JobStatus } from "./types";
 import { CatchmentPanel } from "./components/CatchmentPanel";
+import { LandPanel } from "./components/LandPanel";
 import { LayerControl } from "./components/LayerControl";
 import { MapView } from "./components/MapView";
-import { RainfallPanel, type RainfallStatistics } from "./components/RainfallPanel";
-import { DesignPanel, type PondDesignResult } from "./components/WaterPanel";
-import { LandPanel, type AvailableLand, type SuitabilityResult } from "./components/LandPanel";
-import { RecommendationPanel, type Session } from "./components/RecommendationPanel";
+import { RainfallPanel } from "./components/RainfallPanel";
+import { RecommendationPanel } from "./components/RecommendationPanel";
+import { ResultsOverlay } from "./components/ResultsOverlay";
 import { SitesPanel } from "./components/SitesPanel";
 import { SummaryCard } from "./components/SummaryCard";
 import { UploadPanel } from "./components/UploadPanel";
+import { DesignPanel } from "./components/WaterPanel";
 import { useJob } from "./hooks/useJob";
-import type { CatchmentResult, LayerDescriptor, PourPoint, SiteCandidate, SitingMethod, VillageOut, VillageSummary } from "./types";
+import { useTask } from "./hooks/useTask";
+import { t, type Lang } from "./i18n";
+import type {
+  AvailableLand,
+  CatchmentResult,
+  LayerDescriptor,
+  PondDesignResult,
+  PourPoint,
+  RainfallStatistics,
+  Session,
+  SiteCandidate,
+  SitingMethod,
+  SuitabilityResult,
+  VillageOut,
+  VillageSummary,
+} from "./types";
+import { Badge, Mark } from "./ui";
 
 type Bounds = [number, number, number, number];
 
@@ -26,11 +39,22 @@ function outerRing(geometry: Polygon | MultiPolygon | null): number[][] | null {
   return geometry.type === "Polygon" ? geometry.coordinates[0] : (geometry.coordinates[0]?.[0] ?? null);
 }
 
+/** Bounding box of a boundary ring, or null when there is no ring. */
+function boundsOf(geometry: Polygon | MultiPolygon | null): Bounds | null {
+  const ring = outerRing(geometry);
+  if (!ring) return null;
+  const lons = ring.map((p) => p[0]);
+  const lats = ring.map((p) => p[1]);
+  return [Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)];
+}
+
 const DEFAULT_VISIBLE: Record<string, boolean> = {
   satellite: true, hillshade: true, streams: true, contours: true, catchment: true, sites: true, boundary: true, pond: true,
 };
 
+/** The workspace at /app: one selected village, its terrain, and the four analyses on it. */
 export default function App() {
+  // --- the village and its terrain ---
   const [villages, setVillages] = useState<VillageOut[]>([]);
   const [selected, setSelected] = useState<string>(() => new URLSearchParams(window.location.search).get("village") ?? "");
   const [summary, setSummary] = useState<VillageSummary | null>(null);
@@ -41,26 +65,21 @@ export default function App() {
   const [contourInterval, setContourInterval] = useState(2);
   const [contours, setContours] = useState<FeatureCollection | null>(null);
   const [streams, setStreams] = useState<FeatureCollection | null>(null);
-  const [catchment, setCatchment] = useState<CatchmentResult | null>(null);
-  const [catchmentBusy, setCatchmentBusy] = useState(false);
-  const [catchmentError, setCatchmentError] = useState<string | null>(null);
   const [sites, setSites] = useState<SiteCandidate[]>([]);
   const [siting, setSiting] = useState<SitingMethod | null>(null);
   const [rationale, setRationale] = useState<string | null>(null);
   const [land, setLand] = useState<AvailableLand | null>(null);
-  const [suitability, setSuitability] = useState<SuitabilityResult | null>(null);
-  const [landBusy, setLandBusy] = useState(false);
-  const [landError, setLandError] = useState<string | null>(null);
-  const [design, setDesign] = useState<PondDesignResult | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [designBusy, setDesignBusy] = useState(false);
-  const [designError, setDesignError] = useState<string | null>(null);
-  const [rain, setRain] = useState<RainfallStatistics | null>(null);
-  const [rainBusy, setRainBusy] = useState(false);
-  const [rainError, setRainError] = useState<string | null>(null);
-  const [jobId, setJobId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [progress, setProgress] = useState<Record<string, JobStatus | null>>({});
+
+  // --- the analyses: each one result · busy · error · progress ---
+  const catchment = useTask<CatchmentResult>();
+  const rain = useTask<RainfallStatistics>();
+  const design = useTask<PondDesignResult>();
+  const suitability = useTask<SuitabilityResult>();
+
+  // --- session and shell state ---
+  const [session, setSession] = useState<Session | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
   const [lang, setLang] = useState<Lang>(() => { try { return (localStorage.getItem("lang") as Lang) || "en"; } catch { return "en"; } });
   const [stale, setStale] = useState(staleState.stale);
   const job = useJob(jobId);
@@ -70,7 +89,6 @@ export default function App() {
     return () => { staleState.listeners.delete(setStale); };
   }, []);
   useEffect(() => { try { localStorage.setItem("lang", lang); } catch { /* private mode */ } }, [lang]);
-  const track = (key: string) => (status: JobStatus) => setProgress((p) => ({ ...p, [key]: status.status === "running" || status.status === "queued" ? status : null }));
 
   const refreshVillages = useCallback(async () => {
     const page = await api.villages();
@@ -82,20 +100,36 @@ export default function App() {
     refreshVillages().catch((e) => setLoadError((e as Error).message));
   }, [refreshVillages]);
 
+  const { set: setCatchment, reset: resetCatchment } = catchment;
+  const { reset: resetDesign } = design;
+  const { reset: resetSuitability } = suitability;
+
+  /** Switch village: clear everything derived from the previous one. */
+  const selectVillage = useCallback((id: string) => {
+    setBounds(null);
+    setSites([]);
+    setSiting(null);
+    setRationale(null);
+    resetCatchment();
+    resetDesign();
+    resetSuitability();
+    setSelected(id);
+  }, [resetCatchment, resetDesign, resetSuitability]);
+
   // When the upload job finishes: select its village and show its sites + catchment.
   useEffect(() => {
     if (job?.status !== "succeeded" || !jobId) return;
     api.contourResult(jobId).then(async (result) => {
       await refreshVillages();
-      setSelected(result.village_id);
+      selectVillage(result.village_id);
       setSites(result.candidate_sites);
       setSiting(result.siting);
       setRationale(result.location_rationale);
       setCatchment(result.catchment);
     });
-  }, [job?.status, jobId, refreshVillages]);
+  }, [job?.status, jobId, refreshVillages, selectVillage, setCatchment]);
 
-  // Selecting a village loads its summary, layers, boundary, streams and sites.
+  // Selecting a village loads its summary, layers, boundary, streams, sites and land.
   useEffect(() => {
     if (!selected) return;
     setLoadError(null);
@@ -105,122 +139,92 @@ export default function App() {
         setLayers(l.layers);
         setStreams(st?.geojson ?? null);
         api.availableLand(selected).then(setLand).catch(() => setLand(null));
-        setSuitability(null);
         if (si) {
           setSites(si.candidate_sites);
           setSiting(si.siting);
         }
-        const ring = outerRing(s.village.boundary);
-        if (ring) {
-          setBoundary(s.village.boundary);
-          const lons = ring.map((p) => p[0]);
-          const lats = ring.map((p) => p[1]);
-          setBounds([Math.min(...lons), Math.min(...lats), Math.max(...lons), Math.max(...lats)]);
-        }
+        setBoundary(s.village.boundary);
+        setBounds(boundsOf(s.village.boundary));
       })
       .catch((e) => setLoadError((e as Error).message));
   }, [selected]);
 
   // Rainfall statistics at the village centroid (FR5), once the summary is known.
+  const runRain = rain.run;
   useEffect(() => {
     if (!summary) return;
     const [lon, lat] = summary.village.centroid;
-    setRainBusy(true);
-    setRainError(null);
-    api.rainfallStatistics(lon, lat)
-      .then(setRain)
-      .catch((e) => setRainError((e as Error).message))
-      .finally(() => setRainBusy(false));
-  }, [summary]);
+    void runRain(() => api.rainfallStatistics(lon, lat));
+  }, [summary, runRain]);
 
   useEffect(() => {
     if (!selected) return;
     api.contours(selected, contourInterval).then((c) => setContours(c.geojson)).catch(() => setContours(null));
   }, [selected, contourInterval]);
 
-  const delineate = useCallback(
-    async (point: PourPoint) => {
-      if (!selected) return;
-      setCatchmentBusy(true);
-      setCatchmentError(null);
-      try {
-        setCatchment(await api.catchment(selected, point, track("catchment")));
-      } catch (e) {
-        setCatchmentError((e as Error).message);
-      } finally {
-        setCatchmentBusy(false);
-      }
-    },
-    [selected],
-  );
-
-  const assessLand = useCallback(async () => {
+  const runCatchment = catchment.run;
+  const delineate = useCallback((point: PourPoint) => {
     if (!selected) return;
-    setLandBusy(true);
-    setLandError(null);
-    try {
-      const result = await api.suitability(selected, 8, track("land"));
-      setSuitability(result);
+    void runCatchment((onProgress) => api.catchment(selected, point, onProgress));
+  }, [selected, runCatchment]);
+
+  const runSuitability = suitability.run;
+  const assessLand = useCallback(() => {
+    if (!selected) return;
+    void runSuitability(async (onProgress) => {
+      const result = await api.suitability(selected, 8, onProgress);
       setLand(await api.availableLand(selected));
       setLayers((await api.layers(selected)).layers);
       setVisible((v) => ({ ...v, available_land: true, suitability: true }));
-    } catch (e) {
-      setLandError((e as Error).message);
-    } finally {
-      setLandBusy(false);
-    }
-  }, [selected]);
+      return result;
+    });
+  }, [selected, runSuitability]);
 
-  const designPond = useCallback(async () => {
-    if (!selected || !catchment) return;
-    setDesignBusy(true);
-    setDesignError(null);
-    try {
-      setDesign(await api.pondDesign(selected, catchment.snapped_point, 0.75, track("design")));
-    } catch (e) {
-      setDesignError((e as Error).message);
-    } finally {
-      setDesignBusy(false);
-    }
-  }, [selected, catchment]);
+  const runDesign = design.run;
+  const outlet = catchment.value?.snapped_point ?? null;
+  const designPond = useCallback(() => {
+    if (!selected || !outlet) return;
+    void runDesign((onProgress) => api.pondDesign(selected, outlet, 0.75, onProgress));
+  }, [selected, outlet, runDesign]);
 
   const toggle = (id: string) => setVisible((v) => ({ ...v, [id]: !(v[id] ?? false) }));
-
-  const resetForVillage = (id: string) => { setBounds(null); setCatchment(null); setSites([]); setSiting(null); setRationale(null); setDesign(null); setSelected(id); };
+  const pond = design.value && outlet
+    ? { lon: outlet.lon, lat: outlet.lat, lengthM: design.value.dimensions.top_length.value, widthM: design.value.dimensions.top_width.value }
+    : null;
 
   return (
     <div className="app">
       <header className="topbar">
         <a className="brand" href="/" title="Back to the landing page"><Mark light /><span className="brand-text">{t("title", lang)}</span></a>
-        <select value={selected} onChange={(e) => resetForVillage(e.target.value)} aria-label="Select village">
+        <select value={selected} onChange={(e) => selectVillage(e.target.value)} aria-label="Select village">
           <option value="">— select an analysed area —</option>
           {villages.map((v) => (
             <option key={v.id} value={v.id}>{v.name}{v.district ? ` · ${v.district}` : ""}</option>
           ))}
         </select>
         {stale && <Badge tone="offline">{t("offline", lang)}</Badge>}
-        {rain?.fallback_used === "cache" && !stale && <Badge tone="stale">rainfall from cache</Badge>}
+        {rain.value?.fallback_used === "cache" && !stale && <Badge tone="stale">rainfall from cache</Badge>}
         <span className="spacer" />
         {session && <span className="small" style={{ color: "#cfd8dc" }}>{session.username} · {session.role}</span>}
         <button className="btn btn-sm lang" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label="Toggle language" lang={lang === "en" ? "hi" : "en"}>{lang === "en" ? "हिन्दी" : "EN"}</button>
       </header>
       <aside className="rail" aria-label="Analysis panels">
-        <UploadPanel job={job} hasVillages={villages.length > 0} onSubmitted={(id) => { setBounds(null); setCatchment(null); setSites([]); setJobId(id); }} />
+        <UploadPanel job={job} hasVillages={villages.length > 0} onSubmitted={(id) => { setBounds(null); resetCatchment(); setSites([]); setJobId(id); }} />
         {loadError && <div className="callout callout-critical"><b>Could not load</b> — {loadError}</div>}
         {!villages.length && !job && <div className="empty"><span>No analysed areas yet. Upload a contour map to begin.</span></div>}
         {summary && <SummaryCard summary={summary} />}
         <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
-        {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} progress={progress.catchment ?? null} onDesign={designPond} designBusy={designBusy} />}
-        {selected && <RainfallPanel stats={rain} busy={rainBusy} error={rainError} />}
-        {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} progress={progress.design ?? null} />}
-        {selected && <LandPanel land={land} suitability={suitability} busy={landBusy} error={landError} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} progress={progress.land ?? null} />}
-        {design && <RecommendationPanel designJobId={design.job_id ?? null} session={session} onLogin={setSession} onLogout={() => setSession(null)} />}
+        {selected && <CatchmentPanel catchment={catchment.value} busy={catchment.busy} error={catchment.error} progress={catchment.progress} onDesign={designPond} designBusy={design.busy} />}
+        {selected && <RainfallPanel stats={rain.value} busy={rain.busy} error={rain.error} />}
+        {selected && <DesignPanel design={design.value} busy={design.busy} error={design.error} onDesign={designPond} canDesign={!!outlet} progress={design.progress} />}
+        {selected && <LandPanel land={land} suitability={suitability.value} busy={suitability.busy} error={suitability.error} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} progress={suitability.progress} />}
+        {design.value && <RecommendationPanel designJobId={design.value.job_id ?? null} session={session} onLogin={setSession} onLogout={() => setSession(null)} />}
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>
       <main className="mapwrap">
-        <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} land={land?.geojson ?? null} pond={design && catchment ? { lon: catchment.snapped_point.lon, lat: catchment.snapped_point.lat, lengthM: design.dimensions.top_length.value, widthM: design.dimensions.top_width.value } : null} onClick={delineate} />
-        {selected && !catchment && !catchmentBusy && <span className="hint" role="status">Click anywhere on the map for the catchment of that point</span>}
-        <ResultsOverlay site={catchment?.snapped_point ?? null} catchment={catchment} rain={rain} design={design} villageName={summary?.village.name ?? null} />
+        <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment.value} sites={sites} land={land?.geojson ?? null} pond={pond} onClick={delineate} />
+        {selected && !catchment.value && !catchment.busy && <span className="hint" role="status">Click anywhere on the map for the catchment of that point</span>}
+        <ResultsOverlay site={outlet} catchment={catchment.value} rain={rain.value} design={design.value} villageName={summary?.village.name ?? null} />
       </main>
     </div>
   );

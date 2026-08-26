@@ -1,43 +1,5 @@
-import type { JobStatus, QuantityOut, ResultWarning } from "../types";
+import type { AvailableLand, JobStatus, SuitabilityResult, SuitableSite } from "../types";
 import { Badge, Empty, ErrorBox, Panel, Progress, Warnings } from "../ui";
-
-export interface LandParcel {
-  parcel_id: string;
-  ownership_class: string;
-  area: QuantityOut;
-  mean_slope: QuantityOut;
-  lulc_class: string;
-  eligible: boolean;
-}
-export interface AvailableLand {
-  constraints_applied: string[];
-  total_eligible_area: QuantityOut;
-  parcels: LandParcel[];
-  geojson: GeoJSON.FeatureCollection;
-  warnings: ResultWarning[];
-}
-export interface CriterionScore {
-  criterion: string;
-  raw_value: QuantityOut;
-  normalised_score: QuantityOut;
-  weight: QuantityOut;
-  contribution: QuantityOut;
-}
-export interface SuitableSite {
-  rank: number;
-  location: { lon: number; lat: number };
-  total_score: QuantityOut;
-  criteria: CriterionScore[];
-  catchment_area: QuantityOut;
-  estimated_storage: QuantityOut;
-}
-export interface SuitabilityResult {
-  sites: SuitableSite[];
-  weights: Record<string, number>;
-  consistency_ratio: number;
-  consistency_acceptable: boolean;
-  warnings: ResultWarning[];
-}
 
 /** FR3: available land (constraints + parcels) and the AHP-ranked sites with a per-criterion breakdown. */
 export function LandPanel({ land, suitability, busy, error, onAssess, onPick, canAssess, progress }: {

@@ -1,6 +1,4 @@
-import type { CatchmentResult } from "../types";
-import type { PondDesignResult } from "./WaterPanel";
-import type { RainfallStatistics } from "./RainfallPanel";
+import type { CatchmentResult, PondDesignResult, RainfallStatistics } from "../types";
 import { Badge, Qty } from "../ui";
 
 /** FR8: the six PDF-listed results, together, as one card over the map. */

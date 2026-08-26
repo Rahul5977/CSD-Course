@@ -14,7 +14,7 @@ const ORDER = ["upstream_area", "flatness", "wetness", "impoundment"];
 export function SitesPanel({ sites, method, rationale, onPick }: Props) {
   if (!sites.length) return null;
   return (
-    <Panel title="Suggested sites" meta={method ? `AHP · CR ${(method as unknown as { consistency_ratio?: number }).consistency_ratio?.toFixed(3) ?? ""}`.replace(/ · CR $/, "") : undefined}>
+    <Panel title="Suggested sites" meta={method ? "terrain MCDA" : undefined}>
       {rationale && <p className="muted">{rationale}</p>}
       <div>
         {sites.map((s) => (

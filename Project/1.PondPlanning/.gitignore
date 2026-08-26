@@ -41,3 +41,7 @@ ds-bundle/
 .design-sync/learnings/
 .design-sync/node_modules
 web/ds/dist/
+
+# local working notes, never published
+the working agreement
+.design-sync/

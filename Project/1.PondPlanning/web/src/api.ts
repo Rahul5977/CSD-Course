@@ -1,8 +1,10 @@
-import type { RainfallStatistics } from "./components/RainfallPanel";
-import type { PondDesignResult } from "./components/WaterPanel";
-import type { AvailableLand, SuitabilityResult } from "./components/LandPanel";
-import type { RecommendationOut, Session } from "./components/RecommendationPanel";
 import type {
+  AvailableLand,
+  PondDesignResult,
+  RainfallStatistics,
+  RecommendationOut,
+  Session,
+  SuitabilityResult,
   CatchmentResult,
   ContourAnalysisResult,
   ContourResponse,

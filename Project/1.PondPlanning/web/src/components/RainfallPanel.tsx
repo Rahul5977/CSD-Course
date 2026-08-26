@@ -1,30 +1,5 @@
-import type { QuantityOut, ResultWarning } from "../types";
+import type { RainfallStatistics } from "../types";
 import { Badge, Empty, ErrorBox, Panel, Qty, Q, Skeleton, Warnings } from "../ui";
-
-export interface MonthlyNormal {
-  month: number;
-  mean_rainfall: QuantityOut;
-  rainy_days: QuantityOut;
-}
-
-export interface RainfallStatistics {
-  source: string;
-  years_of_record: number;
-  start_year: number;
-  end_year: number;
-  mean_annual: QuantityOut;
-  median_annual: QuantityOut;
-  dependable_75: QuantityOut;
-  coefficient_of_variation: QuantityOut;
-  monsoon_share: QuantityOut;
-  max_daily_recorded: QuantityOut;
-  rainy_days_mean: QuantityOut;
-  monthly_normals: MonthlyNormal[];
-  data_completeness: QuantityOut;
-  fallback_used: "none" | "cache" | "secondary_provider";
-  attribution: string;
-  warnings: ResultWarning[];
-}
 
 const MONTHS = ["J", "F", "M", "A", "M", "J", "J", "A", "S", "J", "N", "D"];
 
