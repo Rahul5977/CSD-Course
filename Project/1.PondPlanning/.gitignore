@@ -34,7 +34,7 @@ dist/
 .the assistant/settings.local.json
 coverage.json
 
-# design-sync (the AI design tool) machine state — durable inputs under .design-sync/ are committed
+# design-tool sync scratch (never committed)
 .ds-sync/
 ds-bundle/
 .design-sync/.cache/
@@ -42,6 +42,3 @@ ds-bundle/
 .design-sync/node_modules
 web/ds/dist/
 
-# local working notes, never published
-the working agreement
-.design-sync/
