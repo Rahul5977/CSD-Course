@@ -357,7 +357,7 @@
           "villages"
         ],
         "summary": "Get Available Land",
-        "description": "FR3: land eligible for excavation, with the constraints that produced it.",
+        "description": "FR3: land eligible for excavation, with the constraints that produced it.\n\nComputed by the suitability job (``POST /analysis/suitability``) and read\nback here; ``404`` with a hint until that job has run for the village.",
         "operationId": "get_available_land_api_v1_villages__village_id__available_land_get",
         "parameters": [
           {
@@ -371,29 +371,6 @@
               "title": "Village Id"
             },
             "description": "Village identifier"
-          },
-          {
-            "name": "max_slope",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "maximum": 45,
-              "minimum": 0,
-              "default": 5.0,
-              "title": "Max Slope"
-            }
-          },
-          {
-            "name": "min_area_ha",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "number",
-              "exclusiveMinimum": 0,
-              "default": 0.5,
-              "title": "Min Area Ha"
-            }
           }
         ],
         "responses": {
@@ -1456,7 +1433,7 @@
           "analysis"
         ],
         "summary": "Analyse Suitability",
-        "description": "FR3: rank candidate pond sites by AHP-weighted criteria.\n\nResult shape: :class:`~app.schemas.analysis.SuitabilityResult`.",
+        "description": "FR3: land constraints, then rank candidate pond sites by AHP-weighted criteria.\n\nReal since P4. Also produces the available-land parcels, the NDWI water mask\nand the suitability heat-map for the village.\n\nResult shape: :class:`~app.schemas.analysis.SuitabilityResult`.",
         "operationId": "analyse_suitability_api_v1_analysis_suitability_post",
         "requestBody": {
           "content": {
@@ -1630,7 +1607,7 @@
           "analysis"
         ],
         "summary": "Suitability Result",
-        "description": "FR3 result payload.",
+        "description": "FR3 result payload (real since P4).",
         "operationId": "suitability_result_api_v1_analysis_results_suitability__job_id__get",
         "parameters": [
           {

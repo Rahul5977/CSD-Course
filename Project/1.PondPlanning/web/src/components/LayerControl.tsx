@@ -9,6 +9,7 @@ interface Props {
 }
 
 const EXTRA = [
+  { id: "available_land", title: "Available land (FR3)", source: "Specification constraints" },
   { id: "catchment", title: "Catchment", source: "D8 upstream of the clicked point" },
   { id: "sites", title: "Suggested sites", source: "terrain siting score" },
   { id: "boundary", title: "Area boundary", source: "from the upload" },

@@ -47,6 +47,7 @@ class InlineJobRunner:
             tasks.CATCHMENT: tasks.catchment_task,
             tasks.RUNOFF: tasks.runoff_task,
             tasks.POND_DESIGN: tasks.pond_design_task,
+            tasks.SUITABILITY: tasks.suitability_task,
         }[task_name]
         try:
             task.run(str(job_id))

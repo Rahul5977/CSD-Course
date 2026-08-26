@@ -37,6 +37,10 @@ ENGINES_IMPLEMENTED = [
     "design.geometry + optimiser (prismoidal frustum, cost-optimised depth)",
     "design.water_balance (daily balance, fill reliability) + spillway (Kirpich, IMD, weir)",
     "workflows.pond_design (FR7 Builder)",
+    "suitability.constraints (Specification pattern: slope, water, habitation, contiguity)",
+    "suitability.ahp (Saaty eigenvector weights, consistency ratio)",
+    "suitability.water_mask (Sentinel-2 NDWI, Otsu, OpenCV morphology + connected components)",
+    "workflows.suitability (FR3 available land + ranked sites + heat-map)",
 ]
 #: Fixture files whose routes are now real.
 FIXTURES_RETIRED = {
@@ -54,6 +58,8 @@ FIXTURES_RETIRED = {
     "rainfall_series",
     "runoff",
     "pond_design",
+    "suitability",
+    "available_land",
 }
 REAL_ROUTES = [
     "/health",
@@ -82,6 +88,9 @@ REAL_ROUTES = [
     "/api/v1/analysis/results/runoff/{job_id}",
     "/api/v1/analysis/pond-design",
     "/api/v1/analysis/results/pond-design/{job_id}",
+    "/api/v1/analysis/suitability",
+    "/api/v1/analysis/results/suitability/{job_id}",
+    "/api/v1/villages/{village_id}/available-land",
 ]
 
 
@@ -117,7 +126,7 @@ def implementation_status() -> dict[str, object]:
     ``X-Fixture-Data: true`` header and a ``fixture_data`` warning.
     """
     return {
-        "phase": "P3 — Rainfall · Runoff · Pond Design",
+        "phase": "P4 — Suitability & AI",
         "engines_implemented": ENGINES_IMPLEMENTED,
         "fixture_backed": sorted(set(available()) - FIXTURES_RETIRED),
         "real": REAL_ROUTES,

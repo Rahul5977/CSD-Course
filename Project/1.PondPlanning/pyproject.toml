@@ -32,6 +32,7 @@ dependencies = [
     "celery[redis]>=5.6.3",
     "minio>=7.2.20",
     "contourpy>=1.3.3",
+    "opencv-python-headless>=5.0.0.93",
 ]
 
 [dependency-groups]
@@ -109,7 +110,7 @@ strict = true
 
 [[tool.mypy.overrides]]
 # Extend as the geospatial stack lands in P1/P2 (pysheds, richdem, rasterio).
-module = ["geoalchemy2.*", "scipy.*", "rasterio.*", "minio.*", "celery.*", "pysheds.*", "affine.*"]
+module = ["geoalchemy2.*", "scipy.*", "rasterio.*", "minio.*", "celery.*", "pysheds.*", "affine.*", "cv2.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------- pytest

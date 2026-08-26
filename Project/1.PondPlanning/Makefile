@@ -77,6 +77,7 @@ typecheck:  ## Type-check (strict on app/domain and app/engines)
 
 figures:  ## Regenerate the evidence figures in docs/figures from the sample map
 	$(UV) python scripts/make_figures.py
+	$(UV) python scripts/make_water_figure.py
 
 check: lint typecheck test  ## Everything CI runs
 

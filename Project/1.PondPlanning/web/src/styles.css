@@ -77,3 +77,7 @@ details summary { cursor: pointer; }
 .conf-moderate { background: #fff3cd; color: #7a5a00; }
 .conf-low { background: #fdecec; color: var(--error); }
 h3.sub { font-size: 13px; margin: 10px 0 2px; color: var(--muted); }
+
+.parcels { list-style: none; padding: 0; margin: 6px 0; font-size: 13px; }
+.parcels li { padding: 2px 0; border-bottom: 1px dashed var(--line); }
+ul.small { font-size: 12px; padding-left: 16px; }

@@ -13,6 +13,7 @@ interface Props {
   streams: FeatureCollection | null;
   catchment: CatchmentResult | null;
   sites: SiteCandidate[];
+  land: FeatureCollection | null;
   onClick: (point: PourPoint) => void;
 }
 
@@ -27,7 +28,7 @@ function setGeoJSON(m: MLMap, id: string, data: FeatureCollection | Feature) {
 }
 
 /** The map workspace. Raster layers come straight from the API's layer list; vectors are GeoJSON. */
-export function MapView({ layers, visible, boundary, bounds, contours, streams, catchment, sites, onClick }: Props) {
+export function MapView({ layers, visible, boundary, bounds, contours, streams, catchment, sites, land, onClick }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MLMap | null>(null);
   const clickHandler = useRef(onClick);
@@ -109,6 +110,11 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
           paint: { "line-color": "#4fc3f7", "line-width": ["+", 1, ["*", 1.2, ["get", "strahler_order"]]] },
         });
       }
+      setGeoJSON(m, "land", land ?? EMPTY);
+      if (!m.getLayer("vec-land-fill")) {
+        m.addLayer({ id: "vec-land-fill", type: "fill", source: "land", paint: { "fill-color": "#8bc34a", "fill-opacity": 0.3 } });
+        m.addLayer({ id: "vec-land-line", type: "line", source: "land", paint: { "line-color": "#33691e", "line-width": 1.5, "line-dasharray": [2, 1] } });
+      }
       setGeoJSON(m, "catchment", catchment?.geojson ?? EMPTY);
       if (!m.getLayer("vec-catchment-fill")) {
         m.addLayer({ id: "vec-catchment-fill", type: "fill", source: "catchment", filter: ["==", ["get", "kind"], "catchment"], paint: { "fill-color": "#1e88e5", "fill-opacity": 0.28 } });
@@ -131,11 +137,13 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
       show("vec-streams", visible.streams !== false);
       for (const id of ["vec-catchment-fill", "vec-catchment-line", "vec-outlet"]) show(id, visible.catchment !== false);
       show("vec-sites", visible.sites !== false);
+      show("vec-land-fill", visible.available_land === true);
+      show("vec-land-line", visible.available_land === true);
       show("vec-site-labels", visible.sites !== false);
     };
     if (m.isStyleLoaded()) apply();
     else m.once("load", apply);
-  }, [boundary, contours, streams, catchment, sites, visible]);
+  }, [boundary, contours, streams, catchment, sites, land, visible]);
 
   useEffect(() => {
     if (map.current && bounds) {

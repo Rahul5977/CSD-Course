@@ -1,5 +1,6 @@
 import type { RainfallStatistics } from "./components/RainfallPanel";
 import type { PondDesignResult } from "./components/WaterPanel";
+import type { AvailableLand, SuitabilityResult } from "./components/LandPanel";
 import type {
   CatchmentResult,
   ContourAnalysisResult,
@@ -87,6 +88,19 @@ export const api = {
     const status = await waitForJob(accepted.job_id, 1000, 300_000);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
     return fetch(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
+  },
+  async suitability(villageId: string, topN = 8): Promise<SuitabilityResult> {
+    const accepted = await fetch(`${BASE}/analysis/suitability`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ village_id: villageId, top_n: topN }),
+    }).then(json<JobAccepted>);
+    const status = await waitForJob(accepted.job_id, 1500, 600_000);
+    if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
+    return fetch(`${BASE}/analysis/results/suitability/${accepted.job_id}`).then(json<SuitabilityResult>);
+  },
+  availableLand(villageId: string): Promise<AvailableLand | null> {
+    return fetch(`${BASE}/villages/${villageId}/available-land`).then((r) => (r.ok ? r.json() : null));
   },
   rainfallStatistics(lon: number, lat: number): Promise<RainfallStatistics> {
     return fetch(`${BASE}/rainfall/statistics?lon=${lon}&lat=${lat}`).then(json<RainfallStatistics>);

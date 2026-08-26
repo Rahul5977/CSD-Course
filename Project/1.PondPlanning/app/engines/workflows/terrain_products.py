@@ -66,6 +66,15 @@ PRODUCTS: dict[str, RasterProduct] = {
         "flow_accumulation.tif", "flow_accumulation", "Flow accumulation (log10 cells)",
         "log10 cells", "magma", "D8 (O'Callaghan & Mark 1984), descending-elevation pass",
     ),
+    "water_mask": RasterProduct(
+        "water_mask.tif", "water_mask", "Existing water (NDWI)", None, "blues",
+        "Sentinel-2 NDWI, Otsu threshold, OpenCV open/close + connected components",
+        dtype="uint8", nodata=None, fixed_range=(0, 1),
+    ),
+    "suitability": RasterProduct(
+        "suitability.tif", "suitability", "Suitability (AHP)", "score 0-1", "ylgn",
+        "weighted linear combination of fuzzy criteria over eligible land", fixed_range=(0, 1),
+    ),
 }  # fmt: skip
 
 #: Vector products written as GeoJSON to the store.

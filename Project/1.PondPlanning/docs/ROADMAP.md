@@ -67,11 +67,11 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 - [x] Existing-pond comparison recorded honestly, including the error — `docs/figures/p3-existing-pond-comparison.md`
 - [x] **FR5 + FR6 + FR7 complete · 70 marks secured**
 
-### G4 — Suitability
-- [ ] `POST /analysis/suitability` → ranked sites with per-criterion breakdown
-- [ ] AHP consistency ratio computed and **CR < 0.10** asserted
-- [ ] Sanity check recorded: do top-ranked sites land near existing tanks?
-- [ ] **FR3 complete · 77 marks secured**
+### G4 — Suitability ✅ **closed 2026-08-26**
+- [x] `POST /analysis/suitability` → ranked sites with per-criterion breakdown (raw value, membership, weight, contribution)
+- [x] AHP consistency ratio computed and **CR < 0.10** asserted — CR 0.011 for the default matrix; `tests/golden/test_suitability.py` also checks an intransitive matrix is rejected
+- [x] Sanity check recorded: do top-ranked sites land near existing tanks? — No, and correctly: the mapped tanks are canal-fed with 2–11 ha catchments (`docs/figures/p3-existing-pond-comparison.md`); the ranked sites are the rain-fed positions
+- [x] **FR3 complete · 77 marks secured**
 
 ### G5 — Frontend
 - [ ] All six PDF-listed overlays simultaneously toggleable — **FR8 done**
@@ -198,10 +198,10 @@ Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figur
 | 15 | Runoff three-method comparison range | FR6 5 | P3 | ☑ `p3-design-panel.jpg` methods table; `tests/test_runoff_flow.py` |
 | 16 | EAV curve figure | FR7 6 | P3 | ☑ `p3-design-panel.jpg` EAV chart (SVG) |
 | 17 | **Existing-pond comparison note** | FR7 6 + credibility | P3 | ☑ `docs/figures/p3-existing-pond-comparison.md` |
-| 18 | AHP matrix + CR value | Code patterns 4 | P4 | ☐ |
-| 19 | NDWI water-mask before/after OpenCV cleanup | FR3 4 | P4 | ☐ |
-| 20 | ML AUC under spatial block CV | Validation 2 | P4 | ☐ |
-| 21 | SHAP explanation panel screenshot | FR3 | P4 | ☐ |
+| 18 | AHP matrix + CR value | Code patterns 4 | P4 | ☑ default Saaty matrix + CR 0.011 in every suitability response (`ahp_matrix` warning); `app/engines/suitability/ahp.py` |
+| 19 | NDWI water-mask before/after OpenCV cleanup | FR3 4 | P4 | ☑ `docs/figures/p4-ndwi-opencv.png` |
+| 20 | ML AUC under spatial block CV | Validation 2 | P4 | ☐ not produced by design — ML deferred, ADR 0017 |
+| 21 | SHAP explanation panel screenshot | FR3 | P4 | ☑ per-criterion contribution bars in the UI (`p4-land-suitability.jpg`) — SHAP deferred with the ML path |
 | 22 | All-overlays-on screenshot (six layers) | FR8 5 + FE 1 | P5 | ☐ |
 | 23 | Phone-viewport screenshot | FE 1 | P5 | ☐ |
 | 24 | Loading/error/stale state screenshots | FE 1 | P5 | ☐ |

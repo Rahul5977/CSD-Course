@@ -6,6 +6,7 @@ import { LayerControl } from "./components/LayerControl";
 import { MapView } from "./components/MapView";
 import { RainfallPanel, type RainfallStatistics } from "./components/RainfallPanel";
 import { DesignPanel, type PondDesignResult } from "./components/WaterPanel";
+import { LandPanel, type AvailableLand, type SuitabilityResult } from "./components/LandPanel";
 import { SitesPanel } from "./components/SitesPanel";
 import { SummaryCard } from "./components/SummaryCard";
 import { UploadPanel } from "./components/UploadPanel";
@@ -41,6 +42,10 @@ export default function App() {
   const [sites, setSites] = useState<SiteCandidate[]>([]);
   const [siting, setSiting] = useState<SitingMethod | null>(null);
   const [rationale, setRationale] = useState<string | null>(null);
+  const [land, setLand] = useState<AvailableLand | null>(null);
+  const [suitability, setSuitability] = useState<SuitabilityResult | null>(null);
+  const [landBusy, setLandBusy] = useState(false);
+  const [landError, setLandError] = useState<string | null>(null);
   const [design, setDesign] = useState<PondDesignResult | null>(null);
   const [designBusy, setDesignBusy] = useState(false);
   const [designError, setDesignError] = useState<string | null>(null);
@@ -83,6 +88,8 @@ export default function App() {
         setSummary(s);
         setLayers(l.layers);
         setStreams(st?.geojson ?? null);
+        api.availableLand(selected).then(setLand).catch(() => setLand(null));
+        setSuitability(null);
         if (si) {
           setSites(si.candidate_sites);
           setSiting(si.siting);
@@ -131,6 +138,23 @@ export default function App() {
     [selected],
   );
 
+  const assessLand = useCallback(async () => {
+    if (!selected) return;
+    setLandBusy(true);
+    setLandError(null);
+    try {
+      const result = await api.suitability(selected);
+      setSuitability(result);
+      setLand(await api.availableLand(selected));
+      setLayers((await api.layers(selected)).layers);
+      setVisible((v) => ({ ...v, available_land: true, suitability: true }));
+    } catch (e) {
+      setLandError((e as Error).message);
+    } finally {
+      setLandBusy(false);
+    }
+  }, [selected]);
+
   const designPond = useCallback(async () => {
     if (!selected || !catchment) return;
     setDesignBusy(true);
@@ -168,11 +192,12 @@ export default function App() {
         {summary && <SummaryCard summary={summary} />}
         {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} />}
         {selected && <RainfallPanel stats={rain} busy={rainBusy} error={rainError} />}
+        {selected && <LandPanel land={land} suitability={suitability} busy={landBusy} error={landError} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} />}
         {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} />}
         <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>
-      <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} onClick={delineate} />
+      <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} land={land?.geojson ?? null} onClick={delineate} />
     </div>
   );
 }

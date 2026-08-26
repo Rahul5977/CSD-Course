@@ -40,9 +40,11 @@ REAL_PREFIXES = (
     "/api/v1/analysis/results/runoff/",
     "/api/v1/analysis/pond-design",
     "/api/v1/analysis/results/pond-design/",
+    "/api/v1/analysis/suitability",
+    "/api/v1/analysis/results/suitability/",
 )
-#: Real routes that are fixture-backed for a *sub*-path (available-land, parcels).
-FIXTURE_EXCEPTIONS = ("/available-land", "parcels:import")
+#: Real routes that are fixture-backed for a *sub*-path (parcel import).
+FIXTURE_EXCEPTIONS = ("parcels:import",)
 
 #: (method, path, expected_status). Written out rather than derived from the app,
 #: so that deleting a route breaks a test instead of silently shrinking the suite.
@@ -58,7 +60,7 @@ CONTRACT: list[tuple[str, str, int]] = [
     ("GET", f"/api/v1/villages/{UUID_}/summary", 404),
     ("GET", f"/api/v1/villages/{UUID_}/imagery", 404),
     ("GET", f"/api/v1/villages/{UUID_}/siting", 404),
-    ("GET", f"/api/v1/villages/{UUID_}/available-land", 200),
+    ("GET", f"/api/v1/villages/{UUID_}/available-land", 404),
     ("GET", f"/api/v1/terrain/{UUID_}/layers", 404),
     ("GET", f"/api/v1/terrain/{UUID_}/dem", 404),
     ("GET", f"/api/v1/terrain/{UUID_}/contours", 404),
@@ -75,15 +77,13 @@ CONTRACT: list[tuple[str, str, int]] = [
     ("GET", f"/api/v1/analysis/results/catchment/{UUID_}", 404),
     ("GET", f"/api/v1/analysis/results/runoff/{UUID_}", 404),
     ("GET", f"/api/v1/analysis/results/pond-design/{UUID_}", 404),
-    ("GET", f"/api/v1/analysis/results/suitability/{UUID_}", 200),
+    ("GET", f"/api/v1/analysis/results/suitability/{UUID_}", 404),
     ("GET", f"/api/v1/analysis/results/contour/{UUID_}", 404),
     ("GET", "/api/v1/meta/errors", 200),
     ("GET", "/api/v1/meta/implementation-status", 200),
 ]
 
-ANALYSIS_POSTS: list[tuple[str, dict[str, object]]] = [
-    ("/api/v1/analysis/suitability", {"village_id": UUID_}),
-]
+ANALYSIS_POSTS: list[tuple[str, dict[str, object]]] = []
 
 
 @pytest.mark.parametrize(("method", "path", "expected"), CONTRACT)
@@ -93,6 +93,7 @@ def test_every_route_answers(client: TestClient, method: str, path: str, expecte
     assert response.status_code == expected, response.text
 
 
+@pytest.mark.skipif(not ANALYSIS_POSTS, reason="every analysis route is real now")
 @pytest.mark.parametrize(("path", "payload"), ANALYSIS_POSTS)
 def test_analysis_routes_return_202_with_a_poll_url(
     client: TestClient, path: str, payload: dict[str, object]
@@ -154,11 +155,11 @@ def test_implementation_status_reports_the_p2_engines(client: TestClient) -> Non
     """The honest self-report. This test changes when each engine lands."""
     body = client.get("/api/v1/meta/implementation-status").json()
 
-    assert body["phase"].startswith("P3")
+    assert body["phase"].startswith("P4")
     assert any("hydrology.catchment" in engine for engine in body["engines_implemented"])
     assert "villages" not in body["fixture_backed"]
     assert "catchment" not in body["fixture_backed"]
-    assert "suitability" in body["fixture_backed"]
+    assert "recommendations" in body["fixture_backed"]
     assert "/api/v1/analysis/catchment" in body["real"]
 
 

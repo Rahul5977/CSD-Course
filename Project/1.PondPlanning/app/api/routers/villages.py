@@ -16,8 +16,8 @@ from fastapi import APIRouter, Path, Query, UploadFile, status
 from app.api.deps import FixtureRoute, PaginationDep, ReposDep, StoreDep
 from app.domain.errors import NotFoundError
 from app.engines.village import describe_village, imagery_layer, village_summary
+from app.engines.workflows.suitability import AVAILABLE_LAND_KEY
 from app.engines.workflows.terrain_products import SITING_KEY
-from app.providers import fixtures
 from app.repositories.records import DEMAssetRecord, VillageRecord
 from app.schemas.common import JobAccepted, Page
 from app.schemas.village import (
@@ -112,18 +112,21 @@ def get_siting(village_id: VillageId, repos: ReposDep, store: StoreDep) -> dict[
     return dict(json.loads(store.get(key)))
 
 
-@router.get(
-    "/{village_id}/available-land",
-    response_model=AvailableLandResponse,
-    dependencies=[FixtureRoute],
-)
+@router.get("/{village_id}/available-land", response_model=AvailableLandResponse)
 def get_available_land(
-    village_id: VillageId,
-    max_slope: Annotated[float, Query(ge=0, le=45)] = 5.0,
-    min_area_ha: Annotated[float, Query(gt=0)] = 0.5,
+    village_id: VillageId, repos: ReposDep, store: StoreDep
 ) -> AvailableLandResponse:
-    """FR3: land eligible for excavation, with the constraints that produced it."""
-    return AvailableLandResponse.model_validate(fixtures.load("available_land"))
+    """FR3: land eligible for excavation, with the constraints that produced it.
+
+    Computed by the suitability job (``POST /analysis/suitability``) and read
+    back here; ``404`` with a hint until that job has run for the village.
+    """
+    _require_dem(repos, village_id)
+    key = f"villages/{village_id}/{AVAILABLE_LAND_KEY}"
+    if not store.exists(key):
+        msg = "available land not computed yet — run POST /analysis/suitability for this village"
+        raise NotFoundError(msg, {"village_id": str(village_id)})
+    return AvailableLandResponse.model_validate_json(store.get(key))
 
 
 @router.post(

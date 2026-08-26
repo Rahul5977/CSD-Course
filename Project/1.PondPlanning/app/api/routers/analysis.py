@@ -17,11 +17,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, Form, UploadFile, status
 
-from app.api.deps import FixtureRoute, ReposDep, RunnerDep, SettingsDep, StoreDep
+from app.api.deps import ReposDep, RunnerDep, SettingsDep, StoreDep
 from app.api.uploads import read_contour_upload
 from app.domain.errors import NotFoundError
-from app.jobs.tasks import CATCHMENT, CONTOUR_ANALYSIS, POND_DESIGN, RUNOFF
-from app.providers import fixtures
+from app.jobs.tasks import CATCHMENT, CONTOUR_ANALYSIS, POND_DESIGN, RUNOFF, SUITABILITY
 from app.schemas.analysis import (
     CatchmentRequest,
     CatchmentResult,
@@ -97,18 +96,23 @@ def analyse_pond_design(
     return _accepted(str(job.id), 60)
 
 
-@router.post(
-    "/suitability",
-    response_model=JobAccepted,
-    status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[FixtureRoute],
-)
-def analyse_suitability(payload: SuitabilityRequest) -> JobAccepted:
-    """FR3: rank candidate pond sites by AHP-weighted criteria.
+@router.post("/suitability", response_model=JobAccepted, status_code=status.HTTP_202_ACCEPTED)
+def analyse_suitability(
+    payload: SuitabilityRequest, repos: ReposDep, runner: RunnerDep
+) -> JobAccepted:
+    """FR3: land constraints, then rank candidate pond sites by AHP-weighted criteria.
+
+    Real since P4. Also produces the available-land parcels, the NDWI water mask
+    and the suitability heat-map for the village.
 
     Result shape: :class:`~app.schemas.analysis.SuitabilityResult`.
     """
-    return _accepted("c8f2a641-9d3b-4e7c-a512-6b8f3d9c2e47", 40)
+    if repos.villages.get(payload.village_id) is None:
+        msg = "no such village"
+        raise NotFoundError(msg, {"village_id": str(payload.village_id)})
+    job = repos.jobs.create(SUITABILITY_KIND, payload.model_dump(mode="json"), payload.village_id)
+    runner.submit(SUITABILITY, job.id)
+    return _accepted(str(job.id), 60)
 
 
 # The Phase 2 submission route. Mounted outside /analysis at the path the brief
@@ -159,6 +163,7 @@ CONTOUR_ANALYSIS_KIND = "contour_analysis"
 CATCHMENT_KIND = "catchment"
 RUNOFF_KIND = "runoff"
 POND_DESIGN_KIND = "pond_design"
+SUITABILITY_KIND = "suitability"
 
 
 # Result-shape routes. These exist so the OpenAPI document — and therefore the
@@ -192,12 +197,10 @@ def pond_design_result(job_id: UUID, repos: ReposDep) -> PondDesignResult:
     return PondDesignResult.model_validate(_finished(repos, job_id, POND_DESIGN_KIND))
 
 
-@results_router.get(
-    "/suitability/{job_id}", response_model=SuitabilityResult, dependencies=[FixtureRoute]
-)
-def suitability_result(job_id: UUID) -> SuitabilityResult:
-    """FR3 result payload."""
-    return SuitabilityResult.model_validate(fixtures.load("suitability"))
+@results_router.get("/suitability/{job_id}", response_model=SuitabilityResult)
+def suitability_result(job_id: UUID, repos: ReposDep) -> SuitabilityResult:
+    """FR3 result payload (real since P4)."""
+    return SuitabilityResult.model_validate(_finished(repos, job_id, SUITABILITY_KIND))
 
 
 @results_router.get("/contour/{job_id}", response_model=ContourAnalysisResult)
