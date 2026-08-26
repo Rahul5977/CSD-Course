@@ -21,7 +21,9 @@
 - The design system is mirrored, not imported: `web/design/{tokens,components}.css` are copied verbatim to `web/src/{tokens,ui}.css`. the AI design tool gets a self-contained bundle; the app has no build-time coupling to it.
 - the AI design tool push is the user's step (`/design-sync` is reserved for explicit invocation); the bundle is ready in `web/design/`.
 
+- `/design-sync` (full converter, user's choice): the primitives became a real package `web/ds` (`pond-planner-ui`, 19 components with JSDoc'd props; the app now imports it). Converter build → validate (render check 19/19, two `cardMode: column` overrides) → 19 authored previews graded good on the absolute rubric → conventions header validated against the built CSS → 102 files uploaded to the the AI design tool project *Pond Planner Design System*.
+
 ## Tomorrow's three tasks
-1. Run `/design-sync` to push `web/design/` to a the AI design tool project and iterate on the prototypes there if wanted.
+1. Open the the AI design tool project and skim the component pane; report anything that looks off-brand.
 2. Rehearse `docs/DEMO.md` from the landing page.
 3. `make tunnel` on demo day.

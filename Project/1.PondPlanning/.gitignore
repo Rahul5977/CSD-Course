@@ -33,3 +33,11 @@ dist/
 # Local agent settings
 .the assistant/settings.local.json
 coverage.json
+
+# design-sync (the AI design tool) machine state — durable inputs under .design-sync/ are committed
+.ds-sync/
+ds-bundle/
+.design-sync/.cache/
+.design-sync/learnings/
+.design-sync/node_modules
+web/ds/dist/

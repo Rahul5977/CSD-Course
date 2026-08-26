@@ -99,7 +99,7 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 ### G8 — Landing page & UI/UX
 - [x] Landing page at `/` on the Docker stack (nginx 200; `p8-landing.jpg`); every claim maps to a shipped feature; links to `/app`, `/docs`, the report, ADRs, licences, the repo
 - [x] Workspace on the token system; six named states designed (`p8-proto-states.jpg`) and coded in `ui.tsx` + every panel (`p8-app-workspace.jpg`, `p8-app-design.jpg`)
-- [x] Design-system bundle in `web/design/` with `@dsCard` cards and three prototypes; parity pair `p8-proto-landing.jpg` / `p8-landing.jpg`. Push to the AI design tool = user runs `/design-sync` (reserved for explicit invocation)
+- [x] Design system as a real package (`web/ds`, `pond-planner-ui`, 19 components) synced to the AI design tool (`/design-sync`: render check 19/19, all cells graded good); `web/design/` prototypes; parity pair `p8-proto-landing.jpg` / `p8-landing.jpg`
 - [x] Lighthouse accessibility 100 on `/` and `/app`, best practices 100 / 96, SEO 100 · 390 px (`p8-phone-390.jpg`) · `make check` and `npm run build` green
 
 ## 3. Stop-and-fix rules
@@ -233,7 +233,7 @@ Added for the **Phase 2 submission**, which is graded separately (§4):
 | 35 | `POST /analyzeContour` working on `data/samples/contours_1m.kml` | Working endpoint + catchment estimation | P2 | ☑ `make seed`; browser + API |
 | 36 | Public URL for that route, reachable from another machine | Phase 2 report requirement | P2 | ◐ `make tunnel` (ngrok) — started on demo day, URL pasted into the report |
 | 37 | A second contour KML (elevation in Z or `ExtendedData`, not `<name>`) parsing through the same code path | "Extensibility to generalized contour maps" | P2 | ☑ `tests/test_contour_kml.py` (Z, `ExtendedData`, KMZ, `<Folder>` root, ID decoy rejected) |
-| 39 | Design brief + design-system bundle pushed to the AI design tool | Frontend 2 · UX 1 | P8 | ◐ bundle in `web/design/`, brief in `docs/design/BRIEF.md`; push via `/design-sync` |
+| 39 | Design brief + design-system bundle pushed to the AI design tool | Frontend 2 · UX 1 | P8 | ☑ `pond-planner-ui` (19 components, authored previews) synced to the AI design tool project `8430ca8e…` via `/design-sync` |
 | 40 | Landing-page prototype and coded page, screenshot pair | Frontend 2 | P8 | ☑ `p8-proto-landing.jpg` / `p8-landing.jpg` |
 | 41 | Workspace redesign — six panel states, screenshot sheet | UX 1 | P8 | ☑ `p8-proto-states.jpg`, `p8-app-workspace.jpg`, `p8-app-design.jpg` |
 | 42 | Lighthouse accessibility report ≥ 90 on `/` and `/app` | Frontend 1 | P8 | ☑ 100 / 100 — `docs/figures/p8-lighthouse-*.html` |

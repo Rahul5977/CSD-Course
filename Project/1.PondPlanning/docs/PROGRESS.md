@@ -160,6 +160,7 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-08-27 | **UI primitives extracted into a package (`web/ds`, `pond-planner-ui`)** so the AI design tool builds with the real compiled components | The design-sync converter binds a compiled `dist/` + `.d.ts`; a hand-authored HTML bundle would give the AI design tool the look but not the parts. The app imports the same source, so there is one implementation | Lightweight HTML-only bundle (no component contract) |
 | 2026-08-27 | **Two routes, no router library** (`/` landing, `/app` workspace, resolved in `main.tsx`) | nginx `try_files` already serves both; a router is one more dependency to defend for two static paths | react-router (unneeded surface) |
 | 2026-08-27 | **Design system mirrored into the app, not imported** (`web/design/*.css` copied to `web/src/`) | the AI design tool gets a self-contained bundle; the app has no build-time coupling; drift is caught by eye in the parity screenshots | A shared package (build complexity for one consumer) |
 | 2026-08-27 | **Raster sources declare the village `bounds`** | MapLibre stops requesting tiles outside the COG, removing TiTiler 404s from the console and the tile queue | Leave as is (harmless 404s, noisy console, wasted requests) |
