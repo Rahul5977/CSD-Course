@@ -13,6 +13,8 @@
 
 - The clean-clone gate check found two install defects invisible on a warm volume: Postgres's initdb temporary server answers `pg_isready` over the unix socket, so the healthcheck passed before the real server was up and the first `alembic upgrade head` was refused; and `beat` crash-looped on `Permission denied: 'celerybeat-schedule'` because the image runs unprivileged. Fixed: healthcheck probes TCP (`-h localhost`), `make up` retries the migration, the schedule file lives in `/tmp`, and `make seed` waits for `/ready` and fails with a message instead of a traceback. Both are now rows in the README troubleshooting table.
 
+- Second clean-clone run after the fixes: green end to end in 52 s (`make up` 49 s, `make seed` 2 s), every service healthy, tagged `v1.0`.
+
 ## Screenshot
 `docs/figures/p7-coverage.jpg`
 
