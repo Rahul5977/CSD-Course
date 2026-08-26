@@ -1,40 +1,17 @@
 import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
+import type { components } from "./generated/openapi";
 
-// Wire types, mirroring app/schemas. Generated typing (openapi-typescript)
-// replaces this file in P5; for now a hand copy keeps the toolchain small.
+// Wire types. The generic envelopes come straight from the OpenAPI document
+// (`npm run gen:api` regenerates src/generated/openapi.d.ts from
+// docs/api/openapi.json), so a contract change fails the frontend build.
+// Result payloads keep hand-written shapes where the generated ones are too
+// loose for the map (GeoJSON geometry is `dict` on the wire).
+type Schemas = components["schemas"];
 
-export interface QuantityOut {
-  value: number;
-  unit: string;
-  uncertainty_pct: number | null;
-  low: number | null;
-  high: number | null;
-  method: string | null;
-  display: string | null;
-}
-
-export interface ResultWarning {
-  code: string;
-  message: string;
-  severity: "info" | "caution" | "critical";
-}
-
-export interface JobAccepted {
-  job_id: string;
-  status: "queued";
-  poll_url: string;
-  estimated_seconds: number;
-}
-
-export interface JobStatus {
-  job_id: string;
-  kind: string;
-  status: "queued" | "running" | "succeeded" | "failed" | "cancelled";
-  progress: number;
-  stage: string | null;
-  error: { code: string; title: string } | null;
-  result_url: string | null;
-}
+export type QuantityOut = Schemas["QuantityOut"];
+export type ResultWarning = Schemas["ResultWarning"];
+export type JobAccepted = Schemas["JobAccepted"];
+export type JobStatus = Schemas["JobStatus"];
 
 export interface VillageOut {
   id: string;

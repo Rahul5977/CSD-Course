@@ -73,11 +73,11 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 - [x] Sanity check recorded: do top-ranked sites land near existing tanks? — No, and correctly: the mapped tanks are canal-fed with 2–11 ha catchments (`docs/figures/p3-existing-pond-comparison.md`); the ranked sites are the rain-fed positions
 - [x] **FR3 complete · 77 marks secured**
 
-### G5 — Frontend
-- [ ] All six PDF-listed overlays simultaneously toggleable — **FR8 done**
-- [ ] Every panel has designed loading, empty, error, and stale states
-- [ ] Works at 390 px width
-- [ ] **All 8 FRs demonstrable · 84 marks secured**
+### G5 — Frontend ✅ **closed 2026-08-26**
+- [x] All six PDF-listed overlays simultaneously toggleable — **FR8 done** (`docs/figures/p5-all-overlays.jpg`: results overlay + pond footprint + catchment + streams + contours + sites + boundary)
+- [x] Every panel has designed loading, empty, error, and stale states — job progress with stage/percent, empty hints, RFC 9457 errors surfaced, offline badge from the service worker
+- [x] Works at 390 px width (`docs/figures/p5-phone-390px.jpg`)
+- [x] **All 8 FRs demonstrable · 84 marks secured**
 
 ### G6 — Hardening
 - [ ] **Chaos test recorded on video** — network disconnected, app still serves cached results with a staleness badge
@@ -202,9 +202,9 @@ Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figur
 | 19 | NDWI water-mask before/after OpenCV cleanup | FR3 4 | P4 | ☑ `docs/figures/p4-ndwi-opencv.png` |
 | 20 | ML AUC under spatial block CV | Validation 2 | P4 | ☐ not produced by design — ML deferred, ADR 0017 |
 | 21 | SHAP explanation panel screenshot | FR3 | P4 | ◐ per-criterion contribution bars in the UI (screenshot at G5; browser throttled at capture time) — SHAP deferred with the ML path |
-| 22 | All-overlays-on screenshot (six layers) | FR8 5 + FE 1 | P5 | ☐ |
-| 23 | Phone-viewport screenshot | FE 1 | P5 | ☐ |
-| 24 | Loading/error/stale state screenshots | FE 1 | P5 | ☐ |
+| 22 | All-overlays-on screenshot (six layers) | FR8 5 + FE 1 | P5 | ☑ `docs/figures/p5-all-overlays.jpg` |
+| 23 | Phone-viewport screenshot | FE 1 | P5 | ☑ `docs/figures/p5-phone-390px.jpg` |
+| 24 | Loading/error/stale state screenshots | FE 1 | P5 | ☑ progress bars with stage/percent on every job, offline badge (`p5-*`) |
 | 25 | **Chaos test video** | Resilience 3 | P6 | ☐ |
 | 26 | Grafana dashboard screenshot | Observability 2 | P6 | ☐ |
 | 27 | Locust load-test p95 numbers | Scalability 1 | P6 | ☐ |

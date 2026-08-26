@@ -1,16 +1,26 @@
-import type { CatchmentResult, QuantityOut } from "../types";
+import type { CatchmentResult, JobStatus, QuantityOut } from "../types";
 
 function Q({ q }: { q: QuantityOut }) {
   return <strong title={q.method ?? undefined}>{q.display ?? `${q.value} ${q.unit}`}</strong>;
 }
 
 /** FR4: the delineated catchment, with the snap distance front and centre. */
-export function CatchmentPanel({ catchment, busy, error }: { catchment: CatchmentResult | null; busy: boolean; error: string | null }) {
+export function Progress({ status }: { status: JobStatus | null }) {
+  if (!status) return null;
+  return (
+    <div className="job job-running" aria-live="polite">
+      <div className="bar"><div className="fill" style={{ width: `${status.progress}%` }} /></div>
+      <span>{status.progress}% {status.stage ? `· ${status.stage}` : ""}</span>
+    </div>
+  );
+}
+
+export function CatchmentPanel({ catchment, busy, error, progress }: { catchment: CatchmentResult | null; busy: boolean; error: string | null; progress: JobStatus | null }) {
   return (
     <section className="panel">
       <h2>Catchment</h2>
       {!catchment && !busy && !error && <p className="muted">Click anywhere on the map to delineate the area draining to that point.</p>}
-      {busy && <p className="muted" aria-live="polite">Tracing upstream cells…</p>}
+      {busy && <Progress status={progress ?? { job_id: "", kind: "catchment", status: "running", progress: 5, stage: "submitting", created_at: new Date().toISOString() }} />}
       {error && <p className="error">{error}</p>}
       {catchment && (
         <>

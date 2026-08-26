@@ -17,7 +17,18 @@ import type {
 
 const BASE = "/api/v1";
 
+/** Set by the service worker when a response came from cache because the network failed. */
+export const staleState = { stale: false, listeners: new Set<(stale: boolean) => void>() };
+function noteStale(response: Response) {
+  const stale = response.headers.get("X-From-Cache") === "true";
+  if (stale !== staleState.stale) {
+    staleState.stale = stale;
+    staleState.listeners.forEach((fn) => fn(stale));
+  }
+}
+
 async function json<T>(response: Response): Promise<T> {
+  noteStale(response);
   if (!response.ok) {
     let detail = response.statusText;
     try {
@@ -32,10 +43,13 @@ async function json<T>(response: Response): Promise<T> {
 }
 
 /** Poll a job until it settles; resolves with the final status. */
-export async function waitForJob(jobId: string, intervalMs = 800, maxMs = 120_000): Promise<JobStatus> {
+export type Progress = (status: JobStatus) => void;
+
+export async function waitForJob(jobId: string, intervalMs = 800, maxMs = 120_000, onProgress?: Progress): Promise<JobStatus> {
   const started = Date.now();
   for (;;) {
     const status = await api.job(jobId);
+    onProgress?.(status);
     if (status.status !== "queued" && status.status !== "running") return status;
     if (Date.now() - started > maxMs) throw new Error("job timed out");
     await new Promise((r) => setTimeout(r, intervalMs));
@@ -69,33 +83,33 @@ export const api = {
   streams(id: string): Promise<StreamNetwork> {
     return fetch(`${BASE}/terrain/${id}/streams`).then(json<StreamNetwork>);
   },
-  async catchment(villageId: string, point: PourPoint): Promise<CatchmentResult> {
+  async catchment(villageId: string, point: PourPoint, onProgress?: Progress): Promise<CatchmentResult> {
     const accepted = await fetch(`${BASE}/analysis/catchment`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ village_id: villageId, pour_point: point }),
     }).then(json<JobAccepted>);
-    const status = await waitForJob(accepted.job_id);
+    const status = await waitForJob(accepted.job_id, 800, 120_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
     return fetch(`${BASE}/analysis/results/catchment/${accepted.job_id}`).then(json<CatchmentResult>);
   },
-  async pondDesign(villageId: string, point: PourPoint, targetReliability = 0.75): Promise<PondDesignResult> {
+  async pondDesign(villageId: string, point: PourPoint, targetReliability = 0.75, onProgress?: Progress): Promise<PondDesignResult> {
     const accepted = await fetch(`${BASE}/analysis/pond-design`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ village_id: villageId, pour_point: point, target_reliability: targetReliability }),
     }).then(json<JobAccepted>);
-    const status = await waitForJob(accepted.job_id, 1000, 300_000);
+    const status = await waitForJob(accepted.job_id, 1000, 300_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
     return fetch(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
   },
-  async suitability(villageId: string, topN = 8): Promise<SuitabilityResult> {
+  async suitability(villageId: string, topN = 8, onProgress?: Progress): Promise<SuitabilityResult> {
     const accepted = await fetch(`${BASE}/analysis/suitability`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ village_id: villageId, top_n: topN }),
     }).then(json<JobAccepted>);
-    const status = await waitForJob(accepted.job_id, 1500, 600_000);
+    const status = await waitForJob(accepted.job_id, 1500, 600_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
     return fetch(`${BASE}/analysis/results/suitability/${accepted.job_id}`).then(json<SuitabilityResult>);
   },

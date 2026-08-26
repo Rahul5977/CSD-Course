@@ -1,4 +1,5 @@
-import type { QuantityOut, ResultWarning } from "../types";
+import type { JobStatus, QuantityOut, ResultWarning } from "../types";
+import { Progress } from "./CatchmentPanel";
 
 export interface LandParcel {
   parcel_id: string;
@@ -39,7 +40,7 @@ export interface SuitabilityResult {
 }
 
 /** FR3: available land (constraints + parcels) and the AHP-ranked sites with a per-criterion breakdown. */
-export function LandPanel({ land, suitability, busy, error, onAssess, onPick, canAssess }: {
+export function LandPanel({ land, suitability, busy, error, onAssess, onPick, canAssess, progress }: {
   land: AvailableLand | null;
   suitability: SuitabilityResult | null;
   busy: boolean;
@@ -47,6 +48,7 @@ export function LandPanel({ land, suitability, busy, error, onAssess, onPick, ca
   onAssess: () => void;
   onPick: (site: SuitableSite) => void;
   canAssess: boolean;
+  progress: JobStatus | null;
 }) {
   return (
     <section className="panel">
@@ -55,6 +57,7 @@ export function LandPanel({ land, suitability, busy, error, onAssess, onPick, ca
         <button onClick={onAssess} disabled={!canAssess || busy}>{busy ? "Assessing…" : "Assess land & rank sites"}</button>
       </div>
       {error && <p className="error">{error}</p>}
+      {busy && <Progress status={progress} />}
       {land && (
         <>
           <p className="verdict">Eligible for excavation: <strong>{land.total_eligible_area.display}</strong> in {land.parcels.length} patches.</p>

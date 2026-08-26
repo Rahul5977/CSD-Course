@@ -81,3 +81,16 @@ h3.sub { font-size: 13px; margin: 10px 0 2px; color: var(--muted); }
 .parcels { list-style: none; padding: 0; margin: 6px 0; font-size: 13px; }
 .parcels li { padding: 2px 0; border-bottom: 1px dashed var(--line); }
 ul.small { font-size: 12px; padding-left: 16px; }
+
+.mapwrap { grid-area: map; position: relative; min-height: 320px; }
+.mapwrap .map { position: absolute; inset: 0; }
+.overlay { position: absolute; right: 56px; top: 12px; width: 260px; background: rgba(255,255,255,0.93); border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-size: 13px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.overlay h3 { margin: 0 0 4px; font-size: 14px; }
+.overlay dl { grid-template-columns: auto 1fr; gap: 2px 10px; margin: 0; }
+.badge-offline { background: #fdecec; color: var(--error); padding: 2px 8px; border-radius: 3px; font-size: 12px; font-weight: 600; }
+button.lang { margin-left: auto; background: transparent; border: 1px solid #ffffff55; color: #fff; padding: 3px 8px; font-size: 12px; }
+@media (max-width: 767px) {
+  .overlay { right: 8px; left: 8px; width: auto; top: 8px; font-size: 12px; }
+  .overlay dl { grid-template-columns: 1fr 1fr; }
+  header { flex-wrap: wrap; gap: 6px; }
+}

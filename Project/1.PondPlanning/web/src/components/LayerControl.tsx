@@ -9,6 +9,8 @@ interface Props {
 }
 
 const EXTRA = [
+  { id: "pond", title: "Designed pond footprint", source: "FR7 dimensions at the outlet" },
+  { id: "focus", title: "Dim outside the boundary", source: "imagery clipped to the analysed area" },
   { id: "available_land", title: "Available land (FR3)", source: "Specification constraints" },
   { id: "catchment", title: "Catchment", source: "D8 upstream of the clicked point" },
   { id: "sites", title: "Suggested sites", source: "terrain siting score" },

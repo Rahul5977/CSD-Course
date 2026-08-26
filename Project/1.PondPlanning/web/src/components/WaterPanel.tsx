@@ -1,4 +1,5 @@
-import type { QuantityOut, ResultWarning } from "../types";
+import type { JobStatus, QuantityOut, ResultWarning } from "../types";
+import { Progress } from "./CatchmentPanel";
 
 function Q({ q }: { q: QuantityOut }) {
   return <strong title={q.method ?? undefined}>{q.display ?? `${q.value} ${q.unit}`}</strong>;
@@ -62,7 +63,7 @@ export function RunoffPanel({ runoff }: { runoff: RunoffResult }) {
 }
 
 /** FR7: dimensions, storage, EAV curve, reliability, BoQ, confidence. */
-export function DesignPanel({ design, busy, error, onDesign, canDesign }: { design: PondDesignResult | null; busy: boolean; error: string | null; onDesign: () => void; canDesign: boolean }) {
+export function DesignPanel({ design, busy, error, onDesign, canDesign, progress }: { design: PondDesignResult | null; busy: boolean; error: string | null; onDesign: () => void; canDesign: boolean; progress: JobStatus | null }) {
   const W = 300, H = 120, pad = 24;
   const curve = design?.eav_curve ?? [];
   const maxV = Math.max(...curve.map((p) => p.cumulative_volume.value), 1);
@@ -74,6 +75,7 @@ export function DesignPanel({ design, busy, error, onDesign, canDesign }: { desi
         <button onClick={onDesign} disabled={!canDesign || busy}>{busy ? "Designing…" : "Design a pond at the outlet"}</button>
       </div>
       {!canDesign && <p className="muted">Delineate a catchment first (click the map or pick a site).</p>}
+      {busy && <Progress status={progress} />}
       {error && <p className="error">{error}</p>}
       {design && (
         <>

@@ -1,6 +1,9 @@
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { useCallback, useEffect, useState } from "react";
-import { api } from "./api";
+import { api, staleState } from "./api";
+import { ResultsOverlay } from "./components/ResultsOverlay";
+import { t, type Lang } from "./i18n";
+import type { JobStatus } from "./types";
 import { CatchmentPanel } from "./components/CatchmentPanel";
 import { LayerControl } from "./components/LayerControl";
 import { MapView } from "./components/MapView";
@@ -22,7 +25,7 @@ function outerRing(geometry: Polygon | MultiPolygon | null): number[][] | null {
 }
 
 const DEFAULT_VISIBLE: Record<string, boolean> = {
-  satellite: true, hillshade: true, streams: true, contours: true, catchment: true, sites: true, boundary: true,
+  satellite: true, hillshade: true, streams: true, contours: true, catchment: true, sites: true, boundary: true, pond: true,
 };
 
 export default function App() {
@@ -54,7 +57,17 @@ export default function App() {
   const [rainError, setRainError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<Record<string, JobStatus | null>>({});
+  const [lang, setLang] = useState<Lang>(() => { try { return (localStorage.getItem("lang") as Lang) || "en"; } catch { return "en"; } });
+  const [stale, setStale] = useState(staleState.stale);
   const job = useJob(jobId);
+
+  useEffect(() => {
+    staleState.listeners.add(setStale);
+    return () => { staleState.listeners.delete(setStale); };
+  }, []);
+  useEffect(() => { try { localStorage.setItem("lang", lang); } catch { /* private mode */ } }, [lang]);
+  const track = (key: string) => (status: JobStatus) => setProgress((p) => ({ ...p, [key]: status.status === "running" || status.status === "queued" ? status : null }));
 
   const refreshVillages = useCallback(async () => {
     const page = await api.villages();
@@ -128,7 +141,7 @@ export default function App() {
       setCatchmentBusy(true);
       setCatchmentError(null);
       try {
-        setCatchment(await api.catchment(selected, point));
+        setCatchment(await api.catchment(selected, point, track("catchment")));
       } catch (e) {
         setCatchmentError((e as Error).message);
       } finally {
@@ -143,7 +156,7 @@ export default function App() {
     setLandBusy(true);
     setLandError(null);
     try {
-      const result = await api.suitability(selected);
+      const result = await api.suitability(selected, 8, track("land"));
       setSuitability(result);
       setLand(await api.availableLand(selected));
       setLayers((await api.layers(selected)).layers);
@@ -160,7 +173,7 @@ export default function App() {
     setDesignBusy(true);
     setDesignError(null);
     try {
-      setDesign(await api.pondDesign(selected, catchment.snapped_point));
+      setDesign(await api.pondDesign(selected, catchment.snapped_point, 0.75, track("design")));
     } catch (e) {
       setDesignError((e as Error).message);
     } finally {
@@ -173,8 +186,10 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>Village Pond Planner</h1>
-        <span className="muted">terrain · catchment · runoff · storage — derived from your contour map</span>
+        <h1>{t("title", lang)}</h1>
+        <span className="muted">{t("tagline", lang)}</span>
+        {stale && <span className="badge-offline" role="status">{t("offline", lang)}</span>}
+        <button className="lang" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label="Toggle language">{lang === "en" ? "हिन्दी" : "EN"}</button>
       </header>
       <aside>
         <UploadPanel job={job} onSubmitted={(id) => { setBounds(null); setCatchment(null); setSites([]); setJobId(id); }} />
@@ -190,14 +205,17 @@ export default function App() {
           {!villages.length && <p className="muted">No analysed areas yet. Upload a contour map.</p>}
         </section>
         {summary && <SummaryCard summary={summary} />}
-        {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} />}
+        {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} progress={progress.catchment ?? null} />}
         {selected && <RainfallPanel stats={rain} busy={rainBusy} error={rainError} />}
-        {selected && <LandPanel land={land} suitability={suitability} busy={landBusy} error={landError} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} />}
-        {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} />}
+        {selected && <LandPanel land={land} suitability={suitability} busy={landBusy} error={landError} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} progress={progress.land ?? null} />}
+        {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} progress={progress.design ?? null} />}
         <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>
-      <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} land={land?.geojson ?? null} onClick={delineate} />
+      <main className="mapwrap">
+        <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} land={land?.geojson ?? null} pond={design && catchment ? { lon: catchment.snapped_point.lon, lat: catchment.snapped_point.lat, lengthM: design.dimensions.top_length.value, widthM: design.dimensions.top_width.value } : null} onClick={delineate} />
+        <ResultsOverlay site={catchment?.snapped_point ?? null} catchment={catchment} rain={rain} design={design} villageName={summary?.village.name ?? null} />
+      </main>
     </div>
   );
 }

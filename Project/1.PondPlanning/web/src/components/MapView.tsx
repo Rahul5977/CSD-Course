@@ -14,7 +14,25 @@ interface Props {
   catchment: CatchmentResult | null;
   sites: SiteCandidate[];
   land: FeatureCollection | null;
+  pond: { lon: number; lat: number; lengthM: number; widthM: number } | null;
   onClick: (point: PourPoint) => void;
+}
+
+/** Axis-aligned rectangle of L×W metres centred on a lon/lat, as a GeoJSON polygon. */
+function pondFootprint(lon: number, lat: number, lengthM: number, widthM: number): Feature {
+  const dLat = widthM / 2 / 111_320;
+  const dLon = lengthM / 2 / (111_320 * Math.cos((lat * Math.PI) / 180));
+  return {
+    type: "Feature",
+    properties: { kind: "pond" },
+    geometry: { type: "Polygon", coordinates: [[[lon - dLon, lat - dLat], [lon + dLon, lat - dLat], [lon + dLon, lat + dLat], [lon - dLon, lat + dLat], [lon - dLon, lat - dLat]]] },
+  };
+}
+
+/** World polygon with the boundary cut out: dims everything outside the analysed area. */
+function focusMask(boundary: Polygon | MultiPolygon): Feature {
+  const rings = boundary.type === "Polygon" ? [boundary.coordinates[0]] : boundary.coordinates.map((p) => p[0]);
+  return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[-180, -85], [180, -85], [180, 85], [-180, 85], [-180, -85]], ...rings] } };
 }
 
 const ESRI =
@@ -28,7 +46,7 @@ function setGeoJSON(m: MLMap, id: string, data: FeatureCollection | Feature) {
 }
 
 /** The map workspace. Raster layers come straight from the API's layer list; vectors are GeoJSON. */
-export function MapView({ layers, visible, boundary, bounds, contours, streams, catchment, sites, land, onClick }: Props) {
+export function MapView({ layers, visible, boundary, bounds, contours, streams, catchment, sites, land, pond, onClick }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MLMap | null>(null);
   const clickHandler = useRef(onClick);
@@ -52,8 +70,14 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
     m.addControl(new maplibregl.ScaleControl({ unit: "metric" }));
     m.on("click", (e: MapMouseEvent) => clickHandler.current({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
     m.getCanvas().style.cursor = "crosshair";
+    // First frame: the container is laid out by CSS grid after construction, so force a
+    // resize once the style is in; a ResizeObserver keeps it right on phone rotation.
+    m.once("load", () => m.resize());
+    const observer = new ResizeObserver(() => m.resize());
+    observer.observe(container.current);
     map.current = m;
     return () => {
+      observer.disconnect();
       m.remove();
       map.current = null;
     };
@@ -110,6 +134,15 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
           paint: { "line-color": "#4fc3f7", "line-width": ["+", 1, ["*", 1.2, ["get", "strahler_order"]]] },
         });
       }
+      setGeoJSON(m, "focus", boundary ? focusMask(boundary) : EMPTY);
+      if (!m.getLayer("vec-focus")) {
+        m.addLayer({ id: "vec-focus", type: "fill", source: "focus", paint: { "fill-color": "#1f2a30", "fill-opacity": 0.45 } });
+      }
+      setGeoJSON(m, "pond", pond ? pondFootprint(pond.lon, pond.lat, pond.lengthM, pond.widthM) : EMPTY);
+      if (!m.getLayer("vec-pond-fill")) {
+        m.addLayer({ id: "vec-pond-fill", type: "fill", source: "pond", paint: { "fill-color": "#0b6e8f", "fill-opacity": 0.55 } });
+        m.addLayer({ id: "vec-pond-line", type: "line", source: "pond", paint: { "line-color": "#ffffff", "line-width": 2 } });
+      }
       setGeoJSON(m, "land", land ?? EMPTY);
       if (!m.getLayer("vec-land-fill")) {
         m.addLayer({ id: "vec-land-fill", type: "fill", source: "land", paint: { "fill-color": "#8bc34a", "fill-opacity": 0.3 } });
@@ -137,13 +170,16 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
       show("vec-streams", visible.streams !== false);
       for (const id of ["vec-catchment-fill", "vec-catchment-line", "vec-outlet"]) show(id, visible.catchment !== false);
       show("vec-sites", visible.sites !== false);
+      show("vec-focus", visible.focus === true);
+      show("vec-pond-fill", visible.pond !== false);
+      show("vec-pond-line", visible.pond !== false);
       show("vec-land-fill", visible.available_land === true);
       show("vec-land-line", visible.available_land === true);
       show("vec-site-labels", visible.sites !== false);
     };
     if (m.isStyleLoaded()) apply();
     else m.once("load", apply);
-  }, [boundary, contours, streams, catchment, sites, land, visible]);
+  }, [boundary, contours, streams, catchment, sites, land, pond, visible]);
 
   useEffect(() => {
     if (map.current && bounds) {

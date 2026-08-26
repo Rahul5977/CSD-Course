@@ -28,7 +28,8 @@ export function useJob(jobId: string | null, intervalMs = 1500) {
             status: "failed",
             progress: 0,
             stage: null,
-            error: { code: "network", title: (error as Error).message },
+            created_at: new Date().toISOString(),
+            error: { type: "#network", title: (error as Error).message, status: 0, code: "network" },
             result_url: null,
           });
         }

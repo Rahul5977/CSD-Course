@@ -9,10 +9,10 @@ the assistant reads this at the start of every session and updates it at the end
 ## Snapshot
 
 - **Last updated:** 2026-08-26
-- **Current phase:** P5 — Frontend Integration (awaiting the user's go at the G4 checkpoint)
-- **Active gate:** G5 — open. **G4, G3, G2, G1 closed 2026-08-26. G0 closed 2026-08-18.**
-- **Marks secured:** 77 / 100 · next 7 are in P5
-- **Next action:** P5 — FR8 all-overlays workspace polish: layer control with the six PDF overlays and a stats panel, loading/empty/error/stale states on every panel, 390 px viewport, plain-language verdicts, typed client; then P6 hardening
+- **Current phase:** P6 — System Hardening ⭐ (awaiting the user's go at the G5 checkpoint)
+- **Active gate:** G6 — open. **G5, G4, G3, G2, G1 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Marks secured:** 84 / 100 · next 7 are in P6
+- **Next action:** P6 day 1 — bulkhead queues (interactive/heavy), WebSocket progress, Saga onboarding, idempotency keys, JWT + RBAC, state machine, outbox audit log; day 2 — structlog correlation ids, Prometheus + Grafana, leader-elected refresh, backpressure 429, Locust, chaos-test video
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -27,8 +27,8 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P2 Terrain & Catchment ⭐ | 30 | 51 | G2 | ☑ **done** |
 | P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ☑ **done** |
 | P4 Suitability & AI | 7 | 77 | G4 | ☑ **done** |
-| P5 Frontend Integration | 7 | 84 | G5 | ◐ next |
-| P6 System Hardening ⭐ | 7 | 91 | G6 | ☐ |
+| P5 Frontend Integration | 7 | 84 | G5 | ☑ **done** |
+| P6 System Hardening ⭐ | 7 | 91 | G6 | ◐ next |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
 
 Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 24 of 40 ticked (P0 rows 1–5; P1 34a/34b/37; P2 rows 6–13 and 35; P3 rows 14–17; P4 rows 18, 19, 21; row 20 (ML AUC) deliberately not produced — ADR 0017).
@@ -41,6 +41,12 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
 - `docs/assignment/Phase{1,2,3}.txt` — phase briefs; Phase 1 (HLD) submitted and done
 - `data/samples/contours_1m.kml` — the provided sample, 6.4 MB (analysed; see `docs/ROADMAP.md` §4)
 - `the working agreement`, `docs/ROADMAP.md`, `docs/PROGRESS.md`, `CONTRIBUTING.md`, `.gitignore`
+
+**Code — P5 complete, verified 2026-08-26**
+- **FR8** results overlay on the map (pond location, catchment area, 75 % rainfall, SCS runoff,
+  dimensions, storage) + the designed pond footprint and a focus mask as map layers; every long
+  action shows stage + percent; offline-first service worker with a stale badge (ADR 0018);
+  generated OpenAPI types for the envelopes; EN/HI toggle; 390 px layout; initial-paint fix.
 
 **Code — P4 complete, verified 2026-08-26**
 - **FR3** `POST /analysis/suitability` real: Specification-pattern constraints (`app/engines/suitability/constraints.py`), Sentinel-2 NDWI + Otsu + OpenCV water mask (`water_mask.py`, `providers/sentinel.py`), AHP weights with CR (`ahp.py`), ranking restricted to eligible cells, suitability heat-map + water-mask COGs; `GET /villages/{id}/available-land` reads the stored parcels. ADR 0017; ML deferred by the plan's own fallback.
@@ -201,6 +207,10 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 | 2026-08-26 | **AHP weights with the consistency ratio returned** (CR 0.011 for the default matrix) over the P2 terrain criteria, restricted to eligible cells | Defended weights on an already-explainable score; CR makes the weighting checkable, not asserted | Fixed weights (P2); an ML scorer (see next row) |
 | 2026-08-26 | **XGBoost + SHAP deferred; AHP-only ships (α = 1.0)** — the plan's designed fallback, ADR 0017 | Two OSM tanks in 8.5 km² are not a training set; a model fitted to them cannot be evaluated under spatial CV and would be theatre. The scorer interface keeps the ML path as documented future work | Training on two positives |
 | 2026-08-26 | **Suitability computed by one job** (`POST /analysis/suitability`) that stores available-land parcels, the water mask and the heat-map; `GET /villages/{id}/available-land` is a read | Sentinel-2 reads take 10–30 s — too slow for a GET; one job, one cache, one place to look | Computing on every GET |
+| 2026-08-26 | **FR8 as a results overlay on the map + the designed pond drawn as a footprint** at the outlet, all six PDF items in one panel | The rubric grades "all overlays simultaneously toggleable + stats panel"; the footprint makes the dimensions a map object, not a number | A separate results page |
+| 2026-08-26 | **Offline-first service worker** (cache-first tiles, network-first API with stale fallback + badge) — ADR 0018 | The chaos test in one line; stale is visible | Workbox; server cache headers |
+| 2026-08-26 | **Generated OpenAPI types for the wire envelopes**, hand-written shapes kept for GeoJSON payloads | A contract change fails the frontend build; generated GeoJSON types are `dict` and useless for the map | Fully generated client (openapi-fetch) — more surface for little gain at this size |
+| 2026-08-26 | **Minimal EN/HI toggle** (headings + the offline message) | Cut-ladder item 5: proof of capability suffices; full translation is future work | Full i18n |
 | 2026-08-26 | **Autonomous phase loop** with a user check-in at every gate (`the working agreement` § Autonomous loop) | The user wants progress visibility at each checkpoint and otherwise uninterrupted building; the gate is the natural unit | Check-ins per task (too chatty) or per phase without a stop (no visibility) |
 
 ## Open questions
@@ -216,6 +226,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-26 (session 13)
+**P5 complete — G5 closed, 84 marks secured; all 8 FRs demonstrable.** Results overlay, pond footprint, progress states, service worker, generated types, EN/HI, mobile layout (see "What exists today"); ADR 0018; four decisions logged. **Next:** G5 checkpoint, then P6 in full.
 
 ### 2026-08-26 (session 12)
 **P4 complete — G4 closed, 77 marks secured.** Also, at the user's request, stripped the AI co-author trailers from every commit message (`git filter-branch`, force-pushed; authors unchanged). Suitability engines, providers, routes and UI (see "What exists today"); ADR 0017; five decisions logged. Defects found by running: my own guard clamped Otsu to 0 on a two-valued test image (OpenCV returns the lower mode) — test relaxed, behaviour kept; a buffer test cell 80 m from the tank, not 50. **Next:** G4 checkpoint, then P5.
