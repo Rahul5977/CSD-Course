@@ -1,0 +1,644 @@
+{
+  "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+  "catchment": {
+    "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+    "requested_point": {
+      "lon": 81.28414897486398,
+      "lat": 21.26222084697471
+    },
+    "snapped_point": {
+      "lon": 81.28414897486398,
+      "lat": 21.26222084697471
+    },
+    "snap_distance": {
+      "value": 0.0,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 0.0,
+      "high": 0.0,
+      "method": "nearest channel",
+      "display": "0.00 m"
+    },
+    "area": {
+      "value": 38.25,
+      "unit": "ha",
+      "uncertainty_pct": 26.352941176470587,
+      "low": 28.170000000000005,
+      "high": 48.33,
+      "method": "D8 upstream cell count",
+      "display": "38.25 ha (±26.3529 %)"
+    },
+    "perimeter": {
+      "value": 3360.0,
+      "unit": "m",
+      "uncertainty_pct": 10.0,
+      "low": 3024.0,
+      "high": 3696.0000000000005,
+      "method": "dissolved cell polygon",
+      "display": "3,360.00 m (±10 %)"
+    },
+    "longest_flow_path": {
+      "value": 902.1320343559643,
+      "unit": "m",
+      "uncertainty_pct": 10.0,
+      "low": 811.9188309203679,
+      "high": 992.3452377915607,
+      "method": "longest D8 path to outlet",
+      "display": "902.13 m (±10 %)"
+    },
+    "mean_slope": {
+      "value": 2.283210960600306,
+      "unit": "deg",
+      "uncertainty_pct": 15.0,
+      "low": 1.94072931651026,
+      "high": 2.6256926046903515,
+      "method": "Horn (1981), mean over catchment",
+      "display": "2.28 deg (±15 %)"
+    },
+    "relief": {
+      "value": 12.99896240234375,
+      "unit": "m",
+      "uncertainty_pct": 65.0821176194389,
+      "low": 4.538962402343749,
+      "high": 21.45896240234375,
+      "method": "max - min conditioned elevation",
+      "display": "13.00 m (±65.0821 %)"
+    },
+    "outlet_elevation": {
+      "value": 272.9451599121094,
+      "unit": "m",
+      "uncertainty_pct": 2.1982437797878704,
+      "low": 266.9451599121094,
+      "high": 278.9451599121094,
+      "method": "conditioned DEM",
+      "display": "272.95 m (±2.19824 %)"
+    },
+    "flow_routing": "D8 (O'Callaghan & Mark 1984) on a Priority-Flood+epsilon conditioned DEM",
+    "cell_size": {
+      "value": 30.0,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 30.0,
+      "high": 30.0,
+      "method": "working grid",
+      "display": "30.00 m"
+    },
+    "geojson": {
+      "type": "FeatureCollection",
+      "features": [
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [
+                  81.28342632518306,
+                  21.26235759300517
+                ],
+                [
+                  81.28342580645906,
+                  21.26208653526384
+                ],
+                "… 45 more"
+              ]
+            ]
+          },
+          "properties": {
+            "kind": "catchment",
+            "area_ha": 38.25,
+            "cells": 425
+          }
+        },
+        {
+          "type": "Feature",
+          "geometry": {
+            "type": "Point",
+            "coordinates": [
+              81.28414897486398,
+              21.26222084697471
+            ]
+          },
+          "properties": {
+            "kind": "outlet",
+            "snap_distance_m": 0.0
+          }
+        }
+      ],
+      "crs": "EPSG:4326"
+    },
+    "warnings": [
+      {
+        "code": "catchment_truncated",
+        "message": "The catchment reaches the edge of the uploaded map; the true contributing area may be larger than shown.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "rainfall_summary": {
+    "mean_annual": {
+      "value": 1339.2279999999998,
+      "unit": "mm/yr",
+      "uncertainty_pct": 15.0,
+      "low": 1138.3437999999999,
+      "high": 1540.1121999999998,
+      "method": "mean of complete years",
+      "display": "1,339.23 mm/yr (±15 %)"
+    },
+    "dependable_75": {
+      "value": 1192.0500000000002,
+      "unit": "mm/yr",
+      "uncertainty_pct": 15.0,
+      "low": 1013.2425000000002,
+      "high": 1370.8575,
+      "method": "Weibull m/(n+1)",
+      "display": "1,192.05 mm/yr (±15 %)"
+    },
+    "monsoon_share": {
+      "value": 89.14449219998387,
+      "unit": "%",
+      "uncertainty_pct": 3.0,
+      "low": 86.47015743398435,
+      "high": 91.81882696598339,
+      "method": "Jun-Sep",
+      "display": "89.14 % (±3 %)"
+    },
+    "rainfall_25y_1day": {
+      "value": 166.23286592601636,
+      "unit": "mm",
+      "uncertainty_pct": 25.0,
+      "low": 124.67464944451227,
+      "high": 207.79108240752043,
+      "method": "Gumbel EV1, method of moments",
+      "display": "166.23 mm (±25 %)"
+    },
+    "years_of_record": {
+      "value": 25.0,
+      "unit": "count",
+      "uncertainty_pct": null,
+      "low": 25.0,
+      "high": 25.0,
+      "method": null,
+      "display": "25.00 count"
+    }
+  },
+  "runoff": {
+    "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+    "catchment_area": {
+      "value": 38.25,
+      "unit": "ha",
+      "uncertainty_pct": 26.352941176470587,
+      "low": 28.170000000000005,
+      "high": 48.33,
+      "method": "D8 upstream cell count",
+      "display": "38.25 ha (±26.3529 %)"
+    },
+    "results": [
+      {
+        "method": "scs_cn",
+        "annual_runoff_volume": {
+          "value": 99227.6180861407,
+          "unit": "m3",
+          "uncertainty_pct": 30.0,
+          "low": 69459.33266029849,
+          "high": 128995.90351198292,
+          "method": "scs_cn: 75 % dependable annual runoff depth x catchment area",
+          "display": "99,227.62 m3 (±30 %)"
+        },
+        "runoff_coefficient": {
+          "value": 0.23319947879870478,
+          "unit": "ratio",
+          "uncertainty_pct": 30.0,
+          "low": 0.16323963515909334,
+          "high": 0.3031593224383162,
+          "method": "mean annual runoff / rainfall",
+          "display": "0.23 ratio (±30 %)"
+        },
+        "parameters": {
+          "curve_number": {
+            "value": 87.76489404238305,
+            "unit": "count",
+            "uncertainty_pct": null,
+            "low": 87.76489404238305,
+            "high": 87.76489404238305,
+            "method": "AMC II, HSG C, area-weighted",
+            "display": "87.76 count"
+          },
+          "potential_retention_S": {
+            "value": 35.40956719817768,
+            "unit": "mm",
+            "uncertainty_pct": null,
+            "low": 35.40956719817768,
+            "high": 35.40956719817768,
+            "method": "25400/CN - 254",
+            "display": "35.41 mm"
+          },
+          "initial_abstraction_ratio": {
+            "value": 0.2,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.2,
+            "high": 0.2,
+            "method": "Ia = 0.2 S, standard TR-55",
+            "display": "0.20 ratio"
+          },
+          "mean_annual_runoff_depth": {
+            "value": 312.30727159263176,
+            "unit": "mm",
+            "uncertainty_pct": 30.0,
+            "low": 218.61509011484222,
+            "high": 405.9994530704213,
+            "method": "mean of annual sums",
+            "display": "312.31 mm (±30 %)"
+          },
+          "dependable_75_runoff_depth": {
+            "value": 259.4186093755312,
+            "unit": "mm",
+            "uncertainty_pct": 30.0,
+            "low": 181.59302656287184,
+            "high": 337.2441921881906,
+            "method": "Weibull 75 % on annual runoff",
+            "display": "259.42 mm (±30 %)"
+          },
+          "years": {
+            "value": 25.0,
+            "unit": "count",
+            "uncertainty_pct": null,
+            "low": 25.0,
+            "high": 25.0,
+            "method": "complete years",
+            "display": "25.00 count"
+          }
+        },
+        "reference": "USDA-SCS (1972) National Engineering Handbook §4; TR-55 (1986)"
+      },
+      {
+        "method": "rational",
+        "annual_runoff_volume": {
+          "value": 244082.15734831066,
+          "unit": "m3",
+          "uncertainty_pct": 40.0,
+          "low": 146449.2944089864,
+          "high": 341715.0202876349,
+          "method": "rational: 75 % dependable annual runoff depth x catchment area",
+          "display": "244,082.16 m3 (±40 %)"
+        },
+        "runoff_coefficient": {
+          "value": 0.5353158736505398,
+          "unit": "ratio",
+          "uncertainty_pct": 40.0,
+          "low": 0.32118952419032387,
+          "high": 0.7494422231107557,
+          "method": "mean annual runoff / rainfall",
+          "display": "0.54 ratio (±40 %)"
+        },
+        "parameters": {
+          "runoff_coefficient_C": {
+            "value": 0.5353158736505398,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.5353158736505398,
+            "high": 0.5353158736505398,
+            "method": "area-weighted by land cover",
+            "display": "0.54 ratio"
+          },
+          "mean_annual_runoff_depth": {
+            "value": 716.9100068372651,
+            "unit": "mm",
+            "uncertainty_pct": 40.0,
+            "low": 430.14600410235903,
+            "high": 1003.674009572171,
+            "method": "mean of annual sums",
+            "display": "716.91 mm (±40 %)"
+          },
+          "dependable_75_runoff_depth": {
+            "value": 638.123287185126,
+            "unit": "mm",
+            "uncertainty_pct": 40.0,
+            "low": 382.87397231107553,
+            "high": 893.3726020591763,
+            "method": "Weibull 75 % on annual runoff",
+            "display": "638.12 mm (±40 %)"
+          },
+          "years": {
+            "value": 25.0,
+            "unit": "count",
+            "uncertainty_pct": null,
+            "low": 25.0,
+            "high": 25.0,
+            "method": "complete years",
+            "display": "25.00 count"
+          }
+        },
+        "reference": "ASCE (1969) runoff coefficients; Kuichling (1889) rational formula"
+      },
+      "… 1 more"
+    ],
+    "recommended": {
+      "method": "scs_cn",
+      "annual_runoff_volume": {
+        "value": 99227.6180861407,
+        "unit": "m3",
+        "uncertainty_pct": 30.0,
+        "low": 69459.33266029849,
+        "high": 128995.90351198292,
+        "method": "scs_cn: 75 % dependable annual runoff depth x catchment area",
+        "display": "99,227.62 m3 (±30 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.23319947879870478,
+        "unit": "ratio",
+        "uncertainty_pct": 30.0,
+        "low": 0.16323963515909334,
+        "high": 0.3031593224383162,
+        "method": "mean annual runoff / rainfall",
+        "display": "0.23 ratio (±30 %)"
+      },
+      "parameters": {
+        "curve_number": {
+          "value": 87.76489404238305,
+          "unit": "count",
+          "uncertainty_pct": null,
+          "low": 87.76489404238305,
+          "high": 87.76489404238305,
+          "method": "AMC II, HSG C, area-weighted",
+          "display": "87.76 count"
+        },
+        "potential_retention_S": {
+          "value": 35.40956719817768,
+          "unit": "mm",
+          "uncertainty_pct": null,
+          "low": 35.40956719817768,
+          "high": 35.40956719817768,
+          "method": "25400/CN - 254",
+          "display": "35.41 mm"
+        },
+        "initial_abstraction_ratio": {
+          "value": 0.2,
+          "unit": "ratio",
+          "uncertainty_pct": null,
+          "low": 0.2,
+          "high": 0.2,
+          "method": "Ia = 0.2 S, standard TR-55",
+          "display": "0.20 ratio"
+        },
+        "mean_annual_runoff_depth": {
+          "value": 312.30727159263176,
+          "unit": "mm",
+          "uncertainty_pct": 30.0,
+          "low": 218.61509011484222,
+          "high": 405.9994530704213,
+          "method": "mean of annual sums",
+          "display": "312.31 mm (±30 %)"
+        },
+        "dependable_75_runoff_depth": {
+          "value": 259.4186093755312,
+          "unit": "mm",
+          "uncertainty_pct": 30.0,
+          "low": 181.59302656287184,
+          "high": 337.2441921881906,
+          "method": "Weibull 75 % on annual runoff",
+          "display": "259.42 mm (±30 %)"
+        },
+        "years": {
+          "value": 25.0,
+          "unit": "count",
+          "uncertainty_pct": null,
+          "low": 25.0,
+          "high": 25.0,
+          "method": "complete years",
+          "display": "25.00 count"
+        }
+      },
+      "reference": "USDA-SCS (1972) National Engineering Handbook §4; TR-55 (1986)"
+    },
+    "spread_pct": {
+      "value": 187.66931209167254,
+      "unit": "%",
+      "uncertainty_pct": null,
+      "low": 187.66931209167254,
+      "high": 187.66931209167254,
+      "method": "(max - min) / mean across methods",
+      "display": "187.67 %"
+    },
+    "warnings": [
+      {
+        "code": "methods_disagree",
+        "message": "The methods disagree by 188 %; treat the SCS-CN figure as planning-grade and confirm with a season of observation.",
+        "severity": "caution"
+      },
+      {
+        "code": "curve_number_basis",
+        "message": "CN 88 (HSG C, AMC II) from permanent water 38%, cropland 23%, tree cover 21%, grassland 18%; ESA WorldCover 2021 v200 (10 m), © ESA WorldCover project / Contains modified Copernicus Sentinel data (2021); assumed hydrologic soil group (SoilGrids unreachable).",
+        "severity": "info"
+      }
+    ]
+  },
+  "dimensions": {
+    "depth": {
+      "value": 3.5,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 3.5,
+      "high": 3.5,
+      "method": "cost-optimised over 1.5-3.5 m",
+      "display": "3.50 m"
+    },
+    "top_length": {
+      "value": 126.45451415656484,
+      "unit": "m",
+      "uncertainty_pct": 5.0,
+      "low": 120.1317884487366,
+      "high": 132.7772398643931,
+      "method": "frustum solved for target storage",
+      "display": "126.45 m (±5 %)"
+    },
+    "top_width": {
+      "value": 126.45451415656484,
+      "unit": "m",
+      "uncertainty_pct": 5.0,
+      "low": 120.1317884487366,
+      "high": 132.7772398643931,
+      "method": "frustum solved for target storage",
+      "display": "126.45 m (±5 %)"
+    },
+    "bottom_length": {
+      "value": 112.45451415656484,
+      "unit": "m",
+      "uncertainty_pct": 5.0,
+      "low": 106.83178844873659,
+      "high": 118.07723986439309,
+      "method": "top inset by side slopes",
+      "display": "112.45 m (±5 %)"
+    },
+    "bottom_width": {
+      "value": 112.45451415656484,
+      "unit": "m",
+      "uncertainty_pct": 5.0,
+      "low": 106.83178844873659,
+      "high": 118.07723986439309,
+      "method": "top inset by side slopes",
+      "display": "112.45 m (±5 %)"
+    },
+    "side_slope": {
+      "value": 2.0,
+      "unit": "ratio",
+      "uncertainty_pct": null,
+      "low": 2.0,
+      "high": 2.0,
+      "method": "H:V, earthen",
+      "display": "2.00 ratio"
+    },
+    "freeboard": {
+      "value": 0.5,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 0.5,
+      "high": 0.5,
+      "method": "above design water level",
+      "display": "0.50 m"
+    }
+  },
+  "gross_storage": {
+    "value": 50000.0,
+    "unit": "m3",
+    "uncertainty_pct": 20.0,
+    "low": 40000.0,
+    "high": 60000.0,
+    "method": "prismoidal frustum volume",
+    "display": "50,000.00 m3 (±20 %)"
+  },
+  "live_storage": {
+    "value": 42500.0,
+    "unit": "m3",
+    "uncertainty_pct": 20.0,
+    "low": 34000.0,
+    "high": 51000.0,
+    "method": "gross minus dead storage",
+    "display": "42,500.00 m3 (±20 %)"
+  },
+  "dead_storage": {
+    "value": 7500.0,
+    "unit": "m3",
+    "uncertainty_pct": 20.0,
+    "low": 6000.0,
+    "high": 9000.0,
+    "method": "15% silt allowance",
+    "display": "7,500.00 m3 (±20 %)"
+  },
+  "eav_curve": [
+    {
+      "elevation": {
+        "value": 0.0,
+        "unit": "m",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": "above pond floor",
+        "display": "0.00 m"
+      },
+      "surface_area": {
+        "value": 12646.017754189043,
+        "unit": "m2",
+        "uncertainty_pct": 20.0,
+        "low": 10116.814203351234,
+        "high": 15175.221305026851,
+        "method": "frustum",
+        "display": "12,646.02 m2 (±20 %)"
+      },
+      "cumulative_volume": {
+        "value": 0.0,
+        "unit": "m3",
+        "uncertainty_pct": 20.0,
+        "low": 0.0,
+        "high": 0.0,
+        "method": "prismoidal",
+        "display": "0.00 m3 (±20 %)"
+      }
+    },
+    {
+      "elevation": {
+        "value": 0.25,
+        "unit": "m",
+        "uncertainty_pct": null,
+        "low": 0.25,
+        "high": 0.25,
+        "method": "above pond floor",
+        "display": "0.25 m"
+      },
+      "surface_area": {
+        "value": 12871.926782502173,
+        "unit": "m2",
+        "uncertainty_pct": 20.0,
+        "low": 10297.541426001739,
+        "high": 15446.312139002606,
+        "method": "frustum",
+        "display": "12,871.93 m2 (±20 %)"
+      },
+      "cumulative_volume": {
+        "value": 3189.7014004197354,
+        "unit": "m3",
+        "uncertainty_pct": 20.0,
+        "low": 2551.7611203357883,
+        "high": 3827.6416805036824,
+        "method": "prismoidal",
+        "display": "3,189.70 m3 (±20 %)"
+      }
+    },
+    "… 13 more"
+  ],
+  "reliability": {
+    "value": 1.0,
+    "unit": "ratio",
+    "uncertainty_pct": 10.0,
+    "low": 0.9,
+    "high": 1.1,
+    "method": "daily water balance over 25 years: years reaching >= 90 % full",
+    "display": "1.00 ratio (±10 %)"
+  },
+  "bill_of_quantities": {
+    "excavation_volume": {
+      "value": 58122.49325610965,
+      "unit": "m3",
+      "uncertainty_pct": 15.0,
+      "low": 49404.119267693204,
+      "high": 66840.86724452609,
+      "method": "frustum incl. freeboard band",
+      "display": "58,122.49 m3 (±15 %)"
+    },
+    "embankment_volume": {
+      "value": 2023.2722265050375,
+      "unit": "m3",
+      "uncertainty_pct": 25.0,
+      "low": 1517.454169878778,
+      "high": 2529.090283131297,
+      "method": "1 m spoil bund, 2 m crest, 2:1 slopes",
+      "display": "2,023.27 m3 (±25 %)"
+    },
+    "indicative_cost": {
+      "value": 9744718.810808653,
+      "unit": "INR",
+      "uncertainty_pct": 30.0,
+      "low": 6821303.167566056,
+      "high": 12668134.454051249,
+      "method": "excavation + embankment at indicative rates",
+      "display": "9,744,718.81 INR (±30 %)"
+    },
+    "cost_basis": "Indicative: CPWD DSR 2024 / MGNREGA SoR bands for ordinary soil, machine excavation"
+  },
+  "confidence": "low",
+  "confidence_rationale": "coarse catchment (edge-limited or few cells); DEM is contour-interpolated from a ~30 m source: planning grade, not survey grade",
+  "warnings": [
+    {
+      "code": "methods_disagree",
+      "message": "The methods disagree by 188 %; treat the SCS-CN figure as planning-grade and confirm with a season of observation.",
+      "severity": "caution"
+    },
+    {
+      "code": "curve_number_basis",
+      "message": "CN 88 (HSG C, AMC II) from permanent water 38%, cropland 23%, tree cover 21%, grassland 18%; ESA WorldCover 2021 v200 (10 m), © ESA WorldCover project / Contains modified Copernicus Sentinel data (2021); assumed hydrologic soil group (SoilGrids unreachable).",
+      "severity": "info"
+    },
+    "… 3 more"
+  ]
+}

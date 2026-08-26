@@ -1,0 +1,126 @@
+{
+  "source": "Open-Meteo archive (ERA5-Land reanalysis, ~9 km)",
+  "years_of_record": 30,
+  "start_year": 1996,
+  "end_year": 2025,
+  "mean_annual": {
+    "value": 1312.7599999999998,
+    "unit": "mm/yr",
+    "uncertainty_pct": 15.0,
+    "low": 1115.8459999999998,
+    "high": 1509.6739999999995,
+    "method": "arithmetic mean of complete calendar years",
+    "display": "1,312.76 mm/yr (±15 %)"
+  },
+  "median_annual": {
+    "value": 1261.3999999999999,
+    "unit": "mm/yr",
+    "uncertainty_pct": 15.0,
+    "low": 1072.1899999999998,
+    "high": 1450.6099999999997,
+    "method": "50th percentile of annual totals",
+    "display": "1,261.40 mm/yr (±15 %)"
+  },
+  "dependable_75": {
+    "value": 1167.9,
+    "unit": "mm/yr",
+    "uncertainty_pct": 15.0,
+    "low": 992.715,
+    "high": 1343.085,
+    "method": "75 % dependable - Weibull plotting position m/(n+1) on 30 annual totals",
+    "display": "1,167.90 mm/yr (±15 %)"
+  },
+  "coefficient_of_variation": {
+    "value": 17.363230198141636,
+    "unit": "%",
+    "uncertainty_pct": null,
+    "low": 17.363230198141636,
+    "high": 17.363230198141636,
+    "method": "sigma / mu of annual totals",
+    "display": "17.36 %"
+  },
+  "monsoon_share": {
+    "value": 88.93171638380207,
+    "unit": "%",
+    "uncertainty_pct": 3.0,
+    "low": 86.26376489228801,
+    "high": 91.59966787531613,
+    "method": "Jun-Sep share of the annual total",
+    "display": "88.93 % (±3 %)"
+  },
+  "max_daily_recorded": {
+    "value": 173.4,
+    "unit": "mm",
+    "uncertainty_pct": 20.0,
+    "low": 138.72,
+    "high": 208.08,
+    "method": "highest single day in the record (2022-08-10)",
+    "display": "173.40 mm (±20 %)"
+  },
+  "rainy_days_mean": {
+    "value": 86.03333333333333,
+    "unit": "count",
+    "uncertainty_pct": 10.0,
+    "low": 77.43,
+    "high": 94.63666666666667,
+    "method": "mean days per year with >= 2.5 mm (IMD)",
+    "display": "86.03 count (±10 %)"
+  },
+  "monthly_normals": [
+    {
+      "month": 1,
+      "mean_rainfall": {
+        "value": 13.93,
+        "unit": "mm",
+        "uncertainty_pct": 15.0,
+        "low": 11.840499999999999,
+        "high": 16.019499999999997,
+        "method": "monthly mean",
+        "display": "13.93 mm (±15 %)"
+      },
+      "rainy_days": {
+        "value": 1.0,
+        "unit": "count",
+        "uncertainty_pct": 10.0,
+        "low": 0.9,
+        "high": 1.1,
+        "method": "mean per month",
+        "display": "1.00 count (±10 %)"
+      }
+    },
+    {
+      "month": 2,
+      "mean_rainfall": {
+        "value": 10.386666666666667,
+        "unit": "mm",
+        "uncertainty_pct": 15.0,
+        "low": 8.828666666666667,
+        "high": 11.944666666666667,
+        "method": "monthly mean",
+        "display": "10.39 mm (±15 %)"
+      },
+      "rainy_days": {
+        "value": 0.9333333333333333,
+        "unit": "count",
+        "uncertainty_pct": 10.0,
+        "low": 0.8400000000000001,
+        "high": 1.0266666666666668,
+        "method": "mean per month",
+        "display": "0.93 count (±10 %)"
+      }
+    },
+    "… 10 more"
+  ],
+  "data_completeness": {
+    "value": 100.0,
+    "unit": "%",
+    "uncertainty_pct": null,
+    "low": 100.0,
+    "high": 100.0,
+    "method": "days with a value",
+    "display": "100.00 %"
+  },
+  "fallback_used": "none",
+  "attribution": "Open-Meteo.com (CC BY 4.0); ERA5-Land © ECMWF / Copernicus C3S",
+  "warnings": []
+}

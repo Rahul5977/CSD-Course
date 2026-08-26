@@ -1,0 +1,10 @@
+{
+  "type": "https://github.com/Rahul5977/AI-BasedPondAnalysis/blob/main/docs/api/errors.md#not_found",
+  "title": "no such village",
+  "status": 404,
+  "code": "not_found",
+  "detail": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93"
+  },
+  "instance": "/api/v1/villages/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/summary"
+}

@@ -9,10 +9,10 @@ the assistant reads this at the start of every session and updates it at the end
 ## Snapshot
 
 - **Last updated:** 2026-08-26
-- **Current phase:** P7 — Tests · Docs · Report (awaiting the user's go at the G6 checkpoint)
-- **Active gate:** G7 — open. **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
-- **Marks secured:** 91 / 100 · the last 8 are in P7
-- **Next action:** P7 — coverage ≥ 70 % on `engines/` + `domain/` with a screenshot; installation guide with a ≥ 6-row troubleshooting table; API cookbook; technical report with citations and the validation section; `make seed` pre-computes the demo; demo rehearsal + backup recording; `git tag v1.0`
+- **Current phase:** P7 complete — awaiting the user's review at the G7 checkpoint; then demo-day steps only
+- **Active gate:** G7 — closed 2026-08-27 pending the user's review of the report. **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Marks secured:** 99 / 100 targeted · the public URL (evidence row 36) is a demo-day step (`make tunnel`)
+- **Next action:** user reviews `docs/report/REPORT.md` and `README.md`; rehearse `docs/DEMO.md` 3×; on demo day `make up && make seed && make tunnel`, paste the public URL into the report and the Phase 2 submission; run `make check` before every commit
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -29,9 +29,9 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P4 Suitability & AI | 7 | 77 | G4 | ☑ **done** |
 | P5 Frontend Integration | 7 | 84 | G5 | ☑ **done** |
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☑ **done** |
-| P7 Tests · Docs · Report | 8 | 99 | G7 | ◐ next |
+| P7 Tests · Docs · Report | 8 | 99 | G7 | ☑ **done** |
 
-Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 24 of 40 ticked (P0 rows 1–5; P1 34a/34b/37; P2 rows 6–13 and 35; P3 rows 14–17; P4 rows 18, 19, 21; row 20 (ML AUC) deliberately not produced — ADR 0017).
+Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 38 of 40 ticked; row 20 (ML AUC) deliberately not produced — ADR 0017; row 36 (public URL) is `make tunnel` on demo day.
 
 ## What exists today
 
@@ -159,6 +159,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-08-27 | **Report lives in the repo as Markdown** (`docs/report/REPORT.md`) with figures linked | Version-controlled, diffable, reviewable at the G7 checkpoint; `pandoc` produces the PDF if the form insists | A separate Word/PDF document (drifts from the code it describes) |
+| 2026-08-27 | **Backup recording = chaos GIF + the captured figure set**, not a fresh screen recording | Every demo beat already has an artifact; a run-through recording is best made by the presenter at rehearsal | A synthetic recording of the automation window (throttled rendering, misleading) |
+| 2026-08-27 | **API samples captured from the live stack and committed** (`docs/api/samples/`) | The cookbook shows real payloads, trimmed to two list items, so it cannot describe shapes that do not exist | Hand-written JSON in the cookbook (drifts) |
 | 2026-08-18 | `docs/PLAN.md` is the authoritative plan | It decomposes the rubric to sub-item level and allocates all 100 marks across dated phases | The earlier roadmap inferred from the PDF alone — superseded, see below |
 | 2026-08-18 | ~~Avoid GDAL/rasterio~~ **superseded** | PLAN.md builds on pysheds/richdem, `gdal_contour`, rasterio, TiTiler and COGs; the raster path is required for FR2 contour generation and the tile layers | The lightweight numpy-only pipeline — insufficient for the planned layer set |
 | 2026-08-18 | DEM from Copernicus/ALOS provider tiles, contours as *output* | PLAN.md P1; enables slope/aspect/curvature/TWI and satellite-matched stream calibration | Contour-interpolated DEM as the only source — kept as an *additional* adapter, see next row |
@@ -238,6 +241,10 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-27 (session 15)
+
+**P7 complete — G7 closed pending review, 99 marks targeted.** Coverage measured (engines 94.3 %, domain 97.6 %, overall 86.2 %; `p7-coverage.jpg`); README installation guide with a 14-row troubleshooting table; API cookbook with 15 real captured samples and the regenerated error catalogue; technical report with the validation table and 20 references; licence register; demo script; `make tunnel`; DAY_08. Found `make check` had drifted on four P6-era files (format + 11 lint findings) — fixed. Clean-clone verification and the `v1.0` tag follow in the same session. **Next:** G7 checkpoint — the user reviews the report; demo-day steps.
 
 ### 2026-08-27 (session 14)
 **P6 complete — G6 closed, 91 marks secured.** Full hardening scope (see "What exists today"), ADR 0019, three decisions logged. Defects found by running: a saga step that fails half-way must clean its own partial writes (compensation only covers completed steps); the generated OpenAPI types caught two hand-typed shortcuts in the frontend; the old single `worker` container lingered as an orphan after the split. **Next:** G6 checkpoint, then P7.

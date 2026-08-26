@@ -1,0 +1,46 @@
+{
+  "items": [
+    {
+      "id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+      "name": "Khapri",
+      "state_code": "CG",
+      "district": "Durg",
+      "centroid": [
+        81.29712202161097,
+        21.25172580434231
+      ],
+      "utm_epsg": 32644,
+      "area": {
+        "value": 830.1713678988386,
+        "unit": "ha",
+        "uncertainty_pct": null,
+        "low": 830.1713678988386,
+        "high": 830.1713678988386,
+        "method": "boundary polygon area in EPSG:32644",
+        "display": "830.17 ha"
+      },
+      "boundary": {
+        "type": "MultiPolygon",
+        "coordinates": [
+          [
+            [
+              [
+                81.28140449523926,
+                21.263580647220316
+              ],
+              [
+                81.28221988677979,
+                21.239902443718645
+              ],
+              "… 3 more"
+            ]
+          ]
+        ]
+      },
+      "created_at": "2026-08-26T04:30:33.439400Z"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}

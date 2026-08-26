@@ -1,0 +1,105 @@
+{
+  "village": {
+    "id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+    "name": "Khapri",
+    "state_code": "CG",
+    "district": "Durg",
+    "centroid": [
+      81.29712202161097,
+      21.25172580434231
+    ],
+    "utm_epsg": 32644,
+    "area": {
+      "value": 830.1713678988386,
+      "unit": "ha",
+      "uncertainty_pct": null,
+      "low": 830.1713678988386,
+      "high": 830.1713678988386,
+      "method": "boundary polygon area in EPSG:32644",
+      "display": "830.17 ha"
+    },
+    "boundary": {
+      "type": "MultiPolygon",
+      "coordinates": [
+        [
+          [
+            [
+              81.28140449523926,
+              21.263580647220316
+            ],
+            [
+              81.28221988677979,
+              21.239902443718645
+            ],
+            "… 3 more"
+          ]
+        ]
+      ]
+    },
+    "created_at": "2026-08-26T04:30:33.439400Z"
+  },
+  "elevation": {
+    "minimum": {
+      "value": 268.673109399009,
+      "unit": "m",
+      "uncertainty_pct": 2.2331970674033266,
+      "low": 262.673109399009,
+      "high": 274.673109399009,
+      "method": "NASA/USGS SRTM v3 (~30 m), gridded at 30 m",
+      "display": "268.67 m (±2.2332 %)"
+    },
+    "maximum": {
+      "value": 295.7041185572822,
+      "unit": "m",
+      "uncertainty_pct": 2.0290552695963595,
+      "low": 289.7041185572822,
+      "high": 301.7041185572822,
+      "method": "NASA/USGS SRTM v3 (~30 m), gridded at 30 m",
+      "display": "295.70 m (±2.02906 %)"
+    },
+    "mean": {
+      "value": 283.8738611051867,
+      "unit": "m",
+      "uncertainty_pct": 2.1136148205546683,
+      "low": 277.8738611051867,
+      "high": 289.8738611051867,
+      "method": "zonal mean over the grid",
+      "display": "283.87 m (±2.11361 %)"
+    },
+    "relief": {
+      "value": 27.031009158273207,
+      "unit": "m",
+      "uncertainty_pct": 31.39091598302957,
+      "low": 18.545727784034636,
+      "high": 35.516290532511775,
+      "method": "maximum - minimum",
+      "display": "27.03 m (±31.3909 %)"
+    }
+  },
+  "mean_slope": {
+    "value": 1.6142731586929726,
+    "unit": "deg",
+    "uncertainty_pct": 15.0,
+    "low": 1.3721321848890267,
+    "high": 1.8564141324969183,
+    "method": "Horn (1981) 3x3, mean",
+    "display": "1.61 deg (±15 %)"
+  },
+  "dem_source": "NASA/USGS SRTM v3 (~30 m) · working grid 30 m",
+  "dem_vertical_accuracy": {
+    "value": 6.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 6.0,
+    "high": 6.0,
+    "method": "relative, LE90",
+    "display": "6.00 m"
+  },
+  "warnings": [
+    {
+      "code": "boundary_is_upload_extent",
+      "message": "The boundary is the extent drawn in the uploaded contour map, not an administrative village boundary.",
+      "severity": "info"
+    }
+  ]
+}

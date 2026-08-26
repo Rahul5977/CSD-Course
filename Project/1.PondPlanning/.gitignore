@@ -32,3 +32,4 @@ dist/
 
 # Local agent settings
 .the assistant/settings.local.json
+coverage.json

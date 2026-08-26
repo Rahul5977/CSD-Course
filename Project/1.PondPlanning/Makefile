@@ -5,7 +5,7 @@ COMPOSE := docker compose -f infra/docker-compose.yml
 UV      := uv run
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures loadtest
+.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures loadtest tunnel
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -75,6 +75,9 @@ fmt:  ## Auto-format and auto-fix
 
 typecheck:  ## Type-check (strict on app/domain and app/engines)
 	$(UV) mypy
+
+tunnel:  ## Expose the app on a public URL through ngrok (requires `ngrok config add-authtoken …` once)
+	ngrok http $${POND_WEB_PORT:-3000}
 
 loadtest:  ## Locust: 50 users for 60 s against the running stack (records p95 into docs/figures/p6-locust.txt)
 	$(UV) locust -f infra/locustfile.py --headless -u 50 -r 10 -t 60s --host http://localhost:$${POND_API_PORT:-8000} --only-summary 2>&1 | tee docs/figures/p6-locust.txt

@@ -919,7 +919,7 @@
           "recommendations"
         ],
         "summary": "List recommendations",
-        "description": "Return saved pond recommendations.",
+        "description": "Saved pond recommendations, newest first.",
         "operationId": "list_recommendations_api_v1_recommendations_get",
         "parameters": [
           {
@@ -953,6 +953,64 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Page_RecommendationOut_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Save a design",
+        "description": "Turn a succeeded pond-design job into a draft recommendation (planner role).",
+        "operationId": "create_recommendation_api_v1_recommendations_post",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecommendationCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecommendationOut"
                 }
               }
             }
@@ -1020,7 +1078,7 @@
           "recommendations"
         ],
         "summary": "Change Status",
-        "description": "Approve or reject a recommendation.\n\nRole-gated in P6: a viewer receives ``403``. Every transition writes an\n``audit_log`` row, and that table is append-only in the database \u2014 the rules\nare already in migration 0001, so the trail cannot be rewritten later.",
+        "description": "Move a recommendation through its lifecycle.\n\nThe state machine rejects illegal moves (``409 illegal_transition``); the\nrole table rejects under-privileged callers (``403``); every accepted move\nwrites an outbox event that becomes an append-only audit row.",
         "operationId": "change_status_api_v1_recommendations__recommendation_id__status_post",
         "parameters": [
           {
@@ -1031,6 +1089,22 @@
               "type": "string",
               "format": "uuid",
               "title": "Recommendation Id"
+            }
+          },
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
             }
           }
         ],
@@ -1051,6 +1125,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/RecommendationOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/recommendations/{recommendation_id}/audit": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Audit trail",
+        "description": "Audit rows (drained from the outbox) plus any events still pending.",
+        "operationId": "audit_trail_api_v1_recommendations__recommendation_id__audit_get",
+        "parameters": [
+          {
+            "name": "recommendation_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Recommendation Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Audit Trail Api V1 Recommendations  Recommendation Id  Audit Get"
                 }
               }
             }
@@ -1092,6 +1212,11 @@
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "pdf",
+                "geojson",
+                "csv"
+              ],
               "type": "string",
               "default": "pdf",
               "title": "Export Format"
@@ -1301,23 +1426,179 @@
         }
       }
     },
+    "/api/v1/auth/token": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Log in",
+        "description": "RS256 access (15 min) + refresh (7 d) tokens for a configured user.",
+        "operationId": "token_api_v1_auth_token_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh tokens",
+        "description": "A valid refresh token yields a new pair.",
+        "operationId": "refresh_api_v1_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Who am I",
+        "description": "The caller's username and role (viewer when anonymous).",
+        "operationId": "me_api_v1_auth_me_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "title": "Response Me Api V1 Auth Me Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/analysis/catchment": {
       "post": {
         "tags": [
           "analysis"
         ],
         "summary": "Analyse Catchment",
-        "description": "FR4: delineate the upstream contributing area of a clicked point.\n\nReal since P2. Snap \u2192 D8 upstream BFS \u2192 polygon, in a worker; the pipeline\nis :mod:`app.engines.workflows.catchment`.\n\nResult shape: :class:`~app.schemas.analysis.CatchmentResult`.",
+        "description": "FR4: delineate the upstream contributing area of a clicked point.\n\nReal since P2. Snap \u2192 D8 upstream BFS \u2192 polygon, in a worker on the\n``interactive`` queue; the pipeline is :mod:`app.engines.workflows.catchment`.\n\nResult shape: :class:`~app.schemas.analysis.CatchmentResult`.",
         "operationId": "analyse_catchment_api_v1_analysis_catchment_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/CatchmentRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -1351,15 +1632,33 @@
         "summary": "Analyse Runoff",
         "description": "FR6: runoff volume by three methods, reported as a range.\n\nReal since P3: land cover (WorldCover) + soil (SoilGrids) \u2192 curve number \u2192\ndaily rainfall \u2192 SCS-CN / rational / Strange on the daily series.\n\nResult shape: :class:`~app.schemas.analysis.RunoffResult`.",
         "operationId": "analyse_runoff_api_v1_analysis_runoff_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/RunoffRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -1393,15 +1692,33 @@
         "summary": "Analyse Pond Design",
         "description": "FR7: the complete pond design payload \u2014 the project's headline result.\n\nReal since P3. Result shape: :class:`~app.schemas.analysis.PondDesignResult`,\nwhich assembles catchment, rainfall, runoff, dimensions, EAV curve,\nreliability, bill of quantities and a confidence label.",
         "operationId": "analyse_pond_design_api_v1_analysis_pond_design_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/PondDesignRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -1433,17 +1750,35 @@
           "analysis"
         ],
         "summary": "Analyse Suitability",
-        "description": "FR3: land constraints, then rank candidate pond sites by AHP-weighted criteria.\n\nReal since P4. Also produces the available-land parcels, the NDWI water mask\nand the suitability heat-map for the village.\n\nResult shape: :class:`~app.schemas.analysis.SuitabilityResult`.",
+        "description": "FR3: land constraints, then rank candidate pond sites by AHP-weighted criteria.\n\nReal since P4, on the ``heavy`` queue. Also produces the available-land\nparcels, the NDWI water mask and the suitability heat-map for the village.\n\nResult shape: :class:`~app.schemas.analysis.SuitabilityResult`.",
         "operationId": "analyse_suitability_api_v1_analysis_suitability_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SuitabilityRequest"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -1695,17 +2030,35 @@
           "analysis"
         ],
         "summary": "Analyse an uploaded contour map (KML/KMZ)",
-        "description": "Derive terrain \u2014 and, from P2, a pond location and its catchment \u2014 from an upload.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe source accuracy from its own metadata. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nValidate \u2192 store the upload \u2192 create the job \u2192 dispatch \u2192 ``202``. The\npipeline itself runs in :mod:`app.engines.workflows.contour_analysis`.\n\nResult shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.",
+        "description": "Derive terrain, a pond location and its catchment from an uploaded contour map.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe source accuracy from its own metadata. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nValidate \u2192 store the upload \u2192 create the job \u2192 dispatch (``heavy`` queue)\n\u2192 ``202``. The pipeline is :mod:`app.engines.workflows.contour_analysis`.\n\nResult shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.",
         "operationId": "analyze_contour_api_v1_analyzeContour_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "multipart/form-data": {
               "schema": {
                 "$ref": "#/components/schemas/Body_analyze_contour_api_v1_analyzeContour_post"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "202": {
@@ -1715,6 +2068,62 @@
                 "schema": {
                   "$ref": "#/components/schemas/JobAccepted"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/exports/{export_id}.{export_format}": {
+      "get": {
+        "tags": [
+          "recommendations"
+        ],
+        "summary": "Download an export",
+        "description": "Serve a generated export from the object store.",
+        "operationId": "download_export_api_v1_exports__export_id___export_format__get",
+        "parameters": [
+          {
+            "name": "export_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Export Id"
+            }
+          },
+          {
+            "name": "export_format",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "enum": [
+                "pdf",
+                "geojson",
+                "csv"
+              ],
+              "type": "string",
+              "title": "Export Format"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
               }
             }
           },
@@ -3413,6 +3822,22 @@
         "title": "ReadinessResponse",
         "description": "Readiness answer: every dependency needed to serve real traffic is reachable.\n\nKept distinct from liveness on purpose \u2014 an orchestrator should restart a\nprocess that fails liveness, but only stop routing traffic to one that fails\nreadiness. Conflating them turns a slow database into a restart loop."
       },
+      "RecommendationCreate": {
+        "properties": {
+          "design_job_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Design Job Id",
+            "description": "A succeeded pond-design job"
+          }
+        },
+        "type": "object",
+        "required": [
+          "design_job_id"
+        ],
+        "title": "RecommendationCreate",
+        "description": "Save a finished pond design as a draft recommendation."
+      },
       "RecommendationOut": {
         "properties": {
           "id": {
@@ -3501,6 +3926,20 @@
         ],
         "title": "RecommendationOut",
         "description": "A saved pond recommendation, in its current lifecycle state."
+      },
+      "RefreshRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshRequest",
+        "description": "Exchange a refresh token for a new pair."
       },
       "ResultWarning": {
         "properties": {
@@ -4086,6 +4525,63 @@
         ],
         "title": "TerrainPreparationResult",
         "description": "P1 job result: a working DEM, its provenance, and the layers it yields.\n\nThis is what ``POST /analyzeContour`` produces until the catchment engine\nlands in P2, at which point :class:`~app.schemas.analysis.ContourAnalysisResult`\nembeds it. ``catchment`` is present and ``null`` so a client can see the\nshape of what is coming rather than discover a missing key."
+      },
+      "TokenRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "TokenRequest",
+        "description": "Username/password grant."
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "token_type",
+          "expires_in",
+          "role"
+        ],
+        "title": "TokenResponse",
+        "description": "Bearer tokens."
       },
       "Unit": {
         "type": "string",

@@ -1,0 +1,11 @@
+{
+  "job_id": "2e4e9705-91d1-42a4-9e3c-2e7307f2a0e8",
+  "kind": "catchment",
+  "status": "succeeded",
+  "progress": 100,
+  "stage": "done",
+  "created_at": "2026-08-26T09:13:02.280825Z",
+  "finished_at": "2026-08-26T09:13:02.401577Z",
+  "error": null,
+  "result_url": "/api/v1/jobs/2e4e9705-91d1-42a4-9e3c-2e7307f2a0e8/result"
+}
