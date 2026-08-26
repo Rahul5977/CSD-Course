@@ -42,7 +42,10 @@ services:
     healthcheck:
       # The database name matters: without -d, pg_isready reports on the
       # default database and the API can start against a half-created one.
-      test: ["CMD-SHELL", "pg_isready -U ${POND_POSTGRES_USER:-pond} -d ${POND_POSTGRES_DB:-pond}"]
+      # -h localhost forces TCP: initdb's temporary server on a fresh volume listens
+      # on the unix socket only, so a socket probe reports "healthy" seconds before
+      # the real server is up and the first migration hits "connection refused".
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POND_POSTGRES_USER:-pond} -d ${POND_POSTGRES_DB:-pond}"]
       interval: 5s
       timeout: 3s
       retries: 10
@@ -161,7 +164,9 @@ services:
     build:
       context: ..
       dockerfile: infra/Dockerfile.api
-    command: ["celery", "-A", "app.jobs.celery_app:celery_app", "beat", "--loglevel", "INFO"]
+    # The schedule file is derived state (rebuilt from beat_schedule on start), so it
+    # lives in /tmp — the image runs as an unprivileged user with a read-only /srv.
+    command: ["celery", "-A", "app.jobs.celery_app:celery_app", "beat", "--loglevel", "INFO", "--schedule", "/tmp/celerybeat-schedule"]
     environment:
       <<: *api-env
     depends_on:

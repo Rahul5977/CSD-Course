@@ -89,6 +89,8 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | `429 queue_saturated` on an analysis POST | More than `POND_MAX_QUEUE_DEPTH` jobs waiting | Wait `Retry-After` seconds, or raise the limit |
 | `403 forbidden` on save/approve | Logged in with an insufficient role | Log in as `planner` to save, `officer` to approve |
 | Grafana panels say *No data* | Fewer than two scrapes yet, or no jobs run | Run `make seed` or click the map; wait 30 s |
+| First `make up` on a fresh volume: `alembic` says *connection refused* | Postgres's initdb restarts the server once; the healthcheck now probes TCP and `make up` retries the migration | Run `make up` again if it still fails on a slow disk |
+| `beat` restarts with *Permission denied: 'celerybeat-schedule'* | The image runs unprivileged; the schedule file is written to `/tmp` | Pull and `make up` (rebuilds the compose command) |
 | An old `worker` container lingers after upgrading | The single worker was split into two bulkheads | `docker compose -f infra/docker-compose.yml up -d --remove-orphans` |
 | `make check` fails on a fresh clone with a network error | Nothing should — tests use recorded fixtures | Check `POND_RAINFALL_SOURCE` is unset in your shell (tests force `recorded`) |
 

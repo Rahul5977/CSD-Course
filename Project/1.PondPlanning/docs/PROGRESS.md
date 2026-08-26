@@ -159,6 +159,7 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-08-27 | **Postgres healthcheck probes TCP (`pg_isready -h localhost`)**, `make up` retries the migration | On a fresh volume initdb's temporary server answers the unix-socket probe, so the stack reported healthy before the real server restarted — a defect only a clean clone shows | Fixed `sleep` before migrating (masks the cause; slow on slow disks) |
 | 2026-08-27 | **Report lives in the repo as Markdown** (`docs/report/REPORT.md`) with figures linked | Version-controlled, diffable, reviewable at the G7 checkpoint; `pandoc` produces the PDF if the form insists | A separate Word/PDF document (drifts from the code it describes) |
 | 2026-08-27 | **Backup recording = chaos GIF + the captured figure set**, not a fresh screen recording | Every demo beat already has an artifact; a run-through recording is best made by the presenter at rehearsal | A synthetic recording of the automation window (throttled rendering, misleading) |
 | 2026-08-27 | **API samples captured from the live stack and committed** (`docs/api/samples/`) | The cookbook shows real payloads, trimmed to two list items, so it cannot describe shapes that do not exist | Hand-written JSON in the cookbook (drifts) |

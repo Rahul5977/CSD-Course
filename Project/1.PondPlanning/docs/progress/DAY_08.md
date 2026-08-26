@@ -11,6 +11,8 @@
 ## What broke
 - `make check` had drifted: `ruff format` on four files and 11 lint findings in `scripts/`, `infra/locustfile.py` and migration 0003 (unused imports, docstrings, long lines). Those files were added in P6 by scripts that skipped the check. Fixed; CI is what should have caught it — it did run on push, so the lesson is to run `make check` before every commit, not after.
 
+- The clean-clone gate check found two install defects invisible on a warm volume: Postgres's initdb temporary server answers `pg_isready` over the unix socket, so the healthcheck passed before the real server was up and the first `alembic upgrade head` was refused; and `beat` crash-looped on `Permission denied: 'celerybeat-schedule'` because the image runs unprivileged. Fixed: healthcheck probes TCP (`-h localhost`), `make up` retries the migration, the schedule file lives in `/tmp`, and `make seed` waits for `/ready` and fails with a message instead of a traceback. Both are now rows in the README troubleshooting table.
+
 ## Screenshot
 `docs/figures/p7-coverage.jpg`
 

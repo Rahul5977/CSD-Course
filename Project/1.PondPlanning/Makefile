@@ -19,7 +19,7 @@ up:  ## Build and start the stack, then apply migrations
 	$(COMPOSE) up -d --build
 	@echo "Waiting for the API to report healthy..."
 	@until [ "$$(docker inspect -f '{{.State.Health.Status}}' pond-planner-api-1 2>/dev/null)" = "healthy" ]; do sleep 2; done
-	$(COMPOSE) exec -T api alembic upgrade head
+	@for i in 1 2 3 4 5 6; do $(COMPOSE) exec -T api alembic upgrade head && break; echo "migration attempt $$i failed (database still starting?) — retrying in 5 s"; sleep 5; done
 	@echo "App:        http://localhost:$${POND_WEB_PORT:-3000}"
 	@echo "Grafana:    http://localhost:$${POND_GRAFANA_PORT:-3001}  (anonymous viewer; admin/$${POND_GRAFANA_PASSWORD:-admin})"
 	@echo "Swagger UI: http://localhost:$${POND_API_PORT:-8000}/docs"
@@ -37,8 +37,10 @@ shell:  ## Open a shell in the api container
 	$(COMPOSE) exec api /bin/bash
 
 seed:  ## Analyse the provided sample contour map through the running stack
+	@for i in $$(seq 1 30); do curl -sf http://localhost:$${POND_API_PORT:-8000}/ready >/dev/null && break; [ $$i = 30 ] && { echo "API not ready on :$${POND_API_PORT:-8000} — is the stack up? (make ps, make logs)"; exit 1; }; sleep 2; done
 	@echo "Uploading data/samples/contours_1m.kml to POST /api/v1/analyzeContour ..."
 	@JOB=$$(curl -sf -F "file=@data/samples/contours_1m.kml" http://localhost:$${POND_API_PORT:-8000}/api/v1/analyzeContour | python3 -c 'import sys,json;print(json.load(sys.stdin)["job_id"])'); \
+	[ -n "$$JOB" ] || { echo "upload failed — see make logs"; exit 1; }; \
 	echo "job $$JOB queued"; \
 	for i in $$(seq 1 90); do \
 	  S=$$(curl -sf http://localhost:$${POND_API_PORT:-8000}/api/v1/jobs/$$JOB); \
