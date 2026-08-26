@@ -55,7 +55,7 @@ else is started.
 
 ## Definition of done
 
-From `the working agreement`, restated here because it is easy to skip:
+From the working agreement, restated here because it is easy to skip:
 
 - `ruff` clean, `mypy --strict` clean on `app/domain` and `app/engines`
 - New engine code has unit tests; hydrology changes have a golden test

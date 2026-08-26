@@ -107,7 +107,7 @@ then accepts the KML/KMZ upload from anywhere. The tunnel lives as long as the c
 - `docs/PROGRESS.md` — decision log and session history; `docs/progress/DAY_NN.md` — daily logs
 - `docs/LICENSES.md` — data-source licence register
 - `docs/DEMO.md` — the 7-minute demonstration script
-- `docs/design/BRIEF.md`, `web/design/` — the design brief, tokens, components and prototypes (push to the AI design tool with `/design-sync`)
+- `docs/design/BRIEF.md`, `web/design/` — the design brief, tokens, components and prototypes (push to the AI design tool with the design-sync tooling)
 
 ## Development
 
