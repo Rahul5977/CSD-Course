@@ -17,7 +17,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, Form, UploadFile, status
 
-from app.api.deps import FixtureRoute
+from app.api.deps import FixtureRoute, ReposDep, RunnerDep, SettingsDep, StoreDep
+from app.api.uploads import read_contour_upload
+from app.jobs.tasks import CONTOUR_ANALYSIS
 from app.providers import fixtures
 from app.schemas.analysis import (
     CatchmentRequest,
@@ -82,7 +84,8 @@ def analyse_suitability(payload: SuitabilityRequest) -> JobAccepted:
 
 # The Phase 2 submission route. Mounted outside /analysis at the path the brief
 # names, and kept in this module because it shares the whole hydrology chain.
-contour_router = APIRouter(tags=["analysis"], dependencies=[FixtureRoute])
+# Real since P1: no FixtureRoute dependency.
+contour_router = APIRouter(tags=["analysis"])
 
 
 @contour_router.post(
@@ -93,18 +96,37 @@ contour_router = APIRouter(tags=["analysis"], dependencies=[FixtureRoute])
 )
 def analyze_contour(
     file: Annotated[UploadFile, File(description="Contour map, KML or KMZ")],
+    repos: ReposDep,
+    store: StoreDep,
+    runner: RunnerDep,
+    settings: SettingsDep,
     target_interval: Annotated[float | None, Form()] = None,
 ) -> JobAccepted:
-    """Derive a pond location and its catchment from an uploaded contour map.
+    """Derive terrain — and, from P2, a pond location and its catchment — from an upload.
 
     Everything in the result is derived from the upload: the UTM zone from the
     file's own centroid, the grid resolution from its own mean contour spacing,
-    the pour point from its own modelled drainage. No coordinate, extent or CRS
+    the source accuracy from its own metadata. No coordinate, extent or CRS
     specific to any one map exists in this codebase.
 
-    Result shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.
+    Validate → store the upload → create the job → dispatch → ``202``. The
+    pipeline itself runs in :mod:`app.engines.workflows.contour_analysis`.
+
+    Result shape (P1): :class:`~app.schemas.terrain.TerrainPreparationResult`.
     """
-    return _accepted("e5d1c937-8b4a-4f6d-9e23-7c1f4a8d3b95", 35)
+    filename, payload = read_contour_upload(file, settings.max_upload_mb)
+    job = repos.jobs.create(CONTOUR_ANALYSIS_KIND, {"filename": filename}, None)
+    upload_key = f"uploads/{job.id}/{filename}"
+    store.put(upload_key, payload, "application/vnd.google-earth.kml+xml")
+    repos.jobs.update(
+        job.id,
+        params={"filename": filename, "upload_key": upload_key, "target_interval": target_interval},
+    )
+    runner.submit(CONTOUR_ANALYSIS, job.id)
+    return _accepted(str(job.id), 35)
+
+
+CONTOUR_ANALYSIS_KIND = "contour_analysis"
 
 
 # Result-shape routes. These exist so the OpenAPI document — and therefore the

@@ -1,9 +1,9 @@
 """SQLAlchemy ORM models for the first migration.
 
-Three tables only, matching P0's scope: the analysis subject (``villages``),
-the async work record (``jobs``) and the tamper-evident trail (``audit_log``).
-Terrain, rainfall and recommendation tables arrive with the phases that need
-them, each behind its own Alembic revision.
+P0 created the analysis subject (``villages``), the async work record (``jobs``)
+and the tamper-evident trail (``audit_log``). P1 adds ``dem_assets`` and a
+``stage`` column on jobs. Rainfall and recommendation tables arrive with the
+phases that need them, each behind its own Alembic revision.
 """
 
 from __future__ import annotations
@@ -16,8 +16,10 @@ from sqlalchemy import (
     JSON,
     CheckConstraint,
     DateTime,
+    Float,
     ForeignKey,
     Index,
+    Integer,
     String,
     Text,
     func,
@@ -75,6 +77,9 @@ class Job(Base):
     kind: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[str] = mapped_column(String(16), nullable=False, default="queued")
     progress: Mapped[int] = mapped_column(default=0)
+    # Human-readable pipeline stage ("filling sinks"); a percentage alone is
+    # uninformative during a 25-second pipeline.
+    stage: Mapped[str | None] = mapped_column(String(128))
     village_id: Mapped[uuid.UUID | None] = mapped_column(
         postgresql.UUID(as_uuid=True), ForeignKey("villages.id", ondelete="SET NULL")
     )
@@ -122,3 +127,42 @@ class AuditLog(Base):
     )
 
     __table_args__ = (Index("ix_audit_entity", "entity_type", "entity_id"),)
+
+
+class DEMAsset(Base):
+    """Provenance and storage keys of the working DEM for one village.
+
+    One row per village (the latest analysis wins). Everything an evaluator
+    needs to judge the honesty of a terrain number — source, native and working
+    resolution, vertical accuracy — is a column here, not a log line.
+    """
+
+    __tablename__ = "dem_assets"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    village_id: Mapped[uuid.UUID] = mapped_column(
+        postgresql.UUID(as_uuid=True),
+        ForeignKey("villages.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+    )
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    source: Mapped[str] = mapped_column(String(256), nullable=False)
+    native_resolution_m: Mapped[float] = mapped_column(Float, nullable=False)
+    working_resolution_m: Mapped[float] = mapped_column(Float, nullable=False)
+    vertical_accuracy_relative_m: Mapped[float] = mapped_column(Float, nullable=False)
+    vertical_accuracy_absolute_m: Mapped[float] = mapped_column(Float, nullable=False)
+    epsg: Mapped[int] = mapped_column(Integer, nullable=False)
+    bounds_lonlat: Mapped[list[float]] = mapped_column(JSON, nullable=False)
+    dem_key: Mapped[str] = mapped_column(String(256), nullable=False)
+    hillshade_key: Mapped[str | None] = mapped_column(String(256))
+    statistics: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    attribution: Mapped[list[str]] = mapped_column(JSON, nullable=False)
+    acquired: Mapped[str | None] = mapped_column(String(64))
+    method: Mapped[str] = mapped_column(String(256), nullable=False)
+    details: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )

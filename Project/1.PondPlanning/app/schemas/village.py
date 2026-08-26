@@ -35,6 +35,9 @@ class VillageOut(BaseModel):
         )
     )
     area: QuantityOut
+    boundary: dict[str, Any] | None = Field(
+        default=None, description="GeoJSON geometry, EPSG:4326 — the analysed extent"
+    )
     created_at: datetime
 
 

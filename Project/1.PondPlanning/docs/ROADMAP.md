@@ -45,10 +45,12 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 - [x] *Added:* every fixture route is labelled `X-Fixture-Data: true`, and `GET /api/v1/meta/implementation-status` reports what is real
 - **11 marks secured**
 
-### G1 — Walking skeleton
-- [ ] Browser shows real satellite imagery + hillshade from your own pipeline — **FR1 banked**
-- [ ] `assert_crs()` guard exists, with a unit test that fails on an EPSG:4326 array
-- [ ] End-to-end path proven: browser → API → worker → MinIO → tile → browser
+### G1 — Walking skeleton ✅ **closed 2026-08-26**
+- [x] Browser shows real satellite imagery + hillshade from your own pipeline — **FR1 banked** (`docs/figures/p1-walking-skeleton.jpg`)
+- [x] `assert_crs()` guard exists, with a unit test that fails on an EPSG:4326 array (`tests/test_geo.py::test_assert_crs_fails_on_a_geographic_grid`)
+- [x] End-to-end path proven: browser → API → worker → MinIO → tile → browser (`make up && make seed`, then the app at :3000; `tests/test_contour_job_flow.py` runs the same path in-process)
+- [x] *Revised scope (decision log 2026-08-26):* the DEM comes from the uploaded contour map, so `POST /analyzeContour` is real from P1 — parse → TIN → hillshade → COG → MinIO → TiTiler
+- **10 marks secured · 21 cumulative**
 
 ### G2 — Terrain & catchment ⭐
 - [ ] Click any point → catchment polygon in < 5 s (cached < 2 s)
@@ -212,7 +214,9 @@ Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figur
 | 31 | API cookbook + error catalogue | Docs API 2 | P7 | ☐ |
 | 32 | Technical report with citations | Docs report 3 | P7 | ☐ |
 | 33 | Clean `git log` + conventional commits + v1.0 tag | Code Git 2 | P7 | ☐ |
-| 34 | `docs/progress/DAY_NN.md` series | Feeds report | Daily | ☐ |
+| 34 | `docs/progress/DAY_NN.md` series | Feeds report | Daily | ◐ DAY_01–03 |
+| 34a | P1 walking-skeleton screenshot — satellite + hillshade + summary card (`docs/figures/p1-walking-skeleton.jpg`) | FR1 3 · FE 1 | P1 | ☑ |
+| 34b | ADR 0013 ports-and-adapters wiring; `tests/test_contour_job_flow.py` runs the real pipeline on the sample with no Docker | Code 2 · SysDes 1 | P1 | ☑ |
 
 Added for the **Phase 2 submission**, which is graded separately (§4):
 
@@ -220,5 +224,5 @@ Added for the **Phase 2 submission**, which is graded separately (§4):
 |---|---|---|---|---|
 | 35 | `POST /analyzeContour` working on `data/samples/contours_1m.kml` | Working endpoint + catchment estimation | P2 | ☐ |
 | 36 | Public URL for that route, reachable from another machine | Phase 2 report requirement | P2 | ☐ |
-| 37 | A second contour KML (elevation in Z or `ExtendedData`, not `<name>`) parsing through the same code path | "Extensibility to generalized contour maps" | P2 | ☐ |
+| 37 | A second contour KML (elevation in Z or `ExtendedData`, not `<name>`) parsing through the same code path | "Extensibility to generalized contour maps" | P2 | ☑ `tests/test_contour_kml.py` (Z, `ExtendedData`, KMZ, `<Folder>` root, ID decoy rejected) |
 | 38 | Data-source licence register (SRTM · GMTED2010 · HydroSHEDS · Mapzen) | Docs report 3 | P7 | ☐ |

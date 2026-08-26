@@ -8,11 +8,12 @@ the assistant reads this at the start of every session and updates it at the end
 
 ## Snapshot
 
-- **Last updated:** 2026-08-18
-- **Current phase:** P1 — Walking Skeleton
-- **Active gate:** G1 — open. **G0 closed 2026-08-18.**
-- **Marks secured:** 11 / 100 · next 10 are in P1
-- **Next action:** **choose the village** (blocker 2 — the only thing gating P1), then P1 day 1: `DEMProvider` Protocol, Copernicus/ALOS adapter, mosaic → clip → reproject → COG → MinIO, and `assert_crs()` written first
+- **Last updated:** 2026-08-26
+- **Current phase:** P2 — Terrain & Catchment ⭐ (awaiting the user's go at the G1 checkpoint)
+- **Active gate:** G2 — open. **G1 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Marks secured:** 21 / 100 · next 30 are in P2
+- **Next action:** P2 day 1 — priority-flood sink fill + flat resolution on the interpolated DEM, before/after figure, synthetic pit golden test; then D8 → accumulation → streams → snap → BFS catchment; site-selection scorer; `POST /analyzeContour` grows to the full `ContourAnalysisResult`
+- **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
 ## Phase status
@@ -22,15 +23,15 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | Phase | Marks | Cumulative | Gate | Status |
 |---|---|---|---|---|
 | P0 Foundations & Contract | 11 | 11 | G0 | ☑ **done** |
-| P1 Walking Skeleton | 10 | 21 | G1 | ◐ active |
-| P2 Terrain & Catchment ⭐ | 30 | 51 | G2 | ☐ |
+| P1 Walking Skeleton | 10 | 21 | G1 | ☑ **done** |
+| P2 Terrain & Catchment ⭐ | 30 | 51 | G2 | ◐ next |
 | P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ☐ |
 | P4 Suitability & AI | 7 | 77 | G4 | ☐ |
 | P5 Frontend Integration | 7 | 84 | G5 | ☐ |
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☐ |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
 
-Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 5 of 38 ticked (rows 1–5: repo tree, compose+Makefile, 12 ADRs, CI badge, OpenAPI + Swagger screenshots).
+Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 8 of 40 ticked (rows 1–5 from P0; 34a walking-skeleton screenshot, 34b ADR 0013 + real-pipeline test, 37 generalised-KML parser tests).
 
 ## What exists today
 
@@ -40,6 +41,26 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
 - `docs/assignment/Phase{1,2,3}.txt` — phase briefs; Phase 1 (HLD) submitted and done
 - `data/samples/contours_1m.kml` — the provided sample, 6.4 MB (analysed; see `docs/ROADMAP.md` §4)
 - `the working agreement`, `docs/ROADMAP.md`, `docs/PROGRESS.md`, `CONTRIBUTING.md`, `.gitignore`
+
+**Code — P1 complete, verified 2026-08-26**
+- `POST /analyzeContour` is **real**: upload → `ContourKMLAdapter` (lxml parser, ordered elevation
+  strategy, KMZ) → provenance from the file's own metadata → Delaunay TIN → DEM at a derived
+  resolution → Horn slope + hillshade → COGs in MinIO → village row (reverse-geocoded name) →
+  `dem_assets` row → layer descriptors. Job flow `202 → /jobs/{id} → /result` is real (Celery on
+  Redis in Docker, inline in tests). `/villages*`, `/terrain/{id}/dem|layers` real.
+- `app/domain/{geo,raster,contours,dem}.py` — `utm_epsg_for`, `assert_crs`, `GridSpec`, `Raster`,
+  the `DEMProvider` port. `app/engines/terrain/{interpolate,surfaces,adapters,layers}.py`,
+  `app/engines/workflows/contour_analysis.py`, `app/engines/village.py`.
+- Ports + adapters (ADR 0013): repositories (SQL/memory), job runner (Celery/inline), object store
+  (MinIO/local). `make check` runs the real pipeline on the real sample without Docker.
+- `web/` — React + MapLibre SPA: upload → progress → village select → summary card → layer
+  toggles (satellite, hillshade, elevation, boundary). Served by nginx, which proxies `/api` and `/tiles`.
+- Compose: **7 services** (postgres, redis, minio, api, worker, titiler, web). `make seed` analyses
+  the sample. Migration 0002 (`dem_assets`, `jobs.stage`).
+- Tests: **137 passing** (golden: inclined plane, cone, resolution rule; parser on the sample and
+  on Z/ExtendedData/KMZ/decoy variants; end-to-end job flow on the sample).
+- Sample run (Docker): village **Khapri, Durg, CG** (Nominatim), SRTM 30 m detected, EPSG:32644,
+  30 m grid 110×89, 830 ha, elevation 268.7–295.7 m on the grid, mean slope 1.6°, ~2 s per job.
 
 **Code — P0 complete, verified 2026-08-18**
 - `app/` — layered tree. **35 operations across 33 paths**, all fixture-backed except
@@ -75,7 +96,7 @@ Attribution owed in the report: NASA/USGS SRTM · USGS GMTED2010 · HydroSHEDS �
 ## Blockers
 
 1. ~~Sample contour map missing~~ **resolved** — `data/samples/contours_1m.kml` added 18 Aug and fully analysed.
-2. **Village not formally chosen.** The sample fixes an AOI — *area of interest*, the ~8.5 km² rectangle the analysis is clipped to, in Chhattisgarh around 81.297 E, 21.2517 N. P1 still needs the named village and boundary, and for FR7 validation an existing pond nearby to compare computed storage against. Confirm the sample AOI *is* the demo village, or name a different one.
+2. ~~Village not formally chosen~~ **resolved 2026-08-26** — the demo village **is** the sample KML's AOI; its name is derived at runtime by reverse-geocoding the centroid. Original note: The sample fixes an AOI — *area of interest*, the ~8.5 km² rectangle the analysis is clipped to, in Chhattisgarh around 81.297 E, 21.2517 N. P1 still needs the named village and boundary, and for FR7 validation an existing pond nearby to compare computed storage against. Confirm the sample AOI *is* the demo village, or name a different one.
 
 ## Decision log
 
@@ -106,20 +127,39 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 | 2026-08-18 | `audit_log` append-only **in the database** (`DO INSTEAD NOTHING` rules), not by convention | A trail the application can rewrite is not evidence, and G6 grades the audit log. Verified: UPDATE and DELETE affect 0 rows, original row survives | Application-level discipline · role grants (bypassed whenever the app connects as owner) |
 | 2026-08-18 | Alembic autogenerate ignores any *reflected* table this metadata does not declare | The `postgis/postgis` image installs the tiger geocoder and topology and puts `tiger` on the search_path; without the filter every revision opens with ~40 `drop_table` calls against extension-owned tables | Naming the tables to exclude — a list that goes stale the moment an extension is added |
 | 2026-08-18 | SCS-CN applied to the daily series then summed | Applying CN to annual totals overestimates runoff 2–3× | Annual-total CN — a common and visible error |
+| 2026-08-26 | **Demo village = the sample KML's AOI**; name derived at runtime by reverse-geocoding the centroid | Zero extra data work with 10 days left; keeps the anti-hard-coding rule intact — nothing about the village is written into code | A separately chosen village — ~1 day of boundary + DEM work, no marks gained |
+| 2026-08-26 | **Uploaded contour KML is the primary terrain source**; provider DEM tiles (Copernicus/ALOS) demoted to an optional secondary adapter behind the same `DEMProvider` Protocol | Phase 2 grades the KML route and Phase 3 feeds arbitrary contour maps; removes DEM downloads from the critical path; every step (parse → TIN → fill → D8 → snap → BFS) is explainable in the viva, which the professor said is the focus | PLAN.md's order (provider DEM first, KML adapter later in P2) — adds ~1 day and external-download risk for the same marks |
+| 2026-08-26 | **Site selection is a first-class terrain algorithm** (P2), not a P4 afterthought: candidates on the drainage network scored on upstream area, valley-floor slope, TWI and impoundment efficiency (storage per m³ excavated, from the EAV curve), constraints, then non-max suppression → ranked top-N | The Phase 2 brief asks the route to "identify a suitable pond location/region" from the contour map alone, and the professor flagged area selection as the examined topic. P4 layers land/LULC constraints and AHP weights on the same scorer | Selecting sites only in P4 from suitability rasters — leaves the Phase 2 route without a defensible answer to "where" |
+| 2026-08-26 | **Cross-validate catchment against pysheds** (independent published implementation) ±15 %, plus synthetic golden tests and pour-point sensitivity; GRASS `r.watershed` only if QGIS gets installed | GRASS/QGIS/GDAL are not on the dev machine; an independent implementation comparison is the same evidence class, pip-installable, and runs in CI | Installing QGIS for one comparison table — ~1 GB and wall-clock we do not have |
+| 2026-08-26 | **P6 shipped in full** as planned (bulkheads, Saga, WebSocket progress, JWT/RBAC, outbox audit, Grafana, Locust, chaos test) — user's explicit call, open question 6 closed | The user accepts the larger viva surface for the SysDes marks | Trimmed P6 |
+| 2026-08-26 | **Contour → DEM by Delaunay TIN linear interpolation** of densified contour vertices, then Gaussian smoothing (sigma = 1 cell) | Exact on the contours, one-sentence explainable ("the plane through the three nearest contour vertices"), no tuning parameters. Its known flaw — flat triangles where all three vertices share one contour — is softened by the smoothing and finished by the P2 flat-resolution stage, which must exist anyway. Summits above the top contour are flattened; documented as a limitation, and verified by the cone golden test | Thin-plate spline / kriging — smoother, but a hyper-parameter and a covariance model to defend; `gdal_grid` — not installed and no better |
+| 2026-08-26 | **Grid resolution = mean contour spacing / 4, clamped to [source resolution, 50 m]**; spacing estimated as convex-hull area / total contour length | ≥ 4 cells between adjacent contours resolves the surface between them; the floor stops the grid claiming detail the source lacks (30 m for the SRTM-derived sample → 30 m cells, ~110 × 90 grid); the cap keeps a sparse map usable. The estimator is exact for parallel contours (bias (n-1)/n for n lines, negligible at hundreds) | A fixed fine grid — false precision and slow; user-chosen resolution — invites hard-coding per map |
+| 2026-08-26 | **DEM provenance inferred from the upload's own metadata** by a table of known datasets; primary = most-mentioned dataset with raw `.tif` references weighted ×5, ties to the finer product; unknown → conservative defaults + `source_unknown` warning | The sample names SRTM five times and by file (`srtm/N21E081.tif`) and Copernicus once in a generic blurb; naive "first match" or "finest match" both pick the wrong one. The table generalises to other maps; nothing about this file is coded | Hard-coding "30 m SRTM" (violates the anti-hard-coding rule); ignoring provenance entirely (every uncertainty band would be a guess) |
+| 2026-08-26 | **Village named by reverse-geocoding the AOI centroid** (OSM Nominatim, 5 s timeout) with a coordinate-based fallback name and a `geocode_unavailable` warning | The village is derived from the input like everything else; the demo works offline (falls back), and CI never calls the network (`POND_GEOCODE_ENABLED=false`) | A `name` form field (fine as an override later; not a source of truth) |
+| 2026-08-26 | **Ports and adapters chosen by settings** — persistence (postgres/memory), job runner (celery/inline), object store (minio/local); tests run the real pipeline on the real sample with no Docker, no mocks. ADR 0013 | The bugs this project fears live in the real code path, and `make check` must be green on a fresh clone without Docker. The in-memory adapters also power `make api-dev` | Mocks (test the mock); conditionals in engines (scatter wiring, engines depend on settings) |
+| 2026-08-26 | **Hillshade/DEM served as COGs from MinIO via TiTiler**, browser reaches everything through one nginx origin (`/api`, `/tiles`) | The plan's tile path; a new DEM is on the map the moment the worker writes it, no restart, no CORS | Serving PNG tiles from FastAPI (couples the API to raster I/O and blocks its workers) |
+| 2026-08-26 | **Satellite imagery = Esri World Imagery XYZ basemap**, clipped visually to the derived boundary in the client | FR1 asks for imagery for a selected village; a global basemap needs no download and no key, and Sentinel-2 via STAC arrives in P4 for NDWI where pixel access is actually needed | Downloading Sentinel-2 in P1 — a day of work for an image the basemap already shows |
+| 2026-08-26 | **Autonomous phase loop** with a user check-in at every gate (`the working agreement` § Autonomous loop) | The user wants progress visibility at each checkpoint and otherwise uninterrupted building; the gate is the natural unit | Check-ins per task (too chatty) or per phase without a stop (no visibility) |
 
 ## Open questions
 
 1. ~~Where is the provided sample contour map?~~ **resolved** — `data/samples/contours_1m.kml`, analysed in `docs/ROADMAP.md` §4.
 2. ~~What is the Phase 2 submission deadline?~~ **resolved 2026-08-18** — the Phase 2 window has passed and it is not scored as a separate submission. Consequence: it no longer drives sequencing, so P0 → P1 → P2 runs in `docs/PLAN.md` order. **The KML route stays in scope** — G2 still requires it (`docs/ROADMAP.md` §4), Phase 3 is end-to-end over arbitrary contour maps, and the final report must carry a working API route URL.
 3. **When are the lab hours for the prototype demo?** Posture depends on which gate is green when it lands — see the stop-and-fix table (`docs/ROADMAP.md` §3).
-4. **Which village?** See blocker 2 — and is the sample AOI the demo village, or just a test fixture?
-5. **Given the source is SRTM 30 m, is the ALOS 12.5 m download (PLAN P1) still worth the day?** It genuinely improves the demo village, but the graded Phase 2 route must run off the uploaded KML regardless.
-6. **Is the full P6 stack (JWT/RBAC, Grafana, Locust, Celery bulkheads, Saga, outbox audit log) within your explain-it-live budget?** The LLM policy requires justifying every library on demand. Breadth earns SysDes marks; it also multiplies viva surface. Worth an explicit call before P0 locks the compose file.
+4. ~~Which village?~~ **resolved 2026-08-26** — the sample AOI is the demo village.
+5. ~~Is the ALOS 12.5 m download still worth the day?~~ **resolved 2026-08-26** — no; KML-first (decision log). Provider DEM adapter is optional stretch.
+6. ~~Is the full P6 stack within the explain-it-live budget?~~ **resolved 2026-08-26** — user chose full P6.
 7. Minor: the marks matrix in `docs/PLAN.md` §2.1 sums to **99**, not 100 — the System Design column totals 14 against a stated 15. One mark is unallocated.
 
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-26 (session 9)
+**P1 complete — G1 closed, 21 marks secured.** Built the KML-first walking skeleton end to end (see "What exists today"). Defects found by running rather than reading: rasterio wheel needs `libexpat1` on `python:3.12-slim`; TiTiler images are amd64-only and listen on port 80; the provenance heuristic initially picked Copernicus from Mapzen's generic attribution blurb over the explicit `srtm/N21E081.tif` (fixed by evidence weighting); a 30 m grid with smoothing loses the single-cell 267/298 m extremes (documented as expected, tests widened). Seven decisions logged. ADR 0013 added, ADR 0004 amended. **Next:** G1 checkpoint with the user, then P2.
+
+### 2026-08-26 (session 8)
+**Planning session — loop established, four decisions taken with the user.** Read the assignment, phase briefs, full PLAN.md and ROADMAP.md. Eight days had passed with no commits; 10 days remain. Verified `make check` green (101 tests). Decisions: demo village = sample AOI · KML-first terrain source · pysheds + golden tests for validation (no GRASS on the machine) · full P6. Added the autonomous loop protocol to `the working agreement`. Blocker 2 and open questions 4–6 closed. **Next:** P1 revised — `assert_crs()`, `ContourKMLAdapter`, contour→DEM, hillshade → MinIO → TiTiler → browser via `POST /analyzeContour`.
 
 ### 2026-08-18 (session 7)
 **P0 complete — G0 closed, 11 marks secured.** Built the full API contract: 35 operations across 33 paths, 17 generated fixture payloads, `Quantity` and the domain error hierarchy, RFC 9457 problem details with a generated error catalogue, and `/meta/implementation-status`. Added ADRs 0005–0012. **Restructured the repository** to a conventional layout. Captured evidence: `docs/api/openapi.json`, two Swagger screenshots, `docs/api/errors.md`. Tests now 102, `mypy --strict` clean on 43 files, `domain/` 96 % covered. Four defects found in the process, two of them real bugs — a `default_factory` whose type did not match its `Literal`, which would have admitted an invalid runoff method through the default path. **Next:** choose the village (blocker 2, the only thing gating P1), then P1 day 1.

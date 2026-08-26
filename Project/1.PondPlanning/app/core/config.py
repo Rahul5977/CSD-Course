@@ -47,12 +47,36 @@ class Settings(BaseSettings):
     redis_host: str = "localhost"
     redis_port: int = 6379
 
+    # -- wiring: which adapter behind each port ---------------------------
+    # The same code runs in three configurations — Docker (postgres, celery,
+    # minio), a laptop without Docker (memory, inline, local) and CI. Choosing
+    # adapters here, not with conditionals in the code, is what keeps that true.
+    persistence: Literal["postgres", "memory"] = "postgres"
+    job_runner: Literal["celery", "inline"] = "celery"
+    object_store: Literal["minio", "local"] = "minio"
+    local_store_dir: str = "data/cache/store"
+
+    # -- minio / s3 --------------------------------------------------------
+    minio_endpoint: str = "localhost:9000"
+    minio_access_key: str = "pond"
+    minio_secret_key: str = "pondpond"
+    minio_bucket: str = "pond"
+    minio_secure: bool = False
+
+    # -- tiles -------------------------------------------------------------
+    # Public prefix the browser uses to reach TiTiler (nginx proxies it).
+    tiles_public_base: str = "/tiles"
+
     # -- analysis defaults ------------------------------------------------
     # Deliberately *defaults*, not constants: every one of these can be
     # overridden per request, and none of them is specific to any one input
     # map. See docs/ROADMAP.md §6, "derive everything from the input".
     max_upload_mb: int = Field(default=64, ge=1, le=512)
     pour_point_snap_radius_m: float = Field(default=150.0, gt=0)
+    # Finest DEM cell size when an upload does not identify its source DEM.
+    default_dem_floor_m: float = Field(default=10.0, gt=0)
+    # Reverse-geocode the AOI centroid to name the village. Off in CI.
+    geocode_enabled: bool = True
 
     @computed_field  # type: ignore[prop-decorator]
     @property

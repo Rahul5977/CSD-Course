@@ -1,11 +1,29 @@
 # Development stack.
 #
-# Three services in P0 — the ones the API cannot start without. TiTiler, Martin,
-# MinIO and the Celery worker are added by the phase that first needs them
-# (P1/P2), so that every service in this file is one whose purpose can be
-# explained on demand. See docs/adr/0004-service-topology.md.
+# Services arrive in the phase that first calls them (docs/adr/0004):
+#   P0  postgres · redis · api
+#   P1  minio (COG storage) · worker (Celery) · titiler (raster tiles) · web (nginx + SPA)
+# so that every service in this file is one whose purpose can be explained on demand.
 
 name: pond-planner
+
+x-api-env: &api-env
+  POND_ENV: docker
+  POND_LOG_FORMAT: json
+  POND_POSTGRES_HOST: postgres
+  POND_POSTGRES_USER: ${POND_POSTGRES_USER:-pond}
+  POND_POSTGRES_PASSWORD: ${POND_POSTGRES_PASSWORD:-pond}
+  POND_POSTGRES_DB: ${POND_POSTGRES_DB:-pond}
+  POND_REDIS_HOST: redis
+  POND_PERSISTENCE: postgres
+  POND_JOB_RUNNER: celery
+  POND_OBJECT_STORE: minio
+  POND_MINIO_ENDPOINT: minio:9000
+  POND_MINIO_ACCESS_KEY: ${POND_MINIO_ACCESS_KEY:-pond}
+  POND_MINIO_SECRET_KEY: ${POND_MINIO_SECRET_KEY:-pondpond}
+  POND_MINIO_BUCKET: ${POND_MINIO_BUCKET:-pond}
+  POND_TILES_PUBLIC_BASE: /tiles
+  POND_GEOCODE_ENABLED: ${POND_GEOCODE_ENABLED:-true}
 
 services:
   postgres:
@@ -43,18 +61,32 @@ services:
       retries: 10
     restart: unless-stopped
 
+  minio:
+    # S3-compatible object store for every COG the pipeline writes. TiTiler
+    # reads straight from it, so the API never streams raster bytes itself.
+    image: minio/minio:RELEASE.2025-04-22T22-12-26Z
+    command: ["server", "/data", "--console-address", ":9001"]
+    environment:
+      MINIO_ROOT_USER: ${POND_MINIO_ACCESS_KEY:-pond}
+      MINIO_ROOT_PASSWORD: ${POND_MINIO_SECRET_KEY:-pondpond}
+    ports:
+      - "${POND_MINIO_PORT:-9000}:9000"
+      - "${POND_MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
   api:
     build:
       context: ..
       dockerfile: infra/Dockerfile.api
     environment:
-      POND_ENV: docker
-      POND_LOG_FORMAT: json
-      POND_POSTGRES_HOST: postgres
-      POND_POSTGRES_USER: ${POND_POSTGRES_USER:-pond}
-      POND_POSTGRES_PASSWORD: ${POND_POSTGRES_PASSWORD:-pond}
-      POND_POSTGRES_DB: ${POND_POSTGRES_DB:-pond}
-      POND_REDIS_HOST: redis
+      <<: *api-env
     ports:
       - "${POND_API_PORT:-8000}:8000"
     depends_on:
@@ -62,8 +94,81 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker:
+    # Same image as the API, different entrypoint: the Celery worker that runs
+    # every analysis. Two queues so a slow village preparation cannot starve an
+    # interactive catchment click (bulkhead, ADR 0008).
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    command:
+      [
+        "celery", "-A", "app.jobs.celery_app:celery_app", "worker",
+        "--queues", "interactive,heavy", "--concurrency", "2", "--loglevel", "INFO",
+      ]
+    environment:
+      <<: *api-env
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A app.jobs.celery_app:celery_app inspect ping -d celery@$$HOSTNAME --timeout 5 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  titiler:
+    # Dynamic raster tiles from COGs in MinIO. Reads byte ranges over S3, so a
+    # new DEM is on the map the moment the worker finishes writing it.
+    image: ghcr.io/developmentseed/titiler:0.21.0
+    # TiTiler publishes amd64 images only; Docker Desktop on Apple Silicon runs
+    # this one under emulation. Fine for tiles; not on the pipeline's hot path.
+    platform: linux/amd64
+    environment:
+      AWS_ACCESS_KEY_ID: ${POND_MINIO_ACCESS_KEY:-pond}
+      AWS_SECRET_ACCESS_KEY: ${POND_MINIO_SECRET_KEY:-pondpond}
+      AWS_S3_ENDPOINT: minio:9000
+      AWS_VIRTUAL_HOSTING: "FALSE"
+      AWS_HTTPS: "NO"
+      AWS_REGION: us-east-1
+      GDAL_DISABLE_READDIR_ON_OPEN: EMPTY_DIR
+      GDAL_HTTP_MERGE_CONSECUTIVE_RANGES: "YES"
+      GDAL_CACHEMAX: "200"
+      CPL_VSIL_CURL_ALLOWED_EXTENSIONS: ".tif,.TIF,.tiff"
+      VSI_CACHE: "TRUE"
+      VSI_CACHE_SIZE: "5000000"
+      TITILER_API_CORS_ORIGINS: "*"
+    ports:
+      - "${POND_TITILER_PORT:-8080}:80"
+    depends_on:
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    # nginx serving the built SPA and proxying /api → api, /tiles → titiler,
+    # so the browser talks to one origin and no CORS configuration exists.
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.web
+    ports:
+      - "${POND_WEB_PORT:-3000}:80"
+    depends_on:
+      - api
+      - titiler
     restart: unless-stopped
 
 volumes:
   postgres_data:
   redis_data:
+  minio_data:

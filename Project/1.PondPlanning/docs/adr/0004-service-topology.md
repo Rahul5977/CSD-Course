@@ -24,12 +24,18 @@ rest in the phase that first calls it:
 | postgres + postgis | P0 | Villages, jobs, audit log; spatial types from the first migration |
 | redis | P0 | Cache and, shortly, the job broker |
 | api | P0 | — |
-| worker (Celery) | P1 | The first analysis that exceeds a request timeout |
-| minio | P1 | The first COG that has to be stored and served |
-| titiler | P1 | The first raster tile layer in the browser |
+| worker (Celery) | P1 ✅ | The first analysis that exceeds a request timeout |
+| minio | P1 ✅ | The first COG that has to be stored and served |
+| titiler | P1 ✅ | The first raster tile layer in the browser |
+| web (nginx + SPA) | P1 ✅ | The first screen; also the single origin that proxies `/api` and `/tiles`, so no CORS configuration exists anywhere |
 | martin | P2 | Vector tiles for contours and streams |
 | timescaledb | P3 | The daily rainfall series, where a hypertable earns its keep |
-| nginx | P6 | TLS termination and rate limiting during hardening |
+| nginx hardening (TLS, rate limits) | P6 | On the existing `web` container |
+
+**2026-08-26 amendment (P1):** nginx arrived in P1 rather than P6, as the
+`web` container — the SPA needs a static host, and putting the reverse proxy
+there from the start means the browser talks to one origin. Its P6 role (TLS,
+rate limiting) is added to the same container.
 
 ## Consequences
 

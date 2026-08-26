@@ -1,15 +1,22 @@
 """Shared router dependencies.
 
-Small by design. Anything that grows logic belongs in an engine, not here.
+Small by design. Anything that grows logic belongs in an engine, not here. The
+port factories are cached per process so every request shares one adapter
+bundle — one connection pool, one object-store client.
 """
 
 from __future__ import annotations
 
+from functools import lru_cache
 from typing import Annotated
 
 from fastapi import Depends, Query, Response
 
+from app.core.config import Settings, get_settings
+from app.jobs.runner import JobRunner, build_job_runner
 from app.providers.fixtures import FIXTURE_HEADER
+from app.providers.storage import ObjectStore, build_object_store
+from app.repositories import Repositories, build_repositories
 
 
 def mark_fixture(response: Response) -> None:
@@ -40,3 +47,34 @@ class Pagination:
 
 
 PaginationDep = Annotated[Pagination, Depends(Pagination)]
+
+
+@lru_cache(maxsize=1)
+def get_repositories() -> Repositories:
+    """The persistence adapters named in settings."""
+    return build_repositories(get_settings())
+
+
+@lru_cache(maxsize=1)
+def get_object_store() -> ObjectStore:
+    """The object-store adapter named in settings."""
+    return build_object_store(get_settings())
+
+
+@lru_cache(maxsize=1)
+def get_job_runner() -> JobRunner:
+    """The job runner named in settings."""
+    return build_job_runner(get_settings())
+
+
+def reset_dependency_caches() -> None:
+    """Forget cached adapters (tests that change settings)."""
+    get_repositories.cache_clear()
+    get_object_store.cache_clear()
+    get_job_runner.cache_clear()
+
+
+ReposDep = Annotated[Repositories, Depends(get_repositories)]
+StoreDep = Annotated[ObjectStore, Depends(get_object_store)]
+RunnerDep = Annotated[JobRunner, Depends(get_job_runner)]
+SettingsDep = Annotated[Settings, Depends(get_settings)]

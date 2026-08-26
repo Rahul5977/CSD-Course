@@ -263,7 +263,7 @@
           "villages"
         ],
         "summary": "Get Village Imagery",
-        "description": "FR1: the satellite basemap descriptor, clipped to this village.",
+        "description": "FR1: the satellite basemap descriptor; the client clips it to the boundary.",
         "operationId": "get_village_imagery_api_v1_villages__village_id__imagery_get",
         "parameters": [
           {
@@ -1174,7 +1174,7 @@
           "jobs"
         ],
         "summary": "Fetch a finished job's result",
-        "description": "Return the payload of a succeeded job.\n\nUntyped on purpose: the shape depends on ``kind``. The concrete payloads are\ndocumented under ``/analysis/results/*``, which is what a client should read.",
+        "description": "Return the payload of a succeeded job.\n\nUntyped on purpose: the shape depends on ``kind``. The concrete payloads are\ndocumented under ``/analysis/results/*``, which is what a client should read.\n\nRaises:\n    JobFailedError: ``409`` when the job failed or has not finished.",
         "operationId": "get_job_result_api_v1_jobs__job_id__result_get",
         "parameters": [
           {
@@ -1662,7 +1662,7 @@
           "analysis"
         ],
         "summary": "Analyse an uploaded contour map (KML/KMZ)",
-        "description": "Derive a pond location and its catchment from an uploaded contour map.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe pour point from its own modelled drainage. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nResult shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.",
+        "description": "Derive terrain \u2014 and, from P2, a pond location and its catchment \u2014 from an upload.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe source accuracy from its own metadata. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nValidate \u2192 store the upload \u2192 create the job \u2192 dispatch \u2192 ``202``. The\npipeline itself runs in :mod:`app.engines.workflows.contour_analysis`.\n\nResult shape (P1): :class:`~app.schemas.terrain.TerrainPreparationResult`.",
         "operationId": "analyze_contour_api_v1_analyzeContour_post",
         "requestBody": {
           "content": {

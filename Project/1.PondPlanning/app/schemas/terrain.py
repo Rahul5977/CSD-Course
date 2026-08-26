@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -89,4 +89,31 @@ class DerivedSurfaceResponse(BaseModel):
     algorithm: str = Field(description="e.g. 'Horn (1981) 3x3 finite difference'")
     statistics: dict[str, QuantityOut]
     layer: LayerDescriptor
+    warnings: list[ResultWarning] = Field(default_factory=list)
+
+
+class TerrainPreparationResult(BaseModel):
+    """P1 job result: a working DEM, its provenance, and the layers it yields.
+
+    This is what ``POST /analyzeContour`` produces until the catchment engine
+    lands in P2, at which point :class:`~app.schemas.analysis.ContourAnalysisResult`
+    embeds it. ``catchment`` is present and ``null`` so a client can see the
+    shape of what is coming rather than discover a missing key.
+    """
+
+    village_id: UUID
+    village_name: str
+    provider: str
+    elevation_source: str
+    contour_count: int
+    contour_interval: QuantityOut
+    grid_resolution: QuantityOut
+    utm_epsg: int
+    bounds: list[float] = Field(description="[min_lon, min_lat, max_lon, max_lat]")
+    elevation: dict[str, QuantityOut]
+    mean_slope: QuantityOut
+    dem: DEMAsset
+    layers: list[LayerDescriptor]
+    boundary_geojson: dict[str, Any]
+    catchment: None = Field(default=None, description="Arrives in P2")
     warnings: list[ResultWarning] = Field(default_factory=list)
