@@ -35,11 +35,34 @@ def ready(response: Response) -> ReadinessResponse:
     Returns ``503`` when degraded so that a load balancer can act on the status
     code without parsing the body.
     """
-    dependencies = [_check_postgres()]
+    dependencies = [_check_postgres(), _check_redis(), _check_object_store()]
     all_up = all(d.reachable for d in dependencies)
     if not all_up:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
     return ReadinessResponse(status="ready" if all_up else "degraded", dependencies=dependencies)
+
+
+def _check_redis() -> DependencyStatus:
+    """PING the broker/cache."""
+    try:
+        import redis
+
+        redis.Redis.from_url(get_settings().redis_url, socket_timeout=1.0).ping()
+    except Exception as exc:
+        return DependencyStatus(name="redis", reachable=False, detail=str(exc))
+    return DependencyStatus(name="redis", reachable=True)
+
+
+def _check_object_store() -> DependencyStatus:
+    """The object store answers a metadata call (local store: the directory exists)."""
+    try:
+        from app.api.deps import get_object_store
+
+        store = get_object_store()
+        store.exists("readiness-probe")
+    except Exception as exc:
+        return DependencyStatus(name="object_store", reachable=False, detail=str(exc))
+    return DependencyStatus(name="object_store", reachable=True)
 
 
 def _check_postgres() -> DependencyStatus:

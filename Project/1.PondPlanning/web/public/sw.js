@@ -5,7 +5,7 @@
 //   * GET /api/...                -> network-first, fall back to the last cached copy
 //     and mark it with the `X-From-Cache` header so the app can show a staleness badge
 //   * everything else             -> network
-const VERSION = "pond-sw-v1";
+const VERSION = "pond-sw-v2";
 const TILE_HOSTS = ["server.arcgisonline.com", "demotiles.maplibre.org"];
 
 self.addEventListener("install", (event) => {
@@ -24,19 +24,34 @@ async function cacheFirst(request) {
   return response;
 }
 
+async function staleCopy(cache, request) {
+  const hit = await cache.match(request);
+  if (!hit) return null;
+  const headers = new Headers(hit.headers);
+  headers.set("X-From-Cache", "true");
+  const body = await hit.blob();
+  return new Response(body, { status: hit.status, statusText: hit.statusText, headers });
+}
+
 async function networkFirst(request) {
   const cache = await caches.open(VERSION);
   try {
     const response = await fetch(request);
-    if (response.ok) cache.put(request, response.clone());
+    if (response.ok) {
+      cache.put(request, response.clone());
+      return response;
+    }
+    // A 5xx from the reverse proxy (502 when the API container is down) is
+    // "backend unavailable" just as much as a network error is.
+    if (response.status >= 500) {
+      const stale = await staleCopy(cache, request);
+      if (stale) return stale;
+    }
     return response;
   } catch (error) {
-    const hit = await cache.match(request);
-    if (!hit) throw error;
-    const headers = new Headers(hit.headers);
-    headers.set("X-From-Cache", "true");
-    const body = await hit.blob();
-    return new Response(body, { status: hit.status, statusText: hit.statusText, headers });
+    const stale = await staleCopy(cache, request);
+    if (!stale) throw error;
+    return stale;
   }
 }
 

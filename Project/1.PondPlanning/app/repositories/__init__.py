@@ -11,7 +11,14 @@ from dataclasses import dataclass
 from functools import lru_cache
 
 from app.core.config import Settings
-from app.repositories.ports import DEMAssetRepository, JobRepository, VillageRepository
+from app.repositories.ports import (
+    AuditRepository,
+    DEMAssetRepository,
+    JobRepository,
+    OutboxRepository,
+    RecommendationRepository,
+    VillageRepository,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -21,13 +28,19 @@ class Repositories:
     villages: VillageRepository
     jobs: JobRepository
     dem_assets: DEMAssetRepository
+    recommendations: RecommendationRepository
+    outbox: OutboxRepository
+    audit: AuditRepository
 
 
 @lru_cache(maxsize=1)
 def _memory_bundle() -> Repositories:
     from app.repositories.memory import (
+        InMemoryAuditRepository,
         InMemoryDEMAssetRepository,
         InMemoryJobRepository,
+        InMemoryOutboxRepository,
+        InMemoryRecommendationRepository,
         InMemoryVillageRepository,
     )
 
@@ -35,6 +48,9 @@ def _memory_bundle() -> Repositories:
         villages=InMemoryVillageRepository(),
         jobs=InMemoryJobRepository(),
         dem_assets=InMemoryDEMAssetRepository(),
+        recommendations=InMemoryRecommendationRepository(),
+        outbox=InMemoryOutboxRepository(),
+        audit=InMemoryAuditRepository(),
     )
 
 
@@ -47,12 +63,22 @@ def build_repositories(settings: Settings) -> Repositories:
     if settings.persistence == "memory":
         return _memory_bundle()
     from app.core.db import SessionLocal
-    from app.repositories.sql import SqlDEMAssetRepository, SqlJobRepository, SqlVillageRepository
+    from app.repositories.sql import (
+        SqlAuditRepository,
+        SqlDEMAssetRepository,
+        SqlJobRepository,
+        SqlOutboxRepository,
+        SqlRecommendationRepository,
+        SqlVillageRepository,
+    )
 
     return Repositories(
         villages=SqlVillageRepository(SessionLocal),
         jobs=SqlJobRepository(SessionLocal),
         dem_assets=SqlDEMAssetRepository(SessionLocal),
+        recommendations=SqlRecommendationRepository(SessionLocal),
+        outbox=SqlOutboxRepository(SessionLocal),
+        audit=SqlAuditRepository(SessionLocal),
     )
 
 

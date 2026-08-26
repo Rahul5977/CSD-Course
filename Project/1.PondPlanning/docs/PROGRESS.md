@@ -9,10 +9,10 @@ the assistant reads this at the start of every session and updates it at the end
 ## Snapshot
 
 - **Last updated:** 2026-08-26
-- **Current phase:** P6 — System Hardening ⭐ (awaiting the user's go at the G5 checkpoint)
-- **Active gate:** G6 — open. **G5, G4, G3, G2, G1 closed 2026-08-26. G0 closed 2026-08-18.**
-- **Marks secured:** 84 / 100 · next 7 are in P6
-- **Next action:** P6 day 1 — bulkhead queues (interactive/heavy), WebSocket progress, Saga onboarding, idempotency keys, JWT + RBAC, state machine, outbox audit log; day 2 — structlog correlation ids, Prometheus + Grafana, leader-elected refresh, backpressure 429, Locust, chaos-test video
+- **Current phase:** P7 — Tests · Docs · Report (awaiting the user's go at the G6 checkpoint)
+- **Active gate:** G7 — open. **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Marks secured:** 91 / 100 · the last 8 are in P7
+- **Next action:** P7 — coverage ≥ 70 % on `engines/` + `domain/` with a screenshot; installation guide with a ≥ 6-row troubleshooting table; API cookbook; technical report with citations and the validation section; `make seed` pre-computes the demo; demo rehearsal + backup recording; `git tag v1.0`
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -28,8 +28,8 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ☑ **done** |
 | P4 Suitability & AI | 7 | 77 | G4 | ☑ **done** |
 | P5 Frontend Integration | 7 | 84 | G5 | ☑ **done** |
-| P6 System Hardening ⭐ | 7 | 91 | G6 | ◐ next |
-| P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
+| P6 System Hardening ⭐ | 7 | 91 | G6 | ☑ **done** |
+| P7 Tests · Docs · Report | 8 | 99 | G7 | ◐ next |
 
 Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 24 of 40 ticked (P0 rows 1–5; P1 34a/34b/37; P2 rows 6–13 and 35; P3 rows 14–17; P4 rows 18, 19, 21; row 20 (ML AUC) deliberately not produced — ADR 0017).
 
@@ -41,6 +41,15 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
 - `docs/assignment/Phase{1,2,3}.txt` — phase briefs; Phase 1 (HLD) submitted and done
 - `data/samples/contours_1m.kml` — the provided sample, 6.4 MB (analysed; see `docs/ROADMAP.md` §4)
 - `the working agreement`, `docs/ROADMAP.md`, `docs/PROGRESS.md`, `CONTRIBUTING.md`, `.gitignore`
+
+**Code — P6 complete, verified 2026-08-27** (ADR 0019)
+- Bulkhead queues `interactive`/`heavy` with separate workers; WebSocket job progress; Saga with
+  compensations around the contour pipeline's persistence (tested with an injected failure);
+  idempotency keys; JWT RS256 + RBAC (viewer/planner/officer); recommendation state machine +
+  transactional outbox → append-only audit log + audit route; PDF/GeoJSON/CSV exports; backpressure
+  429; correlation ids + Prometheus + provisioned Grafana; beat with a leader-locked nightly rainfall
+  refresh; nginx rate limits + headers. Compose: **11 services**. Tests: **206 passing**.
+- Live: bulkheads (0.6 s click during a heavy job), Locust p95 560 ms E2E at 50 users, chaos test recorded.
 
 **Code — P5 complete, verified 2026-08-26**
 - **FR8** results overlay on the map (pond location, catchment area, 75 % rainfall, SCS runoff,
@@ -211,6 +220,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 | 2026-08-26 | **Offline-first service worker** (cache-first tiles, network-first API with stale fallback + badge) — ADR 0018 | The chaos test in one line; stale is visible | Workbox; server cache headers |
 | 2026-08-26 | **Generated OpenAPI types for the wire envelopes**, hand-written shapes kept for GeoJSON payloads | A contract change fails the frontend build; generated GeoJSON types are `dict` and useless for the map | Fully generated client (openapi-fetch) — more surface for little gain at this size |
 | 2026-08-26 | **Minimal EN/HI toggle** (headings + the offline message) | Cut-ladder item 5: proof of capability suffices; full translation is future work | Full i18n |
+| 2026-08-27 | **P6 hardening set** — bulkheads, WebSocket observer, saga with compensations, idempotency keys, JWT RS256 + RBAC, state machine + outbox → append-only audit, backpressure 429, correlation ids + Prometheus + Grafana, leader-elected refresh, nginx rate limits — ADR 0019 | User chose the full scope; each item is exercised by a test or a recorded demo, not declared | Trimmed P6 |
+| 2026-08-27 | **Audit via a transactional outbox drained by beat**, not direct inserts | Same-transaction event + async projection is the pattern that survives an external audit sink; the pending count is visible on the audit route so nothing is silently lost | Direct insert (simpler; not the pattern the plan names) |
+| 2026-08-27 | **Users are a configured list** (`POND_USERS`), roles viewer/planner/officer | No identity provider in the assignment; the gate is what is graded. Swap for OIDC later without touching the routes (dependency injection) | A users table with password hashing (more to defend, same grade) |
 | 2026-08-26 | **Autonomous phase loop** with a user check-in at every gate (`the working agreement` § Autonomous loop) | The user wants progress visibility at each checkpoint and otherwise uninterrupted building; the gate is the natural unit | Check-ins per task (too chatty) or per phase without a stop (no visibility) |
 
 ## Open questions
@@ -226,6 +238,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-27 (session 14)
+**P6 complete — G6 closed, 91 marks secured.** Full hardening scope (see "What exists today"), ADR 0019, three decisions logged. Defects found by running: a saga step that fails half-way must clean its own partial writes (compensation only covers completed steps); the generated OpenAPI types caught two hand-typed shortcuts in the frontend; the old single `worker` container lingered as an orphan after the split. **Next:** G6 checkpoint, then P7.
 
 ### 2026-08-26 (session 13)
 **P5 complete — G5 closed, 84 marks secured; all 8 FRs demonstrable.** Results overlay, pond footprint, progress states, service worker, generated types, EN/HI, mobile layout (see "What exists today"); ADR 0018; four decisions logged. **Next:** G5 checkpoint, then P6 in full.

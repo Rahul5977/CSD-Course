@@ -80,6 +80,8 @@ class Job(Base):
     # Human-readable pipeline stage ("filling sinks"); a percentage alone is
     # uninformative during a 25-second pipeline.
     stage: Mapped[str | None] = mapped_column(String(128))
+    # Client-supplied key so a double-tap enqueues one job, not two (P6).
+    idempotency_key: Mapped[str | None] = mapped_column(String(128), unique=True)
     village_id: Mapped[uuid.UUID | None] = mapped_column(
         postgresql.UUID(as_uuid=True), ForeignKey("villages.id", ondelete="SET NULL")
     )
@@ -166,3 +168,63 @@ class DEMAsset(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+
+class Recommendation(Base):
+    """A saved pond recommendation with its lifecycle state (draft → submitted → approved)."""
+
+    __tablename__ = "recommendations"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    village_id: Mapped[uuid.UUID] = mapped_column(
+        postgresql.UUID(as_uuid=True), ForeignKey("villages.id", ondelete="CASCADE"), nullable=False
+    )
+    village_name: Mapped[str] = mapped_column(String(128), nullable=False)
+    design_job_id: Mapped[uuid.UUID] = mapped_column(postgresql.UUID(as_uuid=True), nullable=False)
+    lon: Mapped[float] = mapped_column(Float, nullable=False)
+    lat: Mapped[float] = mapped_column(Float, nullable=False)
+    catchment_area_ha: Mapped[float] = mapped_column(Float, nullable=False)
+    gross_storage_m3: Mapped[float] = mapped_column(Float, nullable=False)
+    depth_m: Mapped[float] = mapped_column(Float, nullable=False)
+    indicative_cost_inr: Mapped[float] = mapped_column(Float, nullable=False)
+    confidence: Mapped[str] = mapped_column(String(16), nullable=False)
+    status: Mapped[str] = mapped_column(String(16), nullable=False, default="draft")
+    created_by: Mapped[str] = mapped_column(String(128), nullable=False)
+    payload: Mapped[dict[str, object]] = mapped_column(JSON, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    __table_args__ = (
+        CheckConstraint(
+            "status IN ('draft','submitted','approved','rejected')",
+            name="ck_recommendations_status",
+        ),
+        Index("ix_recommendations_village", "village_id"),
+    )
+
+
+class Outbox(Base):
+    """Transactional outbox: events written with the change, drained to the audit log."""
+
+    __tablename__ = "outbox"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        postgresql.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    event_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    actor: Mapped[str] = mapped_column(String(128), nullable=False)
+    entity_type: Mapped[str] = mapped_column(String(64), nullable=False)
+    entity_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    payload: Mapped[dict[str, object] | None] = mapped_column(JSON)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    processed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+    __table_args__ = (Index("ix_outbox_pending", "processed_at", "created_at"),)

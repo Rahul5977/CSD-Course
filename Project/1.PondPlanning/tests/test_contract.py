@@ -42,6 +42,8 @@ REAL_PREFIXES = (
     "/api/v1/analysis/results/pond-design/",
     "/api/v1/analysis/suitability",
     "/api/v1/analysis/results/suitability/",
+    "/api/v1/recommendations",
+    "/api/v1/auth/",
 )
 #: Real routes that are fixture-backed for a *sub*-path (parcel import).
 FIXTURE_EXCEPTIONS = ("parcels:import",)
@@ -70,7 +72,8 @@ CONTRACT: list[tuple[str, str, int]] = [
     ("GET", "/api/v1/rainfall/statistics?lon=81.297&lat=21.25", 200),
     ("GET", "/api/v1/rainfall/series?lon=81.297&lat=21.25&start=2020-01-01&end=2020-01-31", 200),
     ("GET", "/api/v1/recommendations", 200),
-    ("GET", f"/api/v1/recommendations/{UUID_}", 200),
+    ("GET", f"/api/v1/recommendations/{UUID_}", 404),
+    ("GET", "/api/v1/auth/me", 200),
     ("GET", f"/api/v1/jobs/{UUID_}", 404),
     ("GET", f"/api/v1/jobs/{UUID_}/result", 404),
     ("DELETE", f"/api/v1/jobs/{UUID_}", 404),
@@ -155,11 +158,11 @@ def test_implementation_status_reports_the_p2_engines(client: TestClient) -> Non
     """The honest self-report. This test changes when each engine lands."""
     body = client.get("/api/v1/meta/implementation-status").json()
 
-    assert body["phase"].startswith("P4")
+    assert body["phase"].startswith("P6")
     assert any("hydrology.catchment" in engine for engine in body["engines_implemented"])
     assert "villages" not in body["fixture_backed"]
     assert "catchment" not in body["fixture_backed"]
-    assert "recommendations" in body["fixture_backed"]
+    assert body["fixture_backed"] == []
     assert "/api/v1/analysis/catchment" in body["real"]
 
 

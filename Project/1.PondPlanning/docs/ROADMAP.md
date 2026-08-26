@@ -79,13 +79,14 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 - [x] Works at 390 px width (`docs/figures/p5-phone-390px.jpg`)
 - [x] **All 8 FRs demonstrable · 84 marks secured**
 
-### G6 — Hardening
-- [ ] **Chaos test recorded on video** — network disconnected, app still serves cached results with a staleness badge
-- [ ] Grafana dashboard screenshot captured
-- [ ] Locust p95 numbers recorded
-- [ ] RBAC demo: viewer role gets `403` on the approval route
-- [ ] Audit log rows exist for every recommendation and status change
-- [ ] **91 marks secured**
+### G6 — Hardening ✅ **closed 2026-08-27**
+- [x] **Chaos test recorded** — API container stopped, page reloaded, the app serves the cached village, layers, rainfall and design with the offline badge (`docs/media/chaos-test.gif`)
+- [x] Grafana dashboard screenshot captured (`docs/figures/p6-grafana.jpg`) — queue depth, job p50/p95, provider errors, cache hit rate, HTTP p95
+- [x] Locust p95 numbers recorded (`docs/figures/p6-locust.txt`): 50 users / 60 s, 1 102 catchment submissions, POST p95 33 ms, end-to-end p95 560 ms, 0 HTTP failures
+- [x] RBAC demo: viewer role gets `403` on the approval route — `tests/test_hardening.py::test_recommendation_lifecycle_is_role_gated_and_audited` (viewer 403, planner 403 on approve, officer 200) and the UI login panel
+- [x] Audit log rows exist for every recommendation and status change — outbox → `audit_log` (append-only by DB rule), visible at `GET /recommendations/{id}/audit`
+- [x] Bulkheads proven live: catchment finished in 0.6 s while a suitability job was at 10 % on the heavy queue
+- [x] **91 marks secured**
 
 ### G7 — Submission
 - [ ] Fresh clone on a *different machine* → `make up` → `make seed` → working system
@@ -205,10 +206,10 @@ Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figur
 | 22 | All-overlays-on screenshot (six layers) | FR8 5 + FE 1 | P5 | ☑ `docs/figures/p5-all-overlays.jpg` |
 | 23 | Phone-viewport screenshot | FE 1 | P5 | ☑ `docs/figures/p5-phone-390px.jpg` |
 | 24 | Loading/error/stale state screenshots | FE 1 | P5 | ☑ progress bars with stage/percent on every job, offline badge (`p5-*`) |
-| 25 | **Chaos test video** | Resilience 3 | P6 | ☐ |
-| 26 | Grafana dashboard screenshot | Observability 2 | P6 | ☐ |
-| 27 | Locust load-test p95 numbers | Scalability 1 | P6 | ☐ |
-| 28 | RBAC `403` demo + audit log rows | Security 2 | P6 | ☐ |
+| 25 | **Chaos test video** | Resilience 3 | P6 | ☑ `docs/media/chaos-test.gif` |
+| 26 | Grafana dashboard screenshot | Observability 2 | P6 | ☑ `docs/figures/p6-grafana.jpg` |
+| 27 | Locust load-test p95 numbers | Scalability 1 | P6 | ☑ `docs/figures/p6-locust.txt` — POST p95 33 ms, E2E p95 560 ms at 50 users |
+| 28 | RBAC `403` demo + audit log rows | Security 2 | P6 | ☑ `tests/test_hardening.py`; `GET /recommendations/{id}/audit` |
 | 29 | Coverage report screenshot (≥70 %) | Code testing 3 | P7 | ☐ |
 | 30 | Installation guide with troubleshooting table | Docs install 2 | P7 | ☐ |
 | 31 | API cookbook + error catalogue | Docs API 2 | P7 | ☐ |

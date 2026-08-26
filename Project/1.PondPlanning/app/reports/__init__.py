@@ -1,1 +1,1 @@
-"""Report and export generation (PDF/GeoJSON/CSV bill-of-quantities)."""
+"""Export generation: GeoJSON, CSV and a one-page PDF proposal for a recommendation."""

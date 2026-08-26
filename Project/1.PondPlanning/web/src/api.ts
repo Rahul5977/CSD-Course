@@ -1,6 +1,7 @@
 import type { RainfallStatistics } from "./components/RainfallPanel";
 import type { PondDesignResult } from "./components/WaterPanel";
 import type { AvailableLand, SuitabilityResult } from "./components/LandPanel";
+import type { RecommendationOut, Session } from "./components/RecommendationPanel";
 import type {
   CatchmentResult,
   ContourAnalysisResult,
@@ -45,7 +46,34 @@ async function json<T>(response: Response): Promise<T> {
 /** Poll a job until it settles; resolves with the final status. */
 export type Progress = (status: JobStatus) => void;
 
+/** A fresh Idempotency-Key per user action: a double-tap must not queue two jobs. */
+const idem = () => ({ "Idempotency-Key": crypto.randomUUID() });
+
+/** Try the WebSocket first (one frame per change); fall back to polling. */
+function watchSocket(jobId: string, onProgress?: Progress): Promise<JobStatus | null> {
+  return new Promise((resolve) => {
+    let settled = false;
+    let socket: WebSocket;
+    try {
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      socket = new WebSocket(`${proto}://${location.host}${BASE}/jobs/${jobId}/ws`);
+    } catch {
+      resolve(null);
+      return;
+    }
+    socket.onmessage = (event) => {
+      const status = JSON.parse(event.data) as JobStatus;
+      onProgress?.(status);
+      if (status.status !== "queued" && status.status !== "running") { settled = true; resolve(status); socket.close(); }
+    };
+    socket.onerror = () => { if (!settled) { settled = true; resolve(null); } };
+    socket.onclose = () => { if (!settled) { settled = true; resolve(null); } };
+  });
+}
+
 export async function waitForJob(jobId: string, intervalMs = 800, maxMs = 120_000, onProgress?: Progress): Promise<JobStatus> {
+  const viaSocket = await watchSocket(jobId, onProgress);
+  if (viaSocket) return viaSocket;
   const started = Date.now();
   for (;;) {
     const status = await api.job(jobId);
@@ -86,7 +114,7 @@ export const api = {
   async catchment(villageId: string, point: PourPoint, onProgress?: Progress): Promise<CatchmentResult> {
     const accepted = await fetch(`${BASE}/analysis/catchment`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ village_id: villageId, pour_point: point }),
     }).then(json<JobAccepted>);
     const status = await waitForJob(accepted.job_id, 800, 120_000, onProgress);
@@ -96,17 +124,35 @@ export const api = {
   async pondDesign(villageId: string, point: PourPoint, targetReliability = 0.75, onProgress?: Progress): Promise<PondDesignResult> {
     const accepted = await fetch(`${BASE}/analysis/pond-design`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ village_id: villageId, pour_point: point, target_reliability: targetReliability }),
     }).then(json<JobAccepted>);
     const status = await waitForJob(accepted.job_id, 1000, 300_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
-    return fetch(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
+    const design = await fetch(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
+    design.job_id = accepted.job_id;
+    return design;
+  },
+  async login(username: string, password: string): Promise<Session> {
+    const t = await fetch(`${BASE}/auth/token`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) }).then(json<{ access_token: string; role: string }>);
+    return { username, role: t.role, token: t.access_token };
+  },
+  saveRecommendation(designJobId: string, token: string): Promise<RecommendationOut> {
+    return fetch(`${BASE}/recommendations`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ design_job_id: designJobId }) }).then(json<RecommendationOut>);
+  },
+  changeStatus(id: string, status: string, reason: string, token: string): Promise<RecommendationOut> {
+    return fetch(`${BASE}/recommendations/${id}/status`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status, reason }) }).then(json<RecommendationOut>);
+  },
+  audit(id: string): Promise<{ audit: { actor: string; action: string; detail: Record<string, unknown> }[] }> {
+    return fetch(`${BASE}/recommendations/${id}/audit`).then(json<{ audit: { actor: string; action: string; detail: Record<string, unknown> }[] }>);
+  },
+  createExport(id: string, fmt: string): Promise<{ url: string }> {
+    return fetch(`${BASE}/recommendations/${id}/exports?export_format=${fmt}`, { method: "POST" }).then(json<{ url: string }>);
   },
   async suitability(villageId: string, topN = 8, onProgress?: Progress): Promise<SuitabilityResult> {
     const accepted = await fetch(`${BASE}/analysis/suitability`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ village_id: villageId, top_n: topN }),
     }).then(json<JobAccepted>);
     const status = await waitForJob(accepted.job_id, 1500, 600_000, onProgress);

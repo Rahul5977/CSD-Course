@@ -1,0 +1,25 @@
+{
+  "title": "Pond Planner",
+  "uid": "pond-planner",
+  "schemaVersion": 39,
+  "time": { "from": "now-30m", "to": "now" },
+  "refresh": "10s",
+  "panels": [
+    { "type": "timeseries", "title": "Queue depth", "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "max by (queue) (pond_queue_depth)", "legendFormat": "{{queue}}" }] },
+    { "type": "timeseries", "title": "Job duration p50 / p95 (s)", "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "histogram_quantile(0.5, sum by (le, kind) (rate(pond_job_seconds_bucket[5m])))", "legendFormat": "p50 {{kind}}" },
+        { "expr": "histogram_quantile(0.95, sum by (le, kind) (rate(pond_job_seconds_bucket[5m])))", "legendFormat": "p95 {{kind}}" }
+      ] },
+    { "type": "timeseries", "title": "Provider error rate (/min)", "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum by (provider) (rate(pond_provider_errors_total[5m])) * 60", "legendFormat": "{{provider}}" }] },
+    { "type": "stat", "title": "Cache hit rate", "gridPos": { "x": 12, "y": 8, "w": 6, "h": 8 },
+      "targets": [{ "expr": "sum(rate(pond_cache_events_total{event=\"hit\"}[10m])) / clamp_min(sum(rate(pond_cache_events_total[10m])), 1e-9)" }],
+      "fieldConfig": { "defaults": { "unit": "percentunit" } } },
+    { "type": "timeseries", "title": "HTTP p95 latency by route (s)", "gridPos": { "x": 18, "y": 8, "w": 6, "h": 8 },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, route) (rate(pond_http_request_seconds_bucket[5m])))", "legendFormat": "{{route}}" }] },
+    { "type": "timeseries", "title": "Requests / s by status", "gridPos": { "x": 0, "y": 16, "w": 24, "h": 7 },
+      "targets": [{ "expr": "sum by (status) (rate(pond_http_requests_total[1m]))", "legendFormat": "{{status}}" }] }
+  ]
+}

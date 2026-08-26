@@ -26,6 +26,7 @@ from datetime import date
 
 import numpy as np
 
+from app.core.observability import CACHE_EVENTS, PROVIDER_ERRORS
 from app.domain.errors import UpstreamUnavailableError
 from app.domain.rainfall import DailyRainfall, RainfallProvider
 from app.providers.storage import ObjectStore
@@ -59,6 +60,7 @@ class Retry:
                 return self._inner.daily(lon, lat, start, end)
             except UpstreamUnavailableError as exc:
                 last = exc
+                PROVIDER_ERRORS.labels(self.name).inc()
                 if attempt < self._attempts - 1:
                     self._sleep(self._base * (2**attempt) * (0.5 + random.random()))
         assert last is not None
@@ -177,14 +179,18 @@ class Cached:
         cached = self._read(key)
         if cached is not None and time.time() - cached[1] < self._ttl:
             # A fresh cache entry *is* current data; only a stale one is a fallback.
+            CACHE_EVENTS.labels("rainfall", "hit").inc()
             return replace(cached[0], fetched_live=True)
         try:
             record = self._inner.daily(lon, lat, start, end)
         except UpstreamUnavailableError:
             if cached is not None:
                 logger.warning("serving stale rainfall cache", extra={"key": key})
+                CACHE_EVENTS.labels("rainfall", "stale").inc()
                 return cached[0]
+            CACHE_EVENTS.labels("rainfall", "miss").inc()
             raise
+        CACHE_EVENTS.labels("rainfall", "miss").inc()
         self._write(key, record)
         return record
 

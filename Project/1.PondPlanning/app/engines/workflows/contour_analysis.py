@@ -46,6 +46,7 @@ from app.engines.terrain.surfaces import (
     slope_degrees,
 )
 from app.engines.workflows.catchment import catchment_result
+from app.engines.workflows.saga import Saga, SagaError, Step
 from app.engines.workflows.terrain_products import PRODUCTS, SITING_KEY, STREAMS_KEY
 from app.providers.geocoding import PlaceName, fallback_name
 from app.providers.raster_io import write_cog
@@ -190,22 +191,14 @@ def _run(
         rise_m=ctx.siting_rise_m,
     )
 
-    # ---- village ------------------------------------------------------
+    # ---- persistence as a saga (P6) ------------------------------------
+    # Each step is idempotent (skip-if-exists) and has a compensation, so a
+    # crash between "village created" and "rasters written" cannot leave a
+    # half-registered village behind. The compute above needs no undo.
     progress(76, "naming the area")
     boundary = _boundary_geojson(details)
     west, south, east, north = details["bounds_lonlat"]
     lon, lat = (west + east) / 2, (south + north) / 2
-    village = ctx.repos.villages.find_by_boundary(boundary)
-    place = None
-    if village is None:
-        place = ctx.geocode(lon, lat) if ctx.geocode else None
-        name = place.name if place else fallback_name(lon, lat)
-        village = ctx.repos.villages.create(
-            name, boundary, place.state_code if place else None, place.district if place else None
-        )
-
-    # ---- rasters to the store ----------------------------------------
-    progress(82, "writing rasters")
     surfaces: dict[str, Raster] = {
         "dem": dem,
         "filled": conditioned.filled,
@@ -218,88 +211,160 @@ def _run(
         "twi": twi,
         "flow_accumulation": dem.with_data(np.log10(np.maximum(model.accumulation, 1))),
     }
-    prefix = f"villages/{village.id}"
-    for product_id, raster in surfaces.items():
-        spec = PRODUCTS[product_id]
-        ctx.store.put(
-            f"{prefix}/{spec.key}",
-            write_cog(raster, dtype=spec.dtype, nodata=spec.nodata),
-            "image/tiff",
-        )
-        if spec.fixed_range is None:
-            stats[f"{product_id}_p2"], stats[f"{product_id}_p98"] = _percentiles(raster.data)
-    stats["fill_cells"] = conditioned.cells_filled
-    stats["fill_max_m"] = conditioned.max_fill_m
-    stats["stream_cells"] = int(streams.sum())
-
     to_lonlat = Transformer.from_crs(f"EPSG:{grid.epsg}", "EPSG:4326", always_xy=True)
-    stream_features = []
-    for link in links:
-        xy = np.array([grid.cell_center(r, c) for r, c in link.cells])
-        lons, lats = to_lonlat.transform(xy[:, 0], xy[:, 1])
-        stream_features.append(
-            {
-                "type": "Feature",
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": np.column_stack([lons, lats]).round(6).tolist(),
-                },
-                "properties": {
-                    "strahler_order": link.order,
-                    "length_m": round(link.length_m(grid.cell_size), 1),
-                    "upstream_area_ha_at_mouth": round(
-                        link.upstream_cells_at_mouth * grid.cell_area / 1e4, 2
-                    ),
-                },
-            }
-        )
-    streams_doc = {
-        "type": "FeatureCollection",
-        "features": stream_features,
-        "crs": "EPSG:4326",
-        "threshold_area_m2": ctx.stream_threshold_area_m2,
-        "threshold_cells": threshold_cells(ctx.stream_threshold_area_m2, grid.cell_area),
-        "total_length_m": round(sum(link.length_m(grid.cell_size) for link in links), 1),
-        "strahler_max_order": max((link.order for link in links), default=0),
-    }
-    ctx.store.put(f"{prefix}/{STREAMS_KEY}", json.dumps(streams_doc).encode(), "application/json")
+    saga_ctx: dict[str, Any] = {"place": None, "created_village": False}
 
-    # ---- persist the DEM asset ---------------------------------------
-    progress(88, "persisting")
-    asset = ctx.repos.dem_assets.upsert(
-        DEMAssetRecord(
-            id=job_id,
-            village_id=village.id,
-            provider=adapter.name,
-            source=product.provenance.source,
-            native_resolution_m=product.provenance.native_resolution_m,
-            working_resolution_m=product.working_resolution_m,
-            vertical_accuracy_relative_m=product.provenance.vertical_accuracy_relative_m,
-            vertical_accuracy_absolute_m=product.provenance.vertical_accuracy_absolute_m,
-            epsg=grid.epsg,
-            bounds_lonlat=[float(v) for v in details["bounds_lonlat"]],
-            dem_key=f"{prefix}/{PRODUCTS['dem'].key}",
-            hillshade_key=f"{prefix}/{PRODUCTS['hillshade'].key}",
-            statistics=stats,
-            attribution=list(product.provenance.attribution),
-            acquired=product.provenance.acquired,
-            method=product.method,
-            details={
-                **{k: v for k, v in details.items() if k not in {"aoi_xy"}},
-                "products": list(surfaces),
-                "streams": {
-                    "threshold_area_m2": ctx.stream_threshold_area_m2,
-                    "links": len(links),
-                    "strahler_max_order": streams_doc["strahler_max_order"],
+    def find_or_create_village(c: dict[str, Any]) -> None:
+        existing = ctx.repos.villages.find_by_boundary(boundary)
+        if existing is not None:
+            c["village"] = existing
+            return
+        place = ctx.geocode(lon, lat) if ctx.geocode else None
+        c["place"] = place
+        name = place.name if place else fallback_name(lon, lat)
+        c["village"] = ctx.repos.villages.create(
+            name, boundary, place.state_code if place else None, place.district if place else None
+        )
+        c["created_village"] = True
+
+    def undo_village(c: dict[str, Any]) -> None:
+        if c.get("created_village") and c.get("village") is not None:
+            ctx.repos.villages.delete(c["village"].id)
+
+    def write_rasters(c: dict[str, Any]) -> None:
+        prefix = f"villages/{c['village'].id}"
+        c["prefix"] = prefix
+        c["raster_keys"] = []
+        try:
+            for product_id, raster in surfaces.items():
+                spec = PRODUCTS[product_id]
+                key = f"{prefix}/{spec.key}"
+                ctx.store.put(
+                    key, write_cog(raster, dtype=spec.dtype, nodata=spec.nodata), "image/tiff"
+                )
+                c["raster_keys"].append(key)
+                if spec.fixed_range is None:
+                    stats[f"{product_id}_p2"], stats[f"{product_id}_p98"] = _percentiles(
+                        raster.data
+                    )
+        except Exception:
+            undo_rasters(c)  # a step that fails half-way cleans its own partial work
+            raise
+
+    def undo_rasters(c: dict[str, Any]) -> None:
+        for key in c.get("raster_keys", []):
+            ctx.store.delete(key)
+
+    def write_streams(c: dict[str, Any]) -> None:
+        stream_features = []
+        for link in links:
+            xy = np.array([grid.cell_center(r, col) for r, col in link.cells])
+            lons, lats = to_lonlat.transform(xy[:, 0], xy[:, 1])
+            stream_features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": np.column_stack([lons, lats]).round(6).tolist(),
+                    },
+                    "properties": {
+                        "strahler_order": link.order,
+                        "length_m": round(link.length_m(grid.cell_size), 1),
+                        "upstream_area_ha_at_mouth": round(
+                            link.upstream_cells_at_mouth * grid.cell_area / 1e4, 2
+                        ),
+                    },
+                }
+            )
+        c["streams_doc"] = {
+            "type": "FeatureCollection",
+            "features": stream_features,
+            "crs": "EPSG:4326",
+            "threshold_area_m2": ctx.stream_threshold_area_m2,
+            "threshold_cells": threshold_cells(ctx.stream_threshold_area_m2, grid.cell_area),
+            "total_length_m": round(sum(link.length_m(grid.cell_size) for link in links), 1),
+            "strahler_max_order": max((link.order for link in links), default=0),
+        }
+        ctx.store.put(
+            f"{c['prefix']}/{STREAMS_KEY}",
+            json.dumps(c["streams_doc"]).encode(),
+            "application/json",
+        )
+
+    def undo_streams(c: dict[str, Any]) -> None:
+        ctx.store.delete(f"{c['prefix']}/{STREAMS_KEY}")
+
+    def persist_asset(c: dict[str, Any]) -> None:
+        stats["fill_cells"] = conditioned.cells_filled
+        stats["fill_max_m"] = conditioned.max_fill_m
+        stats["stream_cells"] = int(streams.sum())
+        village = c["village"]
+        c["asset"] = ctx.repos.dem_assets.upsert(
+            DEMAssetRecord(
+                id=job_id,
+                village_id=village.id,
+                provider=adapter.name,
+                source=product.provenance.source,
+                native_resolution_m=product.provenance.native_resolution_m,
+                working_resolution_m=product.working_resolution_m,
+                vertical_accuracy_relative_m=product.provenance.vertical_accuracy_relative_m,
+                vertical_accuracy_absolute_m=product.provenance.vertical_accuracy_absolute_m,
+                epsg=grid.epsg,
+                bounds_lonlat=[float(v) for v in details["bounds_lonlat"]],
+                dem_key=f"{c['prefix']}/{PRODUCTS['dem'].key}",
+                hillshade_key=f"{c['prefix']}/{PRODUCTS['hillshade'].key}",
+                statistics=stats,
+                attribution=list(product.provenance.attribution),
+                acquired=product.provenance.acquired,
+                method=product.method,
+                details={
+                    **{k: v for k, v in details.items() if k not in {"aoi_xy"}},
+                    "products": list(surfaces),
+                    "streams": {
+                        "threshold_area_m2": ctx.stream_threshold_area_m2,
+                        "links": len(links),
+                        "strahler_max_order": c["streams_doc"]["strahler_max_order"],
+                    },
+                    "conditioning": {
+                        "algorithm": "Priority-Flood + epsilon (Barnes et al. 2014)",
+                        "cells_filled": conditioned.cells_filled,
+                        "max_fill_m": conditioned.max_fill_m,
+                    },
                 },
-                "conditioning": {
-                    "algorithm": "Priority-Flood + epsilon (Barnes et al. 2014)",
-                    "cells_filled": conditioned.cells_filled,
-                    "max_fill_m": conditioned.max_fill_m,
-                },
+            )
+        )
+
+    def undo_asset(c: dict[str, Any]) -> None:
+        ctx.repos.dem_assets.delete_for_village(c["village"].id)
+
+    saga = Saga(
+        [
+            Step("village", find_or_create_village, undo_village),
+            Step("rasters", write_rasters, undo_rasters),
+            Step("streams", write_streams, undo_streams),
+            Step("dem_asset", persist_asset, undo_asset),
+        ],
+        on_progress=lambda name: progress(82, f"persisting: {name}"),
+    )
+    try:
+        saga_run = saga.execute(saga_ctx)
+    except SagaError as exc:
+        ctx.repos.jobs.update(
+            job_id,
+            stage="compensated",
+            result={
+                "code": "persistence_failed",
+                "message": str(exc.cause),
+                "detail": {"failed_step": exc.run.failed_step, "compensated": exc.run.compensated},
             },
         )
-    )
+        raise exc.cause from exc
+    village = saga_ctx["village"]
+    place = saga_ctx["place"]
+    asset = saga_ctx["asset"]
+    prefix = saga_ctx["prefix"]
+
+    logger.info("persisted", extra={"saga": saga_run.completed, "skipped": saga_run.skipped})
 
     # ---- assemble the result -----------------------------------------
     progress(94, "delineating the catchment of the top site")

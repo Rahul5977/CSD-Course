@@ -60,6 +60,7 @@ FIXTURES_RETIRED = {
     "pond_design",
     "suitability",
     "available_land",
+    "recommendations",
 }
 REAL_ROUTES = [
     "/health",
@@ -91,6 +92,11 @@ REAL_ROUTES = [
     "/api/v1/analysis/suitability",
     "/api/v1/analysis/results/suitability/{job_id}",
     "/api/v1/villages/{village_id}/available-land",
+    "/api/v1/recommendations",
+    "/api/v1/recommendations/{recommendation_id}/status",
+    "/api/v1/recommendations/{recommendation_id}/exports",
+    "/api/v1/auth/token",
+    "/api/v1/jobs/{job_id}/ws",
 ]
 
 
@@ -126,7 +132,7 @@ def implementation_status() -> dict[str, object]:
     ``X-Fixture-Data: true`` header and a ``fixture_data`` warning.
     """
     return {
-        "phase": "P4 — Suitability & AI",
+        "phase": "P6 — System Hardening",
         "engines_implemented": ENGINES_IMPLEMENTED,
         "fixture_backed": sorted(set(available()) - FIXTURES_RETIRED),
         "real": REAL_ROUTES,

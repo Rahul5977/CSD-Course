@@ -5,11 +5,13 @@ Real since P1: reads the job row the worker writes. No fixture header.
 
 from __future__ import annotations
 
+import asyncio
+import contextlib
 from datetime import UTC, datetime
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, status
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, status
 
 from app.api.deps import ReposDep
 from app.domain.errors import JobFailedError, NotFoundError
@@ -86,3 +88,37 @@ def cancel_job(job_id: UUID, repos: ReposDep) -> None:
         repos.jobs.update(
             job_id, status="cancelled", stage="cancelled", finished_at=datetime.now(UTC)
         )
+
+
+@router.websocket("/{job_id}/ws")
+async def job_progress(websocket: WebSocket, job_id: UUID) -> None:
+    """Push status changes for one job until it reaches a terminal state (Observer).
+
+    The server watches the job row — the single source of truth the worker
+    writes — and sends a message only when something changed, so a 60-second
+    pipeline costs a handful of frames rather than a poll every second.
+    """
+    from app.api.deps import get_repositories
+
+    repos = get_repositories()
+    await websocket.accept()
+    last: str | None = None
+    try:
+        for _ in range(1200):  # 10 minutes at 0.5 s
+            job = repos.jobs.get(job_id)
+            if job is None:
+                await websocket.send_json({"error": "not_found", "job_id": str(job_id)})
+                break
+            payload = _status(job).model_dump(mode="json")
+            snapshot = f"{job.status}:{job.progress}:{job.stage}"
+            if snapshot != last:
+                await websocket.send_json(payload)
+                last = snapshot
+            if job.status in {"succeeded", "failed", "cancelled"}:
+                break
+            await asyncio.sleep(0.5)
+    except WebSocketDisconnect:
+        return
+    finally:
+        with contextlib.suppress(RuntimeError):
+            await websocket.close()

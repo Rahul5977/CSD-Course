@@ -20,6 +20,7 @@ export interface RunoffResult {
   warnings: ResultWarning[];
 }
 export interface PondDesignResult {
+  job_id?: string;
   dimensions: Record<string, QuantityOut>;
   gross_storage: QuantityOut;
   live_storage: QuantityOut;

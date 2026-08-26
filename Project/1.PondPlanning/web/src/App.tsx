@@ -10,6 +10,7 @@ import { MapView } from "./components/MapView";
 import { RainfallPanel, type RainfallStatistics } from "./components/RainfallPanel";
 import { DesignPanel, type PondDesignResult } from "./components/WaterPanel";
 import { LandPanel, type AvailableLand, type SuitabilityResult } from "./components/LandPanel";
+import { RecommendationPanel, type Session } from "./components/RecommendationPanel";
 import { SitesPanel } from "./components/SitesPanel";
 import { SummaryCard } from "./components/SummaryCard";
 import { UploadPanel } from "./components/UploadPanel";
@@ -50,6 +51,7 @@ export default function App() {
   const [landBusy, setLandBusy] = useState(false);
   const [landError, setLandError] = useState<string | null>(null);
   const [design, setDesign] = useState<PondDesignResult | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [designBusy, setDesignBusy] = useState(false);
   const [designError, setDesignError] = useState<string | null>(null);
   const [rain, setRain] = useState<RainfallStatistics | null>(null);
@@ -208,6 +210,7 @@ export default function App() {
         {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} progress={progress.catchment ?? null} />}
         {selected && <RainfallPanel stats={rain} busy={rainBusy} error={rainError} />}
         {selected && <LandPanel land={land} suitability={suitability} busy={landBusy} error={landError} onAssess={assessLand} onPick={(s) => delineate(s.location)} canAssess={!!selected} progress={progress.land ?? null} />}
+        {design && <RecommendationPanel designJobId={design.job_id ?? null} session={session} onLogin={setSession} onLogout={() => setSession(null)} />}
         {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} progress={progress.design ?? null} />}
         <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}

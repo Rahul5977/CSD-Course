@@ -33,6 +33,9 @@ dependencies = [
     "minio>=7.2.20",
     "contourpy>=1.3.3",
     "opencv-python-headless>=5.0.0.93",
+    "pyjwt[crypto]>=2.13.0",
+    "prometheus-client>=0.26.0",
+    "reportlab>=5.0.1",
 ]
 
 [dependency-groups]
@@ -46,6 +49,7 @@ dev = [
     "types-shapely>=2.1.0.20260728",
     "pysheds>=0.5",
     "matplotlib>=3.11.1",
+    "locust>=2.46.4",
 ]
 
 [build-system]
@@ -110,7 +114,7 @@ strict = true
 
 [[tool.mypy.overrides]]
 # Extend as the geospatial stack lands in P1/P2 (pysheds, richdem, rasterio).
-module = ["geoalchemy2.*", "scipy.*", "rasterio.*", "minio.*", "celery.*", "pysheds.*", "affine.*", "cv2.*"]
+module = ["geoalchemy2.*", "scipy.*", "rasterio.*", "minio.*", "celery.*", "pysheds.*", "affine.*", "cv2.*", "reportlab.*", "locust.*"]
 ignore_missing_imports = true
 
 # ---------------------------------------------------------------- pytest

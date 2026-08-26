@@ -35,6 +35,7 @@ class JobRecord:
     progress: int
     stage: str | None
     village_id: UUID | None
+    idempotency_key: str | None
     params: dict[str, Any]
     result: dict[str, Any] | None
     error: str | None
@@ -64,3 +65,39 @@ class DEMAssetRecord:
     method: str
     details: dict[str, Any] = field(default_factory=dict)
     created_at: datetime | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class RecommendationRecord:
+    """A saved pond recommendation."""
+
+    id: UUID
+    village_id: UUID
+    village_name: str
+    design_job_id: UUID
+    lon: float
+    lat: float
+    catchment_area_ha: float
+    gross_storage_m3: float
+    depth_m: float
+    indicative_cost_inr: float
+    confidence: str
+    status: str
+    created_by: str
+    payload: dict[str, Any]
+    created_at: datetime
+    updated_at: datetime
+
+
+@dataclass(frozen=True, slots=True)
+class OutboxEvent:
+    """A pending or processed event."""
+
+    id: UUID
+    event_type: str
+    actor: str
+    entity_type: str
+    entity_id: str
+    payload: dict[str, Any] | None
+    created_at: datetime
+    processed_at: datetime | None

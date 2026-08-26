@@ -63,6 +63,19 @@ class Settings(BaseSettings):
     minio_bucket: str = "pond"
     minio_secure: bool = False
 
+    # -- security (P6) ------------------------------------------------------
+    # RS256 key files; absent → an ephemeral pair with a start-up warning.
+    jwt_private_key_path: str | None = None
+    jwt_public_key_path: str | None = None
+    # Demo users: "name:password:role,...". Roles: viewer < planner < officer.
+    users: str = (
+        "officer:officer-demo:officer,planner:planner-demo:planner,viewer:viewer-demo:viewer"
+    )
+    # Backpressure: a queue deeper than this returns 429 + Retry-After.
+    max_queue_depth: int = Field(default=20, ge=1)
+    # Worker-side Prometheus exporter port (0 disables).
+    metrics_port: int = Field(default=0, ge=0)
+
     # -- tiles -------------------------------------------------------------
     # Public prefix the browser uses to reach TiTiler (nginx proxies it).
     tiles_public_base: str = "/tiles"

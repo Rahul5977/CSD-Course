@@ -26,15 +26,18 @@ _RESERVED = frozenset(logging.LogRecord("", 0, "", 0, "", None, None).__dict__) 
 
 
 class JsonFormatter(logging.Formatter):
-    """Render each record as a single-line JSON object."""
+    """Render each record as a single-line JSON object, with the correlation id."""
 
     def format(self, record: logging.LogRecord) -> str:
         """Serialise ``record``, merging any ``extra=`` keys into the payload."""
+        from app.core.observability import request_id_var
+
         payload: dict[str, Any] = {
             "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
+            "request_id": request_id_var.get(),
         }
         payload.update({k: v for k, v in record.__dict__.items() if k not in _RESERVED})
         if record.exc_info:

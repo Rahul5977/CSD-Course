@@ -34,6 +34,10 @@ class ObjectStore(Protocol):
         """A URL TiTiler (GDAL) can open — ``s3://`` or a file path."""
         ...
 
+    def delete(self, key: str) -> None:
+        """Remove ``key`` if present (saga compensation)."""
+        ...
+
 
 class LocalObjectStore:
     """Filesystem-backed store for tests and Docker-less development."""
@@ -67,6 +71,12 @@ class LocalObjectStore:
     def url(self, key: str) -> str:
         """Absolute file path."""
         return str(self._path(key))
+
+    def delete(self, key: str) -> None:
+        """Remove the file if present."""
+        path = self._path(key)
+        if path.is_file():
+            path.unlink()
 
 
 class MinioObjectStore:
@@ -117,6 +127,10 @@ class MinioObjectStore:
     def url(self, key: str) -> str:
         """``s3://bucket/key`` — what TiTiler is configured to resolve."""
         return f"s3://{self._bucket}/{key}"
+
+    def delete(self, key: str) -> None:
+        """Remove the object (no error if absent)."""
+        self._client.remove_object(self._bucket, key)
 
 
 def build_object_store(settings: Settings) -> ObjectStore:

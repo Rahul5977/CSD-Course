@@ -21,6 +21,9 @@ def test_ready_is_200_when_dependencies_are_reachable(
     monkeypatch.setattr(
         health, "_check_postgres", lambda: DependencyStatus(name="postgres", reachable=True)
     )
+    monkeypatch.setattr(
+        health, "_check_redis", lambda: DependencyStatus(name="redis", reachable=True)
+    )
 
     response = client.get("/ready")
 
@@ -36,6 +39,9 @@ def test_ready_is_503_when_a_dependency_is_down(
         health,
         "_check_postgres",
         lambda: DependencyStatus(name="postgres", reachable=False, detail="connection refused"),
+    )
+    monkeypatch.setattr(
+        health, "_check_redis", lambda: DependencyStatus(name="redis", reachable=True)
     )
 
     response = client.get("/ready")

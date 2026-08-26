@@ -14,6 +14,8 @@ from fastapi import FastAPI, Request, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.api.backpressure import BackpressureError
+from app.core.security import AuthenticationError, AuthorizationError
 from app.domain.errors import (
     CRSError,
     DomainError,
@@ -26,6 +28,7 @@ from app.domain.errors import (
     UpstreamUnavailableError,
     ValidationError,
 )
+from app.domain.recommendation import IllegalTransitionError
 from app.schemas.common import ProblemDetail
 
 logger = logging.getLogger(__name__)
@@ -44,6 +47,10 @@ STATUS_BY_ERROR: dict[type[DomainError], int] = {
     JobFailedError: status.HTTP_409_CONFLICT,
     UpstreamUnavailableError: status.HTTP_503_SERVICE_UNAVAILABLE,
     NotImplementedYetError: status.HTTP_501_NOT_IMPLEMENTED,
+    AuthenticationError: status.HTTP_401_UNAUTHORIZED,
+    AuthorizationError: status.HTTP_403_FORBIDDEN,
+    IllegalTransitionError: status.HTTP_409_CONFLICT,
+    BackpressureError: status.HTTP_429_TOO_MANY_REQUESTS,
 }
 
 
@@ -66,7 +73,10 @@ def problem(error: DomainError, request: Request) -> JSONResponse:
         detail=error.detail,
         instance=request.url.path,
     )
-    return JSONResponse(status_code=code, content=body.model_dump(mode="json"))
+    headers = (
+        {"Retry-After": str(error.retry_after_s)} if isinstance(error, BackpressureError) else None
+    )
+    return JSONResponse(status_code=code, content=body.model_dump(mode="json"), headers=headers)
 
 
 def register_exception_handlers(app: FastAPI) -> None:

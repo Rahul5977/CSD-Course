@@ -3,6 +3,7 @@
 # Services arrive in the phase that first calls them (docs/adr/0004):
 #   P0  postgres · redis · api
 #   P1  minio (COG storage) · worker (Celery) · titiler (raster tiles) · web (nginx + SPA)
+#   P6  worker split into interactive/heavy bulkheads · beat · prometheus · grafana
 # so that every service in this file is one whose purpose can be explained on demand.
 
 name: pond-planner
@@ -98,22 +99,26 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  worker:
-    # Same image as the API, different entrypoint: the Celery worker that runs
-    # every analysis. Two queues so a slow village preparation cannot starve an
-    # interactive catchment click (bulkhead, ADR 0008).
+  worker-interactive:
+    # Bulkhead 1: the short jobs a user is waiting on (catchment, runoff, pond
+    # design). Its own worker, so a queue of village preparations can never
+    # starve a click (ADR 0008). Threads pool: numpy releases the GIL, and one
+    # process per worker means the Prometheus exporter sees every job (prefork
+    # children would each hold their own registry).
     build:
       context: ..
       dockerfile: infra/Dockerfile.api
     command:
       [
         "celery", "-A", "app.jobs.celery_app:celery_app", "worker",
-        "--queues", "interactive,heavy", "--concurrency", "2", "--loglevel", "INFO",
+        "--queues", "interactive", "--pool", "threads", "--concurrency", "2",
+        "--hostname", "interactive@%h", "--loglevel", "INFO",
       ]
     environment:
       <<: *api-env
+      POND_METRICS_PORT: "9100"
     healthcheck:
-      test: ["CMD-SHELL", "celery -A app.jobs.celery_app:celery_app inspect ping -d celery@$$HOSTNAME --timeout 5 || exit 1"]
+      test: ["CMD-SHELL", "celery -A app.jobs.celery_app:celery_app inspect ping -d interactive@$$HOSTNAME --timeout 5 || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 30s
@@ -124,6 +129,43 @@ services:
       redis:
         condition: service_healthy
       minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  worker-heavy:
+    # Bulkhead 2: contour analysis and suitability (minutes, external reads).
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    command:
+      [
+        "celery", "-A", "app.jobs.celery_app:celery_app", "worker",
+        "--queues", "heavy", "--pool", "threads", "--concurrency", "1",
+        "--hostname", "heavy@%h", "--loglevel", "INFO",
+      ]
+    environment:
+      <<: *api-env
+      POND_METRICS_PORT: "9100"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    # Celery beat: the nightly rainfall refresh and the outbox drain. Leader
+    # election for the refresh itself is a Redis lock inside the task.
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile.api
+    command: ["celery", "-A", "app.jobs.celery_app:celery_app", "beat", "--loglevel", "INFO"]
+    environment:
+      <<: *api-env
+    depends_on:
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -153,6 +195,30 @@ services:
     depends_on:
       minio:
         condition: service_healthy
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "${POND_PROMETHEUS_PORT:-9090}:9090"
+    restart: unless-stopped
+
+  grafana:
+    # One provisioned dashboard: queue depth, job p50/p95, provider errors, cache hit rate.
+    image: grafana/grafana:11.1.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${POND_GRAFANA_PASSWORD:-admin}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "${POND_GRAFANA_PORT:-3001}:3000"
+    depends_on:
+      - prometheus
     restart: unless-stopped
 
   web:
