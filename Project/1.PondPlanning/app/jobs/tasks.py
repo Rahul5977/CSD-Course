@@ -9,6 +9,8 @@ from app.jobs.context import get_context
 
 CONTOUR_ANALYSIS = "analysis.contour"
 CATCHMENT = "analysis.catchment"
+RUNOFF = "analysis.runoff"
+POND_DESIGN = "analysis.pond_design"
 
 
 @celery_app.task(name=CONTOUR_ANALYSIS, ignore_result=True)  # type: ignore[untyped-decorator]
@@ -29,6 +31,31 @@ def catchment_task(job_id: str) -> None:
         UUID(job_id),
         ctx.repos,
         ctx.store,
+        snap_radius_m=ctx.snap_radius_m,
+        min_channel_area_m2=ctx.snap_min_upstream_area_m2,
+    )
+
+
+@celery_app.task(name=RUNOFF, ignore_result=True)  # type: ignore[untyped-decorator]
+def runoff_task(job_id: str) -> None:
+    """Run ``POST /analysis/runoff``'s pipeline for one job."""
+    from app.engines.workflows.runoff import run_runoff
+
+    ctx = get_context()
+    run_runoff(UUID(job_id), ctx.repos, ctx.store, ctx.rainfall)
+
+
+@celery_app.task(name=POND_DESIGN, ignore_result=True)  # type: ignore[untyped-decorator]
+def pond_design_task(job_id: str) -> None:
+    """Run ``POST /analysis/pond-design``'s pipeline for one job."""
+    from app.engines.workflows.pond_design import run_pond_design
+
+    ctx = get_context()
+    run_pond_design(
+        UUID(job_id),
+        ctx.repos,
+        ctx.store,
+        ctx.rainfall,
         snap_radius_m=ctx.snap_radius_m,
         min_channel_area_m2=ctx.snap_min_upstream_area_m2,
     )

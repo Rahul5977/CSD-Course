@@ -9,10 +9,10 @@ the assistant reads this at the start of every session and updates it at the end
 ## Snapshot
 
 - **Last updated:** 2026-08-26
-- **Current phase:** P3 — Rainfall · Runoff · Pond Design ⭐ (awaiting the user's go at the G2 checkpoint)
-- **Active gate:** G3 — open. **G2 closed 2026-08-26. G1 closed 2026-08-26. G0 closed 2026-08-18.**
-- **Marks secured:** 51 / 100 · next 19 are in P3
-- **Next action:** P3 day 1 — `RainfallProvider` (Open-Meteo ERA5-Land daily from 1950, NASA POWER fallback), `Cached ∘ CircuitBreaker ∘ Retry` decorators, statistics engine (75 % dependable by Weibull, JJAS share, rainy days, max 1-day), `GET /rainfall/statistics` + chart
+- **Current phase:** P4 — Suitability & AI (awaiting the user's go at the G3 checkpoint)
+- **Active gate:** G4 — open. **G3 closed 2026-08-26. G2, G1 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Marks secured:** 70 / 100 · next 7 are in P4
+- **Next action:** P4 day 1 — Specification-pattern constraints (slope, water buffer, min contiguous area, habitation distance) over the WorldCover window + DEM; `GET /villages/{id}/available-land` real; AHP weights with CR < 0.10 replacing the fixed siting weights; NDWI/OpenCV water mask from Sentinel-2 (STAC) for the existing-water buffer
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -25,13 +25,13 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P0 Foundations & Contract | 11 | 11 | G0 | ☑ **done** |
 | P1 Walking Skeleton | 10 | 21 | G1 | ☑ **done** |
 | P2 Terrain & Catchment ⭐ | 30 | 51 | G2 | ☑ **done** |
-| P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ◐ next |
-| P4 Suitability & AI | 7 | 77 | G4 | ☐ |
+| P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ☑ **done** |
+| P4 Suitability & AI | 7 | 77 | G4 | ◐ next |
 | P5 Frontend Integration | 7 | 84 | G5 | ☐ |
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☐ |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
 
-Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 17 of 40 ticked (P0 rows 1–5; P1 34a/34b/37; P2 rows 6–13 and 35).
+Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 21 of 40 ticked (P0 rows 1–5; P1 34a/34b/37; P2 rows 6–13 and 35; P3 rows 14–17).
 
 ## What exists today
 
@@ -41,6 +41,24 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
 - `docs/assignment/Phase{1,2,3}.txt` — phase briefs; Phase 1 (HLD) submitted and done
 - `data/samples/contours_1m.kml` — the provided sample, 6.4 MB (analysed; see `docs/ROADMAP.md` §4)
 - `the working agreement`, `docs/ROADMAP.md`, `docs/PROGRESS.md`, `CONTRIBUTING.md`, `.gitignore`
+
+**Code — P3 complete, verified 2026-08-26**
+- **FR5** `GET /rainfall/statistics|series` real: Open-Meteo ERA5-Land → NASA POWER behind
+  `Retry ∘ CircuitBreaker ∘ Cached` + `FallbackChain` (`app/providers/resilience.py`); statistics
+  engine (Weibull 75 %, JJAS share, IMD rainy days, Gumbel 25-yr 1-day). 1981–2025 record for the
+  AOI recorded as a fixture; tests/CI/offline demo run on it (`POND_RAINFALL_SOURCE=recorded`).
+- **FR6** `POST /analysis/runoff` real: WorldCover windowed COG read × SoilGrids texture → TR-55 CN
+  (AMC adjustable) → daily SCS-CN / rational / Strange → 75 % dependable volumes as a range with
+  spread; providers degrade to stated defaults with warnings.
+- **FR7** `POST /analysis/pond-design` real (`PondDesignBuilder`, ADR 0016): capped supply-side
+  target, cost-optimised excavated frustum (depth 1.5–3.5 m searched), EAV curve, daily water
+  balance → fill reliability, Gumbel/Kirpich/weir spillway, BoQ, worst-input confidence label.
+- UI: rainfall card + SVG monthly chart with the plain-language verdict; design panel with
+  dimensions, storage, EAV chart, reliability, methods table, BoQ, confidence badge.
+- Tests: **180 passing** (rainfall golden + resilience, CN/method golden, design golden, API flows
+  with offline providers). Existing-pond comparison recorded (`docs/figures/p3-existing-pond-comparison.md`).
+- Live sample run: catchment 38 ha, 75 % rainfall 1 192 mm, CN 88, SCS 99 k m³ (rational 244 k,
+  Strange 18 k), design 50 000 m³ capped, 3.5 m × 126 × 126 m, fills 100 % of years, ₹97 lakh, 6 s.
 
 **Code — P2 complete, verified 2026-08-26**
 - `POST /analyzeContour` returns the full Phase 2 payload: `suggested_pond_location` + rationale,
@@ -166,6 +184,13 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 | 2026-08-26 | **Curvature uses the ArcGIS sign convention** (plan < 0 = laterally concave) | Every evaluator who has opened a GIS expects it; Zevenbergen & Thorne's own sign is the opposite for plan curvature and would read as a bug | Z&T's original sign |
 | 2026-08-26 | **Contours and streams served as GeoJSON from the API**, not MVT via Martin | At village scale a contour set is ~1 400 vertices after simplification; a tile server would be a service to defend for nothing exercised. Martin stays in the ADR 0004 table for district scale | Martin now |
 | 2026-08-26 | **Impoundment efficiency = volume behind a 2 m rise / footprint** as a siting criterion | Rewards natural basins over open slopes with one flood fill per candidate; the same fill becomes the EAV curve in P3 | Excavation-only sizing (ignores what the terrain gives for free) |
+| 2026-08-26 | **Rainfall from Open-Meteo ERA5-Land (primary) with NASA POWER fallback**, both behind `Retry ∘ CircuitBreaker ∘ Cached` and a `FallbackChain`; the 1981-2025 record for the AOI is checked in as a fixture and used when `POND_RAINFALL_SOURCE=recorded` | Free, keyless, 45 years in 2 s; the resilience stack is what the chaos test exercises and the recorded fixture is what makes tests, CI and the demo independent of the network | IMD gridded data (registration, manual download); a single provider (one outage = no demo) |
+| 2026-08-26 | **75 % dependable rainfall by Weibull plotting position** on complete calendar years; incomplete years excluded, never scaled | Indian minor-irrigation practice designs to the 75 % year; scaling a partial year invents rain | Mean annual (fails every second year); Gringorten/Hazen positions (defensible but less familiar) |
+| 2026-08-26 | **TimescaleDB deferred**: the daily series lives in the object-store cache, not a hypertable | ~16 000 rows per point; a hypertable earns nothing at village scale and is one more service to defend. Re-evaluate at district scale (ADR 0004 table) | Hypertable now |
+| 2026-08-26 | **Curve number from ESA WorldCover (windowed COG read) × SoilGrids texture → HSG**, TR-55 table, AMC II; both providers degrade to stated defaults with a warning and pull confidence to *low* | Real land cover for the actual catchment at 10 m without a download; SoilGrids is slow (~40 s) so it runs in the worker and is cached 30 days | FAO HWSD download; a single "cropland, C" assumption |
+| 2026-08-26 | **Three runoff methods on the daily series, reported as a range**; SCS-CN is the design figure; the annual-total shortcut is shown in a test to overestimate > 3× | The disagreement is information; a single number would be false precision. ADR 0010 | One method |
+| 2026-08-26 | **Pond design method** — capped supply-side target, excavated frustum, cost-derived depth, daily water balance, Gumbel/Kirpich spillway, worst-input confidence — ADR 0016 | See the ADR | See the ADR |
+| 2026-08-26 | **Pool behind a bund = 8-connected flood fill on the upstream side**, not D8 donors only; shared by the EAV curve and the siting efficiency | The donor-only pool excluded cells that drain into the channel beside the bund — physically wrong (a cone test gave 2 100 m² where π·50² ≈ 7 850 m² was expected). The upstream-or-not-lower rule keeps the channel below the bund dry | Donor-only fill; unconstrained fill (floods the downstream channel) |
 | 2026-08-26 | **Autonomous phase loop** with a user check-in at every gate (`the working agreement` § Autonomous loop) | The user wants progress visibility at each checkpoint and otherwise uninterrupted building; the gate is the natural unit | Check-ins per task (too chatty) or per phase without a stop (no visibility) |
 
 ## Open questions
@@ -181,6 +206,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-26 (session 11)
+**P3 complete — G3 closed, 70 marks secured; the ideal prototype-demo point.** Rainfall, runoff and pond design engines, providers and routes (see "What exists today"), ADR 0016, seven decisions logged. Defects found by running: the donor-only pool excluded cells beside the bund (fixed with an upstream-side flood fill shared by EAV and siting); a Gumbel expectation that chased an outlier; a synthetic bowl whose channel expression evaluated to 199 m (operator precedence) — the engine was right, the test terrain wrong; SoilGrids ~40 s → worker + 30-day cache + default. **Next:** G3 checkpoint, then P4.
 
 ### 2026-08-26 (session 10)
 **P2 complete — G2 closed, 51 marks secured.** Built the entire terrain & catchment engine in one session (see "What exists today"), ADR 0014 (siting) and 0015 (validation). Ten decisions logged. Defects found by running: monotone area scoring sited every pond on the river (fixed with a plateau); pysheds/NumPy 2 incompatibility; a synthetic that was right and a test that was wrong (Strahler 3, bowl drainage); curvature sign convention. **Next:** G2 checkpoint with the user, then P3.

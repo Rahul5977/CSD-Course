@@ -7,15 +7,18 @@ from functools import lru_cache
 from app.core.config import Settings, get_settings
 from app.engines.workflows.contour_analysis import WorkflowContext
 from app.providers.geocoding import reverse_geocode
+from app.providers.rainfall.service import build_rainfall_provider
 from app.providers.storage import build_object_store
 from app.repositories import build_repositories
 
 
 def build_context(settings: Settings) -> WorkflowContext:
     """Wire adapters to ports according to settings."""
+    store = build_object_store(settings)
     return WorkflowContext(
         repos=build_repositories(settings),
-        store=build_object_store(settings),
+        store=store,
+        rainfall=build_rainfall_provider(settings, store),
         default_floor_m=settings.default_dem_floor_m,
         tiles_public_base=settings.tiles_public_base,
         geocode=reverse_geocode if settings.geocode_enabled else None,

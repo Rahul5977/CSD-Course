@@ -4,6 +4,8 @@ import { api } from "./api";
 import { CatchmentPanel } from "./components/CatchmentPanel";
 import { LayerControl } from "./components/LayerControl";
 import { MapView } from "./components/MapView";
+import { RainfallPanel, type RainfallStatistics } from "./components/RainfallPanel";
+import { DesignPanel, type PondDesignResult } from "./components/WaterPanel";
 import { SitesPanel } from "./components/SitesPanel";
 import { SummaryCard } from "./components/SummaryCard";
 import { UploadPanel } from "./components/UploadPanel";
@@ -39,6 +41,12 @@ export default function App() {
   const [sites, setSites] = useState<SiteCandidate[]>([]);
   const [siting, setSiting] = useState<SitingMethod | null>(null);
   const [rationale, setRationale] = useState<string | null>(null);
+  const [design, setDesign] = useState<PondDesignResult | null>(null);
+  const [designBusy, setDesignBusy] = useState(false);
+  const [designError, setDesignError] = useState<string | null>(null);
+  const [rain, setRain] = useState<RainfallStatistics | null>(null);
+  const [rainBusy, setRainBusy] = useState(false);
+  const [rainError, setRainError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const job = useJob(jobId);
@@ -90,6 +98,18 @@ export default function App() {
       .catch((e) => setLoadError((e as Error).message));
   }, [selected]);
 
+  // Rainfall statistics at the village centroid (FR5), once the summary is known.
+  useEffect(() => {
+    if (!summary) return;
+    const [lon, lat] = summary.village.centroid;
+    setRainBusy(true);
+    setRainError(null);
+    api.rainfallStatistics(lon, lat)
+      .then(setRain)
+      .catch((e) => setRainError((e as Error).message))
+      .finally(() => setRainBusy(false));
+  }, [summary]);
+
   useEffect(() => {
     if (!selected) return;
     api.contours(selected, contourInterval).then((c) => setContours(c.geojson)).catch(() => setContours(null));
@@ -110,6 +130,19 @@ export default function App() {
     },
     [selected],
   );
+
+  const designPond = useCallback(async () => {
+    if (!selected || !catchment) return;
+    setDesignBusy(true);
+    setDesignError(null);
+    try {
+      setDesign(await api.pondDesign(selected, catchment.snapped_point));
+    } catch (e) {
+      setDesignError((e as Error).message);
+    } finally {
+      setDesignBusy(false);
+    }
+  }, [selected, catchment]);
 
   const toggle = (id: string) => setVisible((v) => ({ ...v, [id]: !(v[id] ?? false) }));
 
@@ -134,6 +167,8 @@ export default function App() {
         </section>
         {summary && <SummaryCard summary={summary} />}
         {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} />}
+        {selected && <RainfallPanel stats={rain} busy={rainBusy} error={rainError} />}
+        {selected && <DesignPanel design={design} busy={designBusy} error={designError} onDesign={designPond} canDesign={!!catchment} />}
         <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>

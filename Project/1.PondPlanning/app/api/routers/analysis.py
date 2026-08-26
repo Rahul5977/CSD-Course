@@ -20,7 +20,7 @@ from fastapi import APIRouter, File, Form, UploadFile, status
 from app.api.deps import FixtureRoute, ReposDep, RunnerDep, SettingsDep, StoreDep
 from app.api.uploads import read_contour_upload
 from app.domain.errors import NotFoundError
-from app.jobs.tasks import CATCHMENT, CONTOUR_ANALYSIS
+from app.jobs.tasks import CATCHMENT, CONTOUR_ANALYSIS, POND_DESIGN, RUNOFF
 from app.providers import fixtures
 from app.schemas.analysis import (
     CatchmentRequest,
@@ -62,34 +62,39 @@ def analyse_catchment(payload: CatchmentRequest, repos: ReposDep, runner: Runner
     return _accepted(str(job.id), 5)
 
 
-@router.post(
-    "/runoff",
-    response_model=JobAccepted,
-    status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[FixtureRoute],
-)
-def analyse_runoff(payload: RunoffRequest) -> JobAccepted:
+@router.post("/runoff", response_model=JobAccepted, status_code=status.HTTP_202_ACCEPTED)
+def analyse_runoff(payload: RunoffRequest, repos: ReposDep, runner: RunnerDep) -> JobAccepted:
     """FR6: runoff volume by three methods, reported as a range.
+
+    Real since P3: land cover (WorldCover) + soil (SoilGrids) → curve number →
+    daily rainfall → SCS-CN / rational / Strange on the daily series.
 
     Result shape: :class:`~app.schemas.analysis.RunoffResult`.
     """
-    return _accepted("a7c2e845-6b1d-4e9f-8c37-5a2d9e6b4f18", 8)
+    if repos.villages.get(payload.village_id) is None:
+        msg = "no such village"
+        raise NotFoundError(msg, {"village_id": str(payload.village_id)})
+    job = repos.jobs.create(RUNOFF_KIND, payload.model_dump(mode="json"), payload.village_id)
+    runner.submit(RUNOFF, job.id)
+    return _accepted(str(job.id), 40)
 
 
-@router.post(
-    "/pond-design",
-    response_model=JobAccepted,
-    status_code=status.HTTP_202_ACCEPTED,
-    dependencies=[FixtureRoute],
-)
-def analyse_pond_design(payload: PondDesignRequest) -> JobAccepted:
+@router.post("/pond-design", response_model=JobAccepted, status_code=status.HTTP_202_ACCEPTED)
+def analyse_pond_design(
+    payload: PondDesignRequest, repos: ReposDep, runner: RunnerDep
+) -> JobAccepted:
     """FR7: the complete pond design payload — the project's headline result.
 
-    Result shape: :class:`~app.schemas.analysis.PondDesignResult`, which assembles
-    catchment, rainfall, runoff, dimensions, EAV curve, reliability, bill of
-    quantities and a confidence label.
+    Real since P3. Result shape: :class:`~app.schemas.analysis.PondDesignResult`,
+    which assembles catchment, rainfall, runoff, dimensions, EAV curve,
+    reliability, bill of quantities and a confidence label.
     """
-    return _accepted("f3b9d128-4a7c-4d2e-b6f1-8c3a5e9d2b74", 25)
+    if repos.villages.get(payload.village_id) is None:
+        msg = "no such village"
+        raise NotFoundError(msg, {"village_id": str(payload.village_id)})
+    job = repos.jobs.create(POND_DESIGN_KIND, payload.model_dump(mode="json"), payload.village_id)
+    runner.submit(POND_DESIGN, job.id)
+    return _accepted(str(job.id), 60)
 
 
 @router.post(
@@ -152,6 +157,8 @@ def analyze_contour(
 
 CONTOUR_ANALYSIS_KIND = "contour_analysis"
 CATCHMENT_KIND = "catchment"
+RUNOFF_KIND = "runoff"
+POND_DESIGN_KIND = "pond_design"
 
 
 # Result-shape routes. These exist so the OpenAPI document — and therefore the
@@ -173,18 +180,16 @@ def catchment_result(job_id: UUID, repos: ReposDep) -> CatchmentResult:
     return CatchmentResult.model_validate(_finished(repos, job_id, CATCHMENT_KIND))
 
 
-@results_router.get("/runoff/{job_id}", response_model=RunoffResult, dependencies=[FixtureRoute])
-def runoff_result(job_id: UUID) -> RunoffResult:
-    """FR6 result payload."""
-    return RunoffResult.model_validate(fixtures.load("runoff"))
+@results_router.get("/runoff/{job_id}", response_model=RunoffResult)
+def runoff_result(job_id: UUID, repos: ReposDep) -> RunoffResult:
+    """FR6 result payload (real since P3)."""
+    return RunoffResult.model_validate(_finished(repos, job_id, RUNOFF_KIND))
 
 
-@results_router.get(
-    "/pond-design/{job_id}", response_model=PondDesignResult, dependencies=[FixtureRoute]
-)
-def pond_design_result(job_id: UUID) -> PondDesignResult:
-    """FR7 result payload."""
-    return PondDesignResult.model_validate(fixtures.load("pond_design"))
+@results_router.get("/pond-design/{job_id}", response_model=PondDesignResult)
+def pond_design_result(job_id: UUID, repos: ReposDep) -> PondDesignResult:
+    """FR7 result payload (real since P3)."""
+    return PondDesignResult.model_validate(_finished(repos, job_id, POND_DESIGN_KIND))
 
 
 @results_router.get(

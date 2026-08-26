@@ -61,11 +61,11 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 - [x] **`POST /analyzeContour` accepts the provided KML/KMZ and returns catchment JSON** — full `ContourAnalysisResult` with suggested location, rationale, candidates, method
 - [x] **FR2 + FR4 complete · 51 marks secured**
 
-### G3 — Water numbers ⭐ *ideal prototype demo point*
-- [ ] `POST /analysis/pond-design` returns the full payload (catchment + rainfall + runoff + design + reliability + BoQ + warnings + confidence)
-- [ ] Three runoff methods produce a documented range, not one false-precision number
-- [ ] Existing-pond comparison recorded honestly, including the error
-- [ ] **FR5 + FR6 + FR7 complete · 70 marks secured**
+### G3 — Water numbers ⭐ *ideal prototype demo point* ✅ **closed 2026-08-26**
+- [x] `POST /analysis/pond-design` returns the full payload (catchment + rainfall + runoff + design + reliability + BoQ + warnings + confidence) — live run 6 s on the sample (`docs/figures/p3-design-panel.jpg`)
+- [x] Three runoff methods produce a documented range, not one false-precision number — SCS-CN daily 99 k m³ / rational 244 k / Strange 18 k on the top site (spread 188 %, flagged)
+- [x] Existing-pond comparison recorded honestly, including the error — `docs/figures/p3-existing-pond-comparison.md`
+- [x] **FR5 + FR6 + FR7 complete · 70 marks secured**
 
 ### G4 — Suitability
 - [ ] `POST /analysis/suitability` → ranked sites with per-criterion breakdown
@@ -194,10 +194,10 @@ Every mark needs an artifact an evaluator can see (`docs/PLAN.md` Part 5). Figur
 | 11 | **GRASS `r.watershed` comparison table** | Terrain validation 2 | P2 | ☑ pysheds table, `tests/test_pysheds_crosscheck.py` (ADR 0015) |
 | 12 | **Synthetic-DEM golden tests in CI** | Terrain validation 2 + Code 3 | P2 | ☑ 19 golden tests in CI |
 | 13 | Pour-point sensitivity plot | Terrain validation 2 | P2 | ☑ `docs/figures/p2-pour-point-sensitivity.png` |
-| 14 | Rainfall statistics table (75 % dependable) | FR5 4 | P3 | ☐ |
-| 15 | Runoff three-method comparison range | FR6 5 | P3 | ☐ |
-| 16 | EAV curve figure | FR7 6 | P3 | ☐ |
-| 17 | **Existing-pond comparison note** | FR7 6 + credibility | P3 | ☐ |
+| 14 | Rainfall statistics table (75 % dependable) | FR5 4 | P3 | ☑ `GET /rainfall/statistics` + `p3-rainfall-panel.jpg` (45-yr ERA5-Land, Weibull 75 %) |
+| 15 | Runoff three-method comparison range | FR6 5 | P3 | ☑ `p3-design-panel.jpg` methods table; `tests/test_runoff_flow.py` |
+| 16 | EAV curve figure | FR7 6 | P3 | ☑ `p3-design-panel.jpg` EAV chart (SVG) |
+| 17 | **Existing-pond comparison note** | FR7 6 + credibility | P3 | ☑ `docs/figures/p3-existing-pond-comparison.md` |
 | 18 | AHP matrix + CR value | Code patterns 4 | P4 | ☐ |
 | 19 | NDWI water-mask before/after OpenCV cleanup | FR3 4 | P4 | ☐ |
 | 20 | ML AUC under spatial block CV | Validation 2 | P4 | ☐ |

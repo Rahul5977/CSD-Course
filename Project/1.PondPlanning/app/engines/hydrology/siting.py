@@ -31,14 +31,13 @@ returned in the result, and revisited with AHP in P4.
 
 from __future__ import annotations
 
-from collections import deque
 from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
 
 from app.engines.hydrology.conditioning import NEIGHBOURS
-from app.engines.hydrology.flow import FlowModel, donors
+from app.engines.hydrology.flow import FlowModel
 
 FloatArray = NDArray[np.float64]
 
@@ -88,31 +87,15 @@ def impoundment(
 ) -> tuple[float, float]:
     """Volume (m³) and area (m²) impounded by raising the water level ``rise_m`` at a cell.
 
-    Flood fill over *upstream* cells (so the water is held by the outlet, not
-    spilling downstream) whose surface is below the pool level.
+    The same flood fill as the elevation-area-volume curve (``design.eav``):
+    8-connected over cells below the pool level on the upstream side of a
+    bund at the cell.
     """
-    z = model.filled.data
-    cols = model.shape[1]
-    level = z[row, col] + rise_m
-    offsets, idx = donors(model.receiver)
-    start = row * cols + col
-    seen = {start}
-    queue: deque[int] = deque([start])
-    volume = 0.0
-    count = 0
-    while queue and count < max_cells:
-        cell = queue.popleft()
-        r, c = divmod(cell, cols)
-        depth = level - z[r, c]
-        if depth <= 0:
-            continue
-        volume += depth * model.filled.grid.cell_area
-        count += 1
-        for donor in idx[offsets[cell] : offsets[cell + 1]]:
-            if donor not in seen:
-                seen.add(int(donor))
-                queue.append(int(donor))
-    return float(volume), float(count * model.filled.grid.cell_area)
+    from app.engines.design.eav import flood_pool, pool_domain
+
+    level = float(model.filled.data[row, col]) + rise_m
+    volume, count = flood_pool(model, row, col, level, pool_domain(model, row, col), max_cells)
+    return volume, float(count * model.filled.grid.cell_area)
 
 
 def _plateau(slope_pct: FloatArray, optimum_hi: float = 3.0, limit: float = 15.0) -> FloatArray:

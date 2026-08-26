@@ -1,3 +1,5 @@
+import type { RainfallStatistics } from "./components/RainfallPanel";
+import type { PondDesignResult } from "./components/WaterPanel";
 import type {
   CatchmentResult,
   ContourAnalysisResult,
@@ -75,6 +77,19 @@ export const api = {
     const status = await waitForJob(accepted.job_id);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
     return fetch(`${BASE}/analysis/results/catchment/${accepted.job_id}`).then(json<CatchmentResult>);
+  },
+  async pondDesign(villageId: string, point: PourPoint, targetReliability = 0.75): Promise<PondDesignResult> {
+    const accepted = await fetch(`${BASE}/analysis/pond-design`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ village_id: villageId, pour_point: point, target_reliability: targetReliability }),
+    }).then(json<JobAccepted>);
+    const status = await waitForJob(accepted.job_id, 1000, 300_000);
+    if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
+    return fetch(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
+  },
+  rainfallStatistics(lon: number, lat: number): Promise<RainfallStatistics> {
+    return fetch(`${BASE}/rainfall/statistics?lon=${lon}&lat=${lat}`).then(json<RainfallStatistics>);
   },
   /** The latest contour-analysis result for a village, if the session knows one. */
   siting(id: string): Promise<{ candidate_sites: ContourAnalysisResult["candidate_sites"]; siting: ContourAnalysisResult["siting"] } | null> {

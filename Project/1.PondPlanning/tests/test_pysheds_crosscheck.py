@@ -41,7 +41,8 @@ def _pysheds_catchment(dem, row: int, col: int) -> tuple[int, np.ndarray]:  # ty
     from affine import Affine
     from pyproj import Proj
     from pysheds.grid import Grid
-    from pysheds.view import Raster as PRaster, ViewFinder
+    from pysheds.view import Raster as PRaster
+    from pysheds.view import ViewFinder
 
     a, b, c, d, e, f = dem.grid.affine
     view = ViewFinder(
@@ -72,7 +73,7 @@ def _pysheds_catchment(dem, row: int, col: int) -> tuple[int, np.ndarray]:  # ty
 @pytest.mark.golden
 def test_catchment_areas_agree_with_pysheds_within_15_percent(sample_dem) -> None:  # type: ignore[no-untyped-def]
     model = build_flow_model(fill_depressions(sample_dem).filled)
-    rows, cols = model.shape
+    cols = model.shape[1]
     # Outlets: the five largest-accumulation cells that are not on the edge,
     # spread over the grid so they are not all on one reach.
     interior = model.accumulation.copy()

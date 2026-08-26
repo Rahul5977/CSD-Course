@@ -798,14 +798,20 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "maximum": 50,
-              "minimum": 5,
-              "description": "Length of record to analyse",
-              "default": 20,
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 50,
+                  "minimum": 5
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Length of record",
               "title": "Years"
             },
-            "description": "Length of record to analyse"
+            "description": "Length of record"
           }
         ],
         "responses": {
@@ -874,7 +880,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date"
                 },
                 {
                   "type": "null"
@@ -892,7 +899,8 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "string",
+                  "format": "date"
                 },
                 {
                   "type": "null"
@@ -1364,7 +1372,7 @@
           "analysis"
         ],
         "summary": "Analyse Runoff",
-        "description": "FR6: runoff volume by three methods, reported as a range.\n\nResult shape: :class:`~app.schemas.analysis.RunoffResult`.",
+        "description": "FR6: runoff volume by three methods, reported as a range.\n\nReal since P3: land cover (WorldCover) + soil (SoilGrids) \u2192 curve number \u2192\ndaily rainfall \u2192 SCS-CN / rational / Strange on the daily series.\n\nResult shape: :class:`~app.schemas.analysis.RunoffResult`.",
         "operationId": "analyse_runoff_api_v1_analysis_runoff_post",
         "requestBody": {
           "content": {
@@ -1406,7 +1414,7 @@
           "analysis"
         ],
         "summary": "Analyse Pond Design",
-        "description": "FR7: the complete pond design payload \u2014 the project's headline result.\n\nResult shape: :class:`~app.schemas.analysis.PondDesignResult`, which assembles\ncatchment, rainfall, runoff, dimensions, EAV curve, reliability, bill of\nquantities and a confidence label.",
+        "description": "FR7: the complete pond design payload \u2014 the project's headline result.\n\nReal since P3. Result shape: :class:`~app.schemas.analysis.PondDesignResult`,\nwhich assembles catchment, rainfall, runoff, dimensions, EAV curve,\nreliability, bill of quantities and a confidence label.",
         "operationId": "analyse_pond_design_api_v1_analysis_pond_design_post",
         "requestBody": {
           "content": {
@@ -1534,7 +1542,7 @@
           "analysis"
         ],
         "summary": "Runoff Result",
-        "description": "FR6 result payload.",
+        "description": "FR6 result payload (real since P3).",
         "operationId": "runoff_result_api_v1_analysis_results_runoff__job_id__get",
         "parameters": [
           {
@@ -1578,7 +1586,7 @@
           "analysis"
         ],
         "summary": "Pond Design Result",
-        "description": "FR7 result payload.",
+        "description": "FR7 result payload (real since P3).",
         "operationId": "pond_design_result_api_v1_analysis_results_pond_design__job_id__get",
         "parameters": [
           {

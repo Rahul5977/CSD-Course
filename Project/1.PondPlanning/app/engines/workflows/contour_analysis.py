@@ -80,6 +80,7 @@ class WorkflowContext:
     snap_min_upstream_area_m2: float = 20_000.0
     siting_rise_m: float = 2.0
     siting_top_n: int = 5
+    rainfall: Any = None  # FallbackChain; typed loosely to keep this module free of providers' HTTP
 
 
 def _boundary_geojson(details: dict[str, Any]) -> dict[str, Any]:

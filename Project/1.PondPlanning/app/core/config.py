@@ -86,6 +86,12 @@ class Settings(BaseSettings):
     siting_top_n: int = Field(default=5, ge=1, le=25)
     # Reverse-geocode the AOI centroid to name the village. Off in CI.
     geocode_enabled: bool = True
+    # Rainfall: live providers (Open-Meteo → NASA POWER, cached in the object
+    # store) or the recorded fixture (tests, CI, offline demo).
+    rainfall_source: Literal["live", "recorded"] = "live"
+    rainfall_recorded_path: str = "tests/fixtures/open_meteo_khapri_1981_2025.json"
+    rainfall_years: int = Field(default=30, ge=5, le=50)
+    rainfall_cache_ttl_s: float = Field(default=86_400.0, gt=0)
 
     @computed_field  # type: ignore[prop-decorator]
     @property

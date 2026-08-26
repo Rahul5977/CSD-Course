@@ -28,6 +28,15 @@ ENGINES_IMPLEMENTED = [
     "hydrology.siting (terrain MCDA site ranking, non-maximum suppression)",
     "workflows.contour_analysis (upload → DEM → hydrology → sites → catchment)",
     "workflows.catchment (FR4 click-to-catchment)",
+    "rainfall.statistics (Weibull 75 % dependable, JJAS share, IMD rainy days, Gumbel 25-yr)",
+    "providers.resilience (Retry ∘ CircuitBreaker ∘ Cached, FallbackChain)",
+    "runoff.curve_number (TR-55 CN x WorldCover x SoilGrids HSG, AMC)",
+    "runoff.methods (daily SCS-CN, rational C, Strange's table)",
+    "workflows.runoff (FR6 three-method range)",
+    "design.eav (natural elevation-area-volume by upstream flood fill)",
+    "design.geometry + optimiser (prismoidal frustum, cost-optimised depth)",
+    "design.water_balance (daily balance, fill reliability) + spillway (Kirpich, IMD, weir)",
+    "workflows.pond_design (FR7 Builder)",
 ]
 #: Fixture files whose routes are now real.
 FIXTURES_RETIRED = {
@@ -41,6 +50,10 @@ FIXTURES_RETIRED = {
     "derived_surfaces",
     "catchment",
     "contour_analysis",
+    "rainfall_statistics",
+    "rainfall_series",
+    "runoff",
+    "pond_design",
 }
 REAL_ROUTES = [
     "/health",
@@ -63,6 +76,12 @@ REAL_ROUTES = [
     "/api/v1/analysis/catchment",
     "/api/v1/analysis/results/catchment/{job_id}",
     "/api/v1/analysis/results/contour/{job_id}",
+    "/api/v1/rainfall/statistics",
+    "/api/v1/rainfall/series",
+    "/api/v1/analysis/runoff",
+    "/api/v1/analysis/results/runoff/{job_id}",
+    "/api/v1/analysis/pond-design",
+    "/api/v1/analysis/results/pond-design/{job_id}",
 ]
 
 
@@ -98,7 +117,7 @@ def implementation_status() -> dict[str, object]:
     ``X-Fixture-Data: true`` header and a ``fixture_data`` warning.
     """
     return {
-        "phase": "P2 — Terrain & Catchment",
+        "phase": "P3 — Rainfall · Runoff · Pond Design",
         "engines_implemented": ENGINES_IMPLEMENTED,
         "fixture_backed": sorted(set(available()) - FIXTURES_RETIRED),
         "real": REAL_ROUTES,

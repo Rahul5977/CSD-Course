@@ -64,3 +64,16 @@ dd { margin: 0; }
 .bar-mini i { position: absolute; left: 0; bottom: -1px; height: 3px; background: var(--accent); }
 select.inline { width: auto; padding: 2px 4px; margin-left: 8px; font-size: 12px; }
 details summary { cursor: pointer; }
+
+.chart { width: 100%; height: auto; margin-top: 6px; background: #fbfaf7; border: 1px solid var(--line); border-radius: 4px; }
+.verdict { font-size: 14px; margin: 6px 0; }
+.badge-stale { background: #fff3cd; color: #7a5a00; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+
+.methods { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 6px; }
+.methods th, .methods td { text-align: left; padding: 3px 4px; border-bottom: 1px solid var(--line); }
+.methods tr.recommended td { background: #eef6f9; font-weight: 600; }
+.conf { font-size: 12px; padding: 1px 6px; border-radius: 3px; margin-left: 6px; }
+.conf-high { background: #e3f4e4; color: var(--ok); }
+.conf-moderate { background: #fff3cd; color: #7a5a00; }
+.conf-low { background: #fdecec; color: var(--error); }
+h3.sub { font-size: 13px; margin: 10px 0 2px; color: var(--muted); }

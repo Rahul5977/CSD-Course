@@ -15,6 +15,8 @@ from fastapi import Depends, Query, Response
 from app.core.config import Settings, get_settings
 from app.jobs.runner import JobRunner, build_job_runner
 from app.providers.fixtures import FIXTURE_HEADER
+from app.providers.rainfall.service import build_rainfall_provider
+from app.providers.resilience import FallbackChain
 from app.providers.storage import ObjectStore, build_object_store
 from app.repositories import Repositories, build_repositories
 
@@ -67,14 +69,22 @@ def get_job_runner() -> JobRunner:
     return build_job_runner(get_settings())
 
 
+@lru_cache(maxsize=1)
+def get_rainfall_chain() -> FallbackChain:
+    """The rainfall provider stack named in settings."""
+    return build_rainfall_provider(get_settings(), get_object_store())
+
+
 def reset_dependency_caches() -> None:
     """Forget cached adapters (tests that change settings)."""
     get_repositories.cache_clear()
     get_object_store.cache_clear()
     get_job_runner.cache_clear()
+    get_rainfall_chain.cache_clear()
 
 
 ReposDep = Annotated[Repositories, Depends(get_repositories)]
 StoreDep = Annotated[ObjectStore, Depends(get_object_store)]
 RunnerDep = Annotated[JobRunner, Depends(get_job_runner)]
 SettingsDep = Annotated[Settings, Depends(get_settings)]
+RainfallDep = Annotated[FallbackChain, Depends(get_rainfall_chain)]

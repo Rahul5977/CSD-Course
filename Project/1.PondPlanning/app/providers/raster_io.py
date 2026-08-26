@@ -124,7 +124,30 @@ __all__ = [
     "mask_to_polygon_lonlat",
     "polygon_perimeter_m",
     "rasterio",
+    "rasterize_polygon",
     "read_cog",
     "read_raster_bounds_lonlat",
     "write_cog",
 ]
+
+
+def rasterize_polygon(
+    geometry: dict[str, object],
+    shape: tuple[int, int],
+    transform: tuple[float, float, float, float, float, float],
+) -> np.ndarray:
+    """Boolean mask of the cells inside a GeoJSON polygon on a given grid."""
+    from rasterio.features import rasterize
+
+    a, b, c, d, e, f = transform
+    return np.asarray(
+        rasterize(
+            [(geometry, 1)],
+            out_shape=shape,
+            transform=Affine(a, b, c, d, e, f),
+            fill=0,
+            dtype="uint8",
+            all_touched=True,
+        ),
+        dtype=bool,
+    )

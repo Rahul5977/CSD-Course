@@ -45,6 +45,8 @@ class InlineJobRunner:
         task = {
             tasks.CONTOUR_ANALYSIS: tasks.contour_analysis_task,
             tasks.CATCHMENT: tasks.catchment_task,
+            tasks.RUNOFF: tasks.runoff_task,
+            tasks.POND_DESIGN: tasks.pond_design_task,
         }[task_name]
         try:
             task.run(str(job_id))
