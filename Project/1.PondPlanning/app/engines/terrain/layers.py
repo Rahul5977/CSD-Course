@@ -7,6 +7,7 @@ from uuid import UUID
 
 from app.domain.units import Quantity, Unit
 from app.engines.village import ESRI_WORLD_IMAGERY
+from app.engines.workflows.terrain_products import PRODUCTS
 from app.providers.storage import ObjectStore
 from app.repositories.records import DEMAssetRecord
 from app.schemas.common import QuantityOut, ResultWarning
@@ -20,11 +21,39 @@ def _titiler_template(tiles_base: str, source_url: str, query: str) -> str:
     )
 
 
+def raster_layer(
+    asset: DEMAssetRecord, product_id: str, store: ObjectStore, tiles_base: str
+) -> LayerDescriptor:
+    """Describe one stored raster product as a TiTiler layer."""
+    product = PRODUCTS[product_id]
+    stats = asset.statistics
+    if product.fixed_range is not None:
+        lo, hi = product.fixed_range
+    else:
+        lo = float(stats.get(f"{product_id}_p2", stats.get("min", 0.0)))
+        hi = float(stats.get(f"{product_id}_p98", stats.get("max", 1.0)))
+        if hi <= lo:
+            hi = lo + 1.0
+    query = f"rescale={lo:g},{hi:g}"
+    if product.colormap:
+        query += f"&colormap_name={product.colormap}"
+    return LayerDescriptor(
+        layer_id=product.layer_id,
+        kind="raster",
+        title=product.title,
+        tile_url_template=_titiler_template(
+            tiles_base, store.url(f"villages/{asset.village_id}/{product.key}"), query
+        ),
+        units=product.units,
+        value_range=[lo, hi],
+        source=f"{asset.source} · {product.algorithm}",
+    )
+
+
 def layer_descriptors(
     asset: DEMAssetRecord, store: ObjectStore, tiles_base: str
 ) -> list[LayerDescriptor]:
-    """Satellite basemap plus every raster derived so far for this village."""
-    stats = asset.statistics
+    """Satellite basemap, every stored raster product, and the vector products."""
     layers = [
         LayerDescriptor(
             layer_id="satellite",
@@ -34,32 +63,30 @@ def layer_descriptors(
             source=ESRI_WORLD_IMAGERY.provider,
         )
     ]
-    if asset.hillshade_key:
+    written = set(asset.details.get("products", ["dem", "hillshade"]))
+    for product_id in PRODUCTS:
+        if product_id in written:
+            layers.append(raster_layer(asset, product_id, store, tiles_base))
+    if asset.details.get("streams"):
+        threshold_ha = float(asset.details["streams"]["threshold_area_m2"]) / 1e4
         layers.append(
             LayerDescriptor(
-                layer_id="hillshade",
-                kind="raster",
-                title="Hillshade",
-                tile_url_template=_titiler_template(
-                    tiles_base,
-                    store.url(asset.hillshade_key),
-                    f"rescale={stats.get('hillshade_p2', 1):g},{stats.get('hillshade_p98', 255):g}",
-                ),
-                source=f"{asset.source} · Horn (1981), azimuth 315°, altitude 45°",
+                layer_id="streams",
+                kind="vector",
+                title="Modelled streams",
+                tile_url_template=f"/api/v1/terrain/{asset.village_id}/streams",
+                source=f"D8 accumulation >= {threshold_ha:g} ha",
             )
         )
-    lo, hi = float(stats["min"]), float(stats["max"])
     layers.append(
         LayerDescriptor(
-            layer_id="dem",
-            kind="raster",
-            title="Elevation",
-            tile_url_template=_titiler_template(
-                tiles_base, store.url(asset.dem_key), f"rescale={lo:g},{hi:g}&colormap_name=terrain"
-            ),
+            layer_id="contours",
+            kind="vector",
+            title="Contours",
+            tile_url_template=f"/api/v1/terrain/{asset.village_id}/contours?interval={{interval}}",
             units="m",
-            value_range=[lo, hi],
-            source=f"{asset.source} · {asset.method}",
+            value_range=[float(asset.statistics["min"]), float(asset.statistics["max"])],
+            source="marching squares on the working DEM, Douglas-Peucker simplified",
         )
     )
     return layers

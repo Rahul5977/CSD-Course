@@ -19,10 +19,29 @@ ENGINES_IMPLEMENTED = [
     "terrain.contour_kml (parser with ordered elevation strategy)",
     "terrain.interpolate (Delaunay TIN contour → DEM, derived resolution)",
     "terrain.surfaces (Horn slope/aspect, hillshade)",
-    "workflows.contour_analysis (upload → DEM → COG → MinIO → layers)",
+    "terrain.derived (Zevenbergen-Thorne curvature, TWI)",
+    "terrain.contours (marching squares + Douglas-Peucker)",
+    "hydrology.conditioning (Priority-Flood + epsilon)",
+    "hydrology.flow (D8, accumulation, streams)",
+    "hydrology.streams (link tracing, Strahler order)",
+    "hydrology.catchment (snap-to-drainage, upstream BFS)",
+    "hydrology.siting (terrain MCDA site ranking, non-maximum suppression)",
+    "workflows.contour_analysis (upload → DEM → hydrology → sites → catchment)",
+    "workflows.catchment (FR4 click-to-catchment)",
 ]
 #: Fixture files whose routes are now real.
-FIXTURES_RETIRED = {"villages", "village_summary", "imagery", "dem_asset", "terrain_layers"}
+FIXTURES_RETIRED = {
+    "villages",
+    "village_summary",
+    "imagery",
+    "dem_asset",
+    "terrain_layers",
+    "contours",
+    "streams",
+    "derived_surfaces",
+    "catchment",
+    "contour_analysis",
+}
 REAL_ROUTES = [
     "/health",
     "/ready",
@@ -35,8 +54,15 @@ REAL_ROUTES = [
     "/api/v1/villages/{village_id}",
     "/api/v1/villages/{village_id}/summary",
     "/api/v1/villages/{village_id}/imagery",
+    "/api/v1/villages/{village_id}/siting",
     "/api/v1/terrain/{village_id}/dem",
     "/api/v1/terrain/{village_id}/layers",
+    "/api/v1/terrain/{village_id}/contours",
+    "/api/v1/terrain/{village_id}/streams",
+    "/api/v1/terrain/{village_id}/derived/{surface}",
+    "/api/v1/analysis/catchment",
+    "/api/v1/analysis/results/catchment/{job_id}",
+    "/api/v1/analysis/results/contour/{job_id}",
 ]
 
 
@@ -72,7 +98,7 @@ def implementation_status() -> dict[str, object]:
     ``X-Fixture-Data: true`` header and a ``fixture_data`` warning.
     """
     return {
-        "phase": "P1 — Walking Skeleton",
+        "phase": "P2 — Terrain & Catchment",
         "engines_implemented": ENGINES_IMPLEMENTED,
         "fixture_backed": sorted(set(available()) - FIXTURES_RETIRED),
         "real": REAL_ROUTES,

@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/components/layercontrol.tsx","./src/components/mapview.tsx","./src/components/summarycard.tsx","./src/components/uploadpanel.tsx","./src/hooks/usejob.ts"],"version":"5.9.3"}
+{"root":["./src/app.tsx","./src/api.ts","./src/main.tsx","./src/types.ts","./src/components/catchmentpanel.tsx","./src/components/layercontrol.tsx","./src/components/mapview.tsx","./src/components/sitespanel.tsx","./src/components/summarycard.tsx","./src/components/uploadpanel.tsx","./src/hooks/usejob.ts"],"version":"5.9.3"}

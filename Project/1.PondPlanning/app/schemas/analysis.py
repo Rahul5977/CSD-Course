@@ -13,6 +13,7 @@ from uuid import UUID
 from pydantic import BaseModel, Field
 
 from app.schemas.common import GeoJSONFeatureCollection, QuantityOut, ResultWarning
+from app.schemas.terrain import TerrainPreparationResult
 
 RunoffMethod = Literal["scs_cn", "rational", "empirical_strange"]
 
@@ -220,16 +221,56 @@ class SuitabilityResult(BaseModel):
     warnings: list[ResultWarning] = Field(default_factory=list)
 
 
+class SiteCandidateOut(BaseModel):
+    """One ranked pond location from the terrain-only siting engine (P2).
+
+    ``criteria`` carries the normalised score of every criterion so the ranking
+    is checkable: an evaluator can see *why* rank 1 beat rank 2.
+    """
+
+    rank: int
+    location: PourPoint
+    score: QuantityOut
+    upstream_area: QuantityOut
+    local_slope: QuantityOut
+    wetness_index: QuantityOut
+    impoundment_volume: QuantityOut = Field(
+        description="Water held behind a nominal rise at this point, from the DEM"
+    )
+    impoundment_efficiency: QuantityOut = Field(
+        description="Impounded volume per unit footprint — the mean pool depth"
+    )
+    criteria: dict[str, float]
+
+
+class SitingMethod(BaseModel):
+    """The rules that produced the ranking, returned so they can be defended."""
+
+    weights: dict[str, float]
+    nominal_rise: QuantityOut
+    max_slope: QuantityOut
+    suppression_radius: QuantityOut
+    stream_threshold: QuantityOut
+    upstream_area_bounds_ha: list[float] = Field(
+        description="[too small, ideal from, ideal to, too large] — the upstream-area plateau"
+    )
+    candidates_considered: int
+    description: str
+
+
 class ContourAnalysisResult(BaseModel):
-    """The Phase 2 submission payload: catchment derived from an uploaded contour map.
+    """The Phase 2 submission payload: pond location + catchment from an uploaded contour map.
 
     Everything here is derived from the upload. The UTM zone comes from the
     file's own centroid, the grid resolution from its own mean contour spacing,
-    and the pour point from its own modelled drainage — nothing is configured per
-    map, which is exactly what the assignment's anti-hard-coding rule requires.
+    the source accuracy from its own metadata and the pour point from its own
+    modelled drainage — nothing is configured per map, which is exactly what
+    the assignment's anti-hard-coding rule requires.
     """
 
     source_file: str
+    village_id: UUID
+    village_name: str
     contour_count: int
     elevation_source: Literal["z_coordinate", "extended_data", "placemark_name"] = Field(
         description="Which parsing strategy succeeded, so the result is auditable"
@@ -244,4 +285,7 @@ class ContourAnalysisResult(BaseModel):
     suggested_pond_location: PourPoint
     location_rationale: str
     catchment: CatchmentResult
+    candidate_sites: list[SiteCandidateOut]
+    siting: SitingMethod
+    terrain: TerrainPreparationResult
     warnings: list[ResultWarning] = Field(default_factory=list)

@@ -5,7 +5,7 @@ COMPOSE := docker compose -f infra/docker-compose.yml
 UV      := uv run
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev
+.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -74,6 +74,9 @@ fmt:  ## Auto-format and auto-fix
 
 typecheck:  ## Type-check (strict on app/domain and app/engines)
 	$(UV) mypy
+
+figures:  ## Regenerate the evidence figures in docs/figures from the sample map
+	$(UV) python scripts/make_figures.py
 
 check: lint typecheck test  ## Everything CI runs
 

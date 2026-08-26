@@ -1,20 +1,26 @@
+import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
+import { CatchmentPanel } from "./components/CatchmentPanel";
 import { LayerControl } from "./components/LayerControl";
 import { MapView } from "./components/MapView";
+import { SitesPanel } from "./components/SitesPanel";
 import { SummaryCard } from "./components/SummaryCard";
 import { UploadPanel } from "./components/UploadPanel";
 import { useJob } from "./hooks/useJob";
-import type { MultiPolygon, Polygon } from "geojson";
-import type { LayerDescriptor, VillageOut, VillageSummary } from "./types";
+import type { CatchmentResult, LayerDescriptor, PourPoint, SiteCandidate, SitingMethod, VillageOut, VillageSummary } from "./types";
 
 type Bounds = [number, number, number, number];
 
 /** Outer ring of a Polygon, or of the first part of a MultiPolygon (PostGIS stores the latter). */
 function outerRing(geometry: Polygon | MultiPolygon | null): number[][] | null {
   if (!geometry) return null;
-  return geometry.type === "Polygon" ? geometry.coordinates[0] : geometry.coordinates[0]?.[0] ?? null;
+  return geometry.type === "Polygon" ? geometry.coordinates[0] : (geometry.coordinates[0]?.[0] ?? null);
 }
+
+const DEFAULT_VISIBLE: Record<string, boolean> = {
+  satellite: true, hillshade: true, streams: true, contours: true, catchment: true, sites: true, boundary: true,
+};
 
 export default function App() {
   const [villages, setVillages] = useState<VillageOut[]>([]);
@@ -23,7 +29,16 @@ export default function App() {
   const [layers, setLayers] = useState<LayerDescriptor[]>([]);
   const [boundary, setBoundary] = useState<Polygon | MultiPolygon | null>(null);
   const [bounds, setBounds] = useState<Bounds | null>(null);
-  const [visible, setVisible] = useState<Record<string, boolean>>({ satellite: true, hillshade: true, dem: false, boundary: true });
+  const [visible, setVisible] = useState<Record<string, boolean>>(DEFAULT_VISIBLE);
+  const [contourInterval, setContourInterval] = useState(2);
+  const [contours, setContours] = useState<FeatureCollection | null>(null);
+  const [streams, setStreams] = useState<FeatureCollection | null>(null);
+  const [catchment, setCatchment] = useState<CatchmentResult | null>(null);
+  const [catchmentBusy, setCatchmentBusy] = useState(false);
+  const [catchmentError, setCatchmentError] = useState<string | null>(null);
+  const [sites, setSites] = useState<SiteCandidate[]>([]);
+  const [siting, setSiting] = useState<SitingMethod | null>(null);
+  const [rationale, setRationale] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const job = useJob(jobId);
@@ -38,23 +53,32 @@ export default function App() {
     refreshVillages().catch((e) => setLoadError((e as Error).message));
   }, [refreshVillages]);
 
-  // When the upload job finishes, select the village it created.
+  // When the upload job finishes: select its village and show its sites + catchment.
   useEffect(() => {
     if (job?.status !== "succeeded" || !jobId) return;
-    api.terrainResult(jobId).then(async (result) => {
+    api.contourResult(jobId).then(async (result) => {
       await refreshVillages();
       setSelected(result.village_id);
+      setSites(result.candidate_sites);
+      setSiting(result.siting);
+      setRationale(result.location_rationale);
+      setCatchment(result.catchment);
     });
   }, [job?.status, jobId, refreshVillages]);
 
-  // Selecting a village loads its summary, layers and boundary.
+  // Selecting a village loads its summary, layers, boundary, streams and sites.
   useEffect(() => {
     if (!selected) return;
     setLoadError(null);
-    Promise.all([api.summary(selected), api.layers(selected)])
-      .then(([s, l]) => {
+    Promise.all([api.summary(selected), api.layers(selected), api.streams(selected).catch(() => null), api.siting(selected).catch(() => null)])
+      .then(([s, l, st, si]) => {
         setSummary(s);
         setLayers(l.layers);
+        setStreams(st?.geojson ?? null);
+        if (si) {
+          setSites(si.candidate_sites);
+          setSiting(si.siting);
+        }
         const ring = outerRing(s.village.boundary);
         if (ring) {
           setBoundary(s.village.boundary);
@@ -66,7 +90,28 @@ export default function App() {
       .catch((e) => setLoadError((e as Error).message));
   }, [selected]);
 
-  const toggle = (id: string) => setVisible((v) => ({ ...v, [id]: !(v[id] ?? true) }));
+  useEffect(() => {
+    if (!selected) return;
+    api.contours(selected, contourInterval).then((c) => setContours(c.geojson)).catch(() => setContours(null));
+  }, [selected, contourInterval]);
+
+  const delineate = useCallback(
+    async (point: PourPoint) => {
+      if (!selected) return;
+      setCatchmentBusy(true);
+      setCatchmentError(null);
+      try {
+        setCatchment(await api.catchment(selected, point));
+      } catch (e) {
+        setCatchmentError((e as Error).message);
+      } finally {
+        setCatchmentBusy(false);
+      }
+    },
+    [selected],
+  );
+
+  const toggle = (id: string) => setVisible((v) => ({ ...v, [id]: !(v[id] ?? false) }));
 
   return (
     <div className="app">
@@ -75,10 +120,10 @@ export default function App() {
         <span className="muted">terrain · catchment · runoff · storage — derived from your contour map</span>
       </header>
       <aside>
-        <UploadPanel job={job} onSubmitted={(id) => { setBounds(null); setJobId(id); }} />
+        <UploadPanel job={job} onSubmitted={(id) => { setBounds(null); setCatchment(null); setSites([]); setJobId(id); }} />
         <section className="panel">
           <h2>Village</h2>
-          <select value={selected} onChange={(e) => { setBounds(null); setSelected(e.target.value); }} aria-label="Select village">
+          <select value={selected} onChange={(e) => { setBounds(null); setCatchment(null); setSites([]); setSiting(null); setRationale(null); setSelected(e.target.value); }} aria-label="Select village">
             <option value="">— select an analysed area —</option>
             {villages.map((v) => (
               <option key={v.id} value={v.id}>{v.name}</option>
@@ -88,9 +133,11 @@ export default function App() {
           {!villages.length && <p className="muted">No analysed areas yet. Upload a contour map.</p>}
         </section>
         {summary && <SummaryCard summary={summary} />}
-        {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} />}
+        {selected && <CatchmentPanel catchment={catchment} busy={catchmentBusy} error={catchmentError} />}
+        <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
+        {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>
-      <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} />
+      <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment} sites={sites} onClick={delineate} />
     </div>
   );
 }

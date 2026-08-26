@@ -303,6 +303,54 @@
         }
       }
     },
+    "/api/v1/villages/{village_id}/siting": {
+      "get": {
+        "tags": [
+          "villages"
+        ],
+        "summary": "Ranked pond sites from the last terrain analysis",
+        "description": "The candidate sites, the suggested location and the rules that ranked them.\n\nStored by the contour-analysis job, so a village keeps its ranking across\nsessions without re-running the upload.",
+        "operationId": "get_siting_api_v1_villages__village_id__siting_get",
+        "parameters": [
+          {
+            "name": "village_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Village identifier",
+              "title": "Village Id"
+            },
+            "description": "Village identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Get Siting Api V1 Villages  Village Id  Siting Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/villages/{village_id}/available-land": {
       "get": {
         "tags": [
@@ -1274,7 +1322,7 @@
           "analysis"
         ],
         "summary": "Analyse Catchment",
-        "description": "FR4: delineate the upstream contributing area of a clicked point.\n\nResult shape: :class:`~app.schemas.analysis.CatchmentResult`.",
+        "description": "FR4: delineate the upstream contributing area of a clicked point.\n\nReal since P2. Snap \u2192 D8 upstream BFS \u2192 polygon, in a worker; the pipeline\nis :mod:`app.engines.workflows.catchment`.\n\nResult shape: :class:`~app.schemas.analysis.CatchmentResult`.",
         "operationId": "analyse_catchment_api_v1_analysis_catchment_post",
         "requestBody": {
           "content": {
@@ -1442,7 +1490,7 @@
           "analysis"
         ],
         "summary": "Catchment Result",
-        "description": "FR4 result payload.",
+        "description": "FR4 result payload (real since P2).",
         "operationId": "catchment_result_api_v1_analysis_results_catchment__job_id__get",
         "parameters": [
           {
@@ -1618,7 +1666,7 @@
           "analysis"
         ],
         "summary": "Contour Result",
-        "description": "Phase 2 result payload.",
+        "description": "Phase 2 result payload (real since P2).",
         "operationId": "contour_result_api_v1_analysis_results_contour__job_id__get",
         "parameters": [
           {
@@ -1662,7 +1710,7 @@
           "analysis"
         ],
         "summary": "Analyse an uploaded contour map (KML/KMZ)",
-        "description": "Derive terrain \u2014 and, from P2, a pond location and its catchment \u2014 from an upload.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe source accuracy from its own metadata. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nValidate \u2192 store the upload \u2192 create the job \u2192 dispatch \u2192 ``202``. The\npipeline itself runs in :mod:`app.engines.workflows.contour_analysis`.\n\nResult shape (P1): :class:`~app.schemas.terrain.TerrainPreparationResult`.",
+        "description": "Derive terrain \u2014 and, from P2, a pond location and its catchment \u2014 from an upload.\n\nEverything in the result is derived from the upload: the UTM zone from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe source accuracy from its own metadata. No coordinate, extent or CRS\nspecific to any one map exists in this codebase.\n\nValidate \u2192 store the upload \u2192 create the job \u2192 dispatch \u2192 ``202``. The\npipeline itself runs in :mod:`app.engines.workflows.contour_analysis`.\n\nResult shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.",
         "operationId": "analyze_contour_api_v1_analyzeContour_post",
         "requestBody": {
           "content": {
@@ -1930,6 +1978,15 @@
             "type": "string",
             "title": "Source File"
           },
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "village_name": {
+            "type": "string",
+            "title": "Village Name"
+          },
           "contour_count": {
             "type": "integer",
             "title": "Contour Count"
@@ -1981,6 +2038,19 @@
           "catchment": {
             "$ref": "#/components/schemas/CatchmentResult"
           },
+          "candidate_sites": {
+            "items": {
+              "$ref": "#/components/schemas/SiteCandidateOut"
+            },
+            "type": "array",
+            "title": "Candidate Sites"
+          },
+          "siting": {
+            "$ref": "#/components/schemas/SitingMethod"
+          },
+          "terrain": {
+            "$ref": "#/components/schemas/TerrainPreparationResult"
+          },
           "warnings": {
             "items": {
               "$ref": "#/components/schemas/ResultWarning"
@@ -1992,6 +2062,8 @@
         "type": "object",
         "required": [
           "source_file",
+          "village_id",
+          "village_name",
           "contour_count",
           "elevation_source",
           "elevation_range",
@@ -2001,10 +2073,13 @@
           "grid_resolution",
           "suggested_pond_location",
           "location_rationale",
-          "catchment"
+          "catchment",
+          "candidate_sites",
+          "siting",
+          "terrain"
         ],
         "title": "ContourAnalysisResult",
-        "description": "The Phase 2 submission payload: catchment derived from an uploaded contour map.\n\nEverything here is derived from the upload. The UTM zone comes from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nand the pour point from its own modelled drainage \u2014 nothing is configured per\nmap, which is exactly what the assignment's anti-hard-coding rule requires."
+        "description": "The Phase 2 submission payload: pond location + catchment from an uploaded contour map.\n\nEverything here is derived from the upload. The UTM zone comes from the\nfile's own centroid, the grid resolution from its own mean contour spacing,\nthe source accuracy from its own metadata and the pour point from its own\nmodelled drainage \u2014 nothing is configured per map, which is exactly what\nthe assignment's anti-hard-coding rule requires."
       },
       "ContourResponse": {
         "properties": {
@@ -3611,6 +3686,110 @@
         "title": "RunoffResult",
         "description": "FR6: three methods, reported as a range.\n\nThree methods rather than one because they disagree, and the disagreement is\ninformation. A single number here would be false precision."
       },
+      "SiteCandidateOut": {
+        "properties": {
+          "rank": {
+            "type": "integer",
+            "title": "Rank"
+          },
+          "location": {
+            "$ref": "#/components/schemas/PourPoint"
+          },
+          "score": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "upstream_area": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "local_slope": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "wetness_index": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "impoundment_volume": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Water held behind a nominal rise at this point, from the DEM"
+          },
+          "impoundment_efficiency": {
+            "$ref": "#/components/schemas/QuantityOut",
+            "description": "Impounded volume per unit footprint \u2014 the mean pool depth"
+          },
+          "criteria": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Criteria"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rank",
+          "location",
+          "score",
+          "upstream_area",
+          "local_slope",
+          "wetness_index",
+          "impoundment_volume",
+          "impoundment_efficiency",
+          "criteria"
+        ],
+        "title": "SiteCandidateOut",
+        "description": "One ranked pond location from the terrain-only siting engine (P2).\n\n``criteria`` carries the normalised score of every criterion so the ranking\nis checkable: an evaluator can see *why* rank 1 beat rank 2."
+      },
+      "SitingMethod": {
+        "properties": {
+          "weights": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Weights"
+          },
+          "nominal_rise": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "max_slope": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "suppression_radius": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "stream_threshold": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "upstream_area_bounds_ha": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Upstream Area Bounds Ha",
+            "description": "[too small, ideal from, ideal to, too large] \u2014 the upstream-area plateau"
+          },
+          "candidates_considered": {
+            "type": "integer",
+            "title": "Candidates Considered"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "weights",
+          "nominal_rise",
+          "max_slope",
+          "suppression_radius",
+          "stream_threshold",
+          "upstream_area_bounds_ha",
+          "candidates_considered",
+          "description"
+        ],
+        "title": "SitingMethod",
+        "description": "The rules that produced the ranking, returned so they can be defended."
+      },
       "StatusChangeRequest": {
         "properties": {
           "status": {
@@ -3824,6 +4003,105 @@
         "title": "TerrainLayers",
         "description": "The full toggleable layer set for a village \u2014 FR8's six overlays live here."
       },
+      "TerrainPreparationResult": {
+        "properties": {
+          "village_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Village Id"
+          },
+          "village_name": {
+            "type": "string",
+            "title": "Village Name"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "elevation_source": {
+            "type": "string",
+            "title": "Elevation Source"
+          },
+          "contour_count": {
+            "type": "integer",
+            "title": "Contour Count"
+          },
+          "contour_interval": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "grid_resolution": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "utm_epsg": {
+            "type": "integer",
+            "title": "Utm Epsg"
+          },
+          "bounds": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "title": "Bounds",
+            "description": "[min_lon, min_lat, max_lon, max_lat]"
+          },
+          "elevation": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/QuantityOut"
+            },
+            "type": "object",
+            "title": "Elevation"
+          },
+          "mean_slope": {
+            "$ref": "#/components/schemas/QuantityOut"
+          },
+          "dem": {
+            "$ref": "#/components/schemas/DEMAsset"
+          },
+          "layers": {
+            "items": {
+              "$ref": "#/components/schemas/LayerDescriptor"
+            },
+            "type": "array",
+            "title": "Layers"
+          },
+          "boundary_geojson": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Boundary Geojson"
+          },
+          "catchment": {
+            "type": "null",
+            "title": "Catchment",
+            "description": "Arrives in P2"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/ResultWarning"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "village_id",
+          "village_name",
+          "provider",
+          "elevation_source",
+          "contour_count",
+          "contour_interval",
+          "grid_resolution",
+          "utm_epsg",
+          "bounds",
+          "elevation",
+          "mean_slope",
+          "dem",
+          "layers",
+          "boundary_geojson"
+        ],
+        "title": "TerrainPreparationResult",
+        "description": "P1 job result: a working DEM, its provenance, and the layers it yields.\n\nThis is what ``POST /analyzeContour`` produces until the catchment engine\nlands in P2, at which point :class:`~app.schemas.analysis.ContourAnalysisResult`\nembeds it. ``catchment`` is present and ``null`` so a client can see the\nshape of what is coming rather than discover a missing key."
+      },
       "Unit": {
         "type": "string",
         "enum": [
@@ -3979,6 +4257,19 @@
           },
           "area": {
             "$ref": "#/components/schemas/QuantityOut"
+          },
+          "boundary": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Boundary",
+            "description": "GeoJSON geometry, EPSG:4326 \u2014 the analysed extent"
           },
           "created_at": {
             "type": "string",

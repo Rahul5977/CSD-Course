@@ -1,7 +1,7 @@
-import type { MultiPolygon, Polygon } from "geojson";
+import type { Feature, FeatureCollection, MultiPolygon, Polygon } from "geojson";
 
 // Wire types, mirroring app/schemas. Generated typing (openapi-typescript)
-// replaces this file in P5; for the skeleton a hand copy keeps the toolchain small.
+// replaces this file in P5; for now a hand copy keeps the toolchain small.
 
 export interface QuantityOut {
   value: number;
@@ -82,6 +82,50 @@ export interface VillageSummary {
   warnings: ResultWarning[];
 }
 
+export interface PourPoint {
+  lon: number;
+  lat: number;
+}
+
+export interface CatchmentResult {
+  village_id: string;
+  requested_point: PourPoint;
+  snapped_point: PourPoint;
+  snap_distance: QuantityOut;
+  area: QuantityOut;
+  perimeter: QuantityOut;
+  longest_flow_path: QuantityOut;
+  mean_slope: QuantityOut;
+  relief: QuantityOut;
+  outlet_elevation: QuantityOut;
+  flow_routing: string;
+  cell_size: QuantityOut;
+  geojson: FeatureCollection;
+  warnings: ResultWarning[];
+}
+
+export interface SiteCandidate {
+  rank: number;
+  location: PourPoint;
+  score: QuantityOut;
+  upstream_area: QuantityOut;
+  local_slope: QuantityOut;
+  wetness_index: QuantityOut;
+  impoundment_volume: QuantityOut;
+  impoundment_efficiency: QuantityOut;
+  criteria: Record<string, number>;
+}
+
+export interface SitingMethod {
+  weights: Record<string, number>;
+  nominal_rise: QuantityOut;
+  max_slope: QuantityOut;
+  suppression_radius: QuantityOut;
+  stream_threshold: QuantityOut;
+  candidates_considered: number;
+  description: string;
+}
+
 export interface TerrainPreparationResult {
   village_id: string;
   village_name: string;
@@ -96,3 +140,38 @@ export interface TerrainPreparationResult {
   dem: DEMAsset;
   warnings: ResultWarning[];
 }
+
+export interface ContourAnalysisResult {
+  source_file: string;
+  village_id: string;
+  village_name: string;
+  contour_count: number;
+  elevation_source: string;
+  bounds: [number, number, number, number];
+  utm_epsg: number;
+  grid_resolution: QuantityOut;
+  suggested_pond_location: PourPoint;
+  location_rationale: string;
+  catchment: CatchmentResult;
+  candidate_sites: SiteCandidate[];
+  siting: SitingMethod;
+  terrain: TerrainPreparationResult;
+  warnings: ResultWarning[];
+}
+
+export interface ContourResponse {
+  interval: QuantityOut;
+  levels: number;
+  vertices_before_simplification: number;
+  vertices_after_simplification: number;
+  geojson: FeatureCollection;
+}
+
+export interface StreamNetwork {
+  accumulation_threshold: QuantityOut;
+  total_length: QuantityOut;
+  strahler_max_order: number;
+  geojson: FeatureCollection;
+}
+
+export type AnyFeature = Feature;

@@ -75,6 +75,15 @@ class Settings(BaseSettings):
     pour_point_snap_radius_m: float = Field(default=150.0, gt=0)
     # Finest DEM cell size when an upload does not identify its source DEM.
     default_dem_floor_m: float = Field(default=10.0, gt=0)
+    # Drainage network: cells with at least this much upstream area are channels.
+    # Expressed as an area so it means the same on any grid; calibrated by
+    # overlaying the result on satellite imagery (P2 decision log).
+    stream_threshold_area_m2: float = Field(default=50_000.0, gt=0)
+    # Snapping only considers cells draining at least this much (2 ha).
+    snap_min_upstream_area_m2: float = Field(default=20_000.0, gt=0)
+    # Site selection: nominal water-level rise for impoundment scoring, and how many sites.
+    siting_rise_m: float = Field(default=2.0, gt=0)
+    siting_top_n: int = Field(default=5, ge=1, le=25)
     # Reverse-geocode the AOI centroid to name the village. Off in CI.
     geocode_enabled: bool = True
 

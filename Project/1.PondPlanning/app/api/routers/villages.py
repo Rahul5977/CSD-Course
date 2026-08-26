@@ -7,14 +7,16 @@ import stay fixture-backed until P4 and say so.
 
 from __future__ import annotations
 
-from typing import Annotated
+import json
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Path, Query, UploadFile, status
 
-from app.api.deps import FixtureRoute, PaginationDep, ReposDep
+from app.api.deps import FixtureRoute, PaginationDep, ReposDep, StoreDep
 from app.domain.errors import NotFoundError
 from app.engines.village import describe_village, imagery_layer, village_summary
+from app.engines.workflows.terrain_products import SITING_KEY
 from app.providers import fixtures
 from app.repositories.records import DEMAssetRecord, VillageRecord
 from app.schemas.common import JobAccepted, Page
@@ -93,6 +95,21 @@ def get_village_imagery(village_id: VillageId, repos: ReposDep) -> ImageryLayer:
     """FR1: the satellite basemap descriptor; the client clips it to the boundary."""
     _require_village(repos, village_id)
     return imagery_layer()
+
+
+@router.get("/{village_id}/siting", summary="Ranked pond sites from the last terrain analysis")
+def get_siting(village_id: VillageId, repos: ReposDep, store: StoreDep) -> dict[str, Any]:
+    """The candidate sites, the suggested location and the rules that ranked them.
+
+    Stored by the contour-analysis job, so a village keeps its ranking across
+    sessions without re-running the upload.
+    """
+    _require_dem(repos, village_id)
+    key = f"villages/{village_id}/{SITING_KEY}"
+    if not store.exists(key):
+        msg = "no site ranking stored for this village"
+        raise NotFoundError(msg, {"village_id": str(village_id)})
+    return dict(json.loads(store.get(key)))
 
 
 @router.get(

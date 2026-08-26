@@ -42,7 +42,10 @@ class InlineJobRunner:
         """Execute immediately; failures are already written to the job row."""
         from app.jobs import tasks
 
-        task = {tasks.CONTOUR_ANALYSIS: tasks.contour_analysis_task}[task_name]
+        task = {
+            tasks.CONTOUR_ANALYSIS: tasks.contour_analysis_task,
+            tasks.CATCHMENT: tasks.catchment_task,
+        }[task_name]
         try:
             task.run(str(job_id))
         except DomainError as exc:

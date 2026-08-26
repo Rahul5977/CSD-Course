@@ -9,10 +9,10 @@ the assistant reads this at the start of every session and updates it at the end
 ## Snapshot
 
 - **Last updated:** 2026-08-26
-- **Current phase:** P2 — Terrain & Catchment ⭐ (awaiting the user's go at the G1 checkpoint)
-- **Active gate:** G2 — open. **G1 closed 2026-08-26. G0 closed 2026-08-18.**
-- **Marks secured:** 21 / 100 · next 30 are in P2
-- **Next action:** P2 day 1 — priority-flood sink fill + flat resolution on the interpolated DEM, before/after figure, synthetic pit golden test; then D8 → accumulation → streams → snap → BFS catchment; site-selection scorer; `POST /analyzeContour` grows to the full `ContourAnalysisResult`
+- **Current phase:** P3 — Rainfall · Runoff · Pond Design ⭐ (awaiting the user's go at the G2 checkpoint)
+- **Active gate:** G3 — open. **G2 closed 2026-08-26. G1 closed 2026-08-26. G0 closed 2026-08-18.**
+- **Marks secured:** 51 / 100 · next 19 are in P3
+- **Next action:** P3 day 1 — `RainfallProvider` (Open-Meteo ERA5-Land daily from 1950, NASA POWER fallback), `Cached ∘ CircuitBreaker ∘ Retry` decorators, statistics engine (75 % dependable by Weibull, JJAS share, rainy days, max 1-day), `GET /rainfall/statistics` + chart
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in `the working agreement` § Autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -24,14 +24,14 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 |---|---|---|---|---|
 | P0 Foundations & Contract | 11 | 11 | G0 | ☑ **done** |
 | P1 Walking Skeleton | 10 | 21 | G1 | ☑ **done** |
-| P2 Terrain & Catchment ⭐ | 30 | 51 | G2 | ◐ next |
-| P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ☐ |
+| P2 Terrain & Catchment ⭐ | 30 | 51 | G2 | ☑ **done** |
+| P3 Rainfall · Runoff · Design ⭐ | 19 | 70 | G3 | ◐ next |
 | P4 Suitability & AI | 7 | 77 | G4 | ☐ |
 | P5 Frontend Integration | 7 | 84 | G5 | ☐ |
 | P6 System Hardening ⭐ | 7 | 91 | G6 | ☐ |
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☐ |
 
-Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 8 of 40 ticked (rows 1–5 from P0; 34a walking-skeleton screenshot, 34b ADR 0013 + real-pipeline test, 37 generalised-KML parser tests).
+Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 17 of 40 ticked (P0 rows 1–5; P1 34a/34b/37; P2 rows 6–13 and 35).
 
 ## What exists today
 
@@ -41,6 +41,23 @@ Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8
 - `docs/assignment/Phase{1,2,3}.txt` — phase briefs; Phase 1 (HLD) submitted and done
 - `data/samples/contours_1m.kml` — the provided sample, 6.4 MB (analysed; see `docs/ROADMAP.md` §4)
 - `the working agreement`, `docs/ROADMAP.md`, `docs/PROGRESS.md`, `CONTRIBUTING.md`, `.gitignore`
+
+**Code — P2 complete, verified 2026-08-26**
+- `POST /analyzeContour` returns the full Phase 2 payload: `suggested_pond_location` + rationale,
+  its `catchment`, 5 `candidate_sites` with per-criterion scores, the `siting` method, and the
+  terrain block. `POST /analysis/catchment` (FR4) is real: snap → D8 upstream BFS → polygon, ~1 s.
+- `app/engines/hydrology/` — `conditioning` (Priority-Flood + ε), `flow` (D8, accumulation,
+  streams), `streams` (links + Strahler), `catchment` (snap, BFS, metrics), `siting` (terrain MCDA
+  + NMS). `app/engines/terrain/{derived,contours}.py` (curvature, TWI; marching squares + D-P).
+  `workflows/catchment.py`, `workflows/terrain_products.py` (the product catalogue).
+- Real routes: `/terrain/{id}/contours|streams|derived/*|layers|dem`, `/villages/{id}/siting`,
+  `/analysis/results/{contour,catchment}/{job}`. 10 raster products as COGs + streams/siting JSON per village.
+- Validation: 19 golden tests; pysheds cross-check (ADR 0015); `make figures` (sink fill, flow
+  accumulation, pour-point sensitivity). Tests: **156 passing**.
+- UI: click-to-catchment with snap distance, contours + labels + interval, streams by order,
+  ranked sites panel with criterion bars, 13 toggleable layers.
+- Sample run: 672 drainage cells scored; 101 stream links, Strahler 3, 24.4 km; fill 2 141 cells
+  max 8.6 m; contours 2 m: 13 levels, 5 097 → 1 408 vertices.
 
 **Code — P1 complete, verified 2026-08-26**
 - `POST /analyzeContour` is **real**: upload → `ContourKMLAdapter` (lxml parser, ordered elevation
@@ -139,6 +156,16 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 | 2026-08-26 | **Ports and adapters chosen by settings** — persistence (postgres/memory), job runner (celery/inline), object store (minio/local); tests run the real pipeline on the real sample with no Docker, no mocks. ADR 0013 | The bugs this project fears live in the real code path, and `make check` must be green on a fresh clone without Docker. The in-memory adapters also power `make api-dev` | Mocks (test the mock); conditionals in engines (scatter wiring, engines depend on settings) |
 | 2026-08-26 | **Hillshade/DEM served as COGs from MinIO via TiTiler**, browser reaches everything through one nginx origin (`/api`, `/tiles`) | The plan's tile path; a new DEM is on the map the moment the worker writes it, no restart, no CORS | Serving PNG tiles from FastAPI (couples the API to raster I/O and blocks its workers) |
 | 2026-08-26 | **Satellite imagery = Esri World Imagery XYZ basemap**, clipped visually to the derived boundary in the client | FR1 asks for imagery for a selected village; a global basemap needs no download and no key, and Sentinel-2 via STAC arrives in P4 for NDWI where pixel access is actually needed | Downloading Sentinel-2 in P1 — a day of work for an image the basemap already shows |
+| 2026-08-26 | **Priority-Flood + ε** (Barnes et al. 2014) for sink filling *and* flat resolution in one pass | Deterministic, O(n log n), textbook; the fill-depth raster is itself an evidence figure. On the sample: 2141 cells (22 %) filled, max 8.6 m — the TIN leaves shallow depressions between contours and the river floor sits below its map-edge exit | Breaching (changes the surface less but is harder to explain and to show); separate fill + flat passes (two algorithms to defend) |
+| 2026-08-26 | **D8 accumulation by one descending-elevation pass** (pure numpy, no numba) | On a filled+ε surface descending elevation is a topological order, so a single sorted loop is exact; village-scale grids run in milliseconds and the code is 20 legible lines | numba/Cython (a dependency to justify for no measurable gain at this scale); recursive upstream sums (recursion depth) |
+| 2026-08-26 | **Stream threshold expressed as an area (5 ha)**, not a cell count | Means the same thing on any grid resolution; overlaying the 5 ha network on the satellite basemap reproduces the visible N–S river and its main tributaries without hillside noise (`docs/figures/p2-streams-on-satellite.jpg`) | A cell count (changes meaning with resolution); a fixed fraction of the grid |
+| 2026-08-26 | **Snap to the *nearest* channel cell within 150 m that drains ≥ 2 ha**, not the largest | A click on a tributary must not be dragged onto the main river; the distance moved is returned and shown. Sensitivity figure: pour-point CV 212 % → 48 % | Max-accumulation in a 5×5 window (PLAN) — always the main river |
+| 2026-08-26 | **Catchments that touch the map edge carry `catchment_truncated`** | The upload bounds the analysis, not a divide; the number must not be read as complete | Silently reporting the clipped area |
+| 2026-08-26 | **Site selection = terrain MCDA with an upstream-area plateau (10–150 ha)** — ADR 0014 | First version scored area monotonically and put every top site on the main river (345–406 ha upstream): a dam, not a pond. The plateau encodes "enough to fill, not a river" | Monotone area; max-TWI; deferring siting to P4 |
+| 2026-08-26 | **Validation by golden tests + pysheds cross-check + sensitivity plot** — ADR 0015 | No GRASS on the machine; an independent implementation is the same evidence class and runs in CI. Result: 2.0 % / 3.4 % / 22.5 % (floodplain flat) | Installing QGIS |
+| 2026-08-26 | **Curvature uses the ArcGIS sign convention** (plan < 0 = laterally concave) | Every evaluator who has opened a GIS expects it; Zevenbergen & Thorne's own sign is the opposite for plan curvature and would read as a bug | Z&T's original sign |
+| 2026-08-26 | **Contours and streams served as GeoJSON from the API**, not MVT via Martin | At village scale a contour set is ~1 400 vertices after simplification; a tile server would be a service to defend for nothing exercised. Martin stays in the ADR 0004 table for district scale | Martin now |
+| 2026-08-26 | **Impoundment efficiency = volume behind a 2 m rise / footprint** as a siting criterion | Rewards natural basins over open slopes with one flood fill per candidate; the same fill becomes the EAV curve in P3 | Excavation-only sizing (ignores what the terrain gives for free) |
 | 2026-08-26 | **Autonomous phase loop** with a user check-in at every gate (`the working agreement` § Autonomous loop) | The user wants progress visibility at each checkpoint and otherwise uninterrupted building; the gate is the natural unit | Check-ins per task (too chatty) or per phase without a stop (no visibility) |
 
 ## Open questions
@@ -154,6 +181,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-26 (session 10)
+**P2 complete — G2 closed, 51 marks secured.** Built the entire terrain & catchment engine in one session (see "What exists today"), ADR 0014 (siting) and 0015 (validation). Ten decisions logged. Defects found by running: monotone area scoring sited every pond on the river (fixed with a plateau); pysheds/NumPy 2 incompatibility; a synthetic that was right and a test that was wrong (Strahler 3, bowl drainage); curvature sign convention. **Next:** G2 checkpoint with the user, then P3.
 
 ### 2026-08-26 (session 9)
 **P1 complete — G1 closed, 21 marks secured.** Built the KML-first walking skeleton end to end (see "What exists today"). Defects found by running rather than reading: rasterio wheel needs `libexpat1` on `python:3.12-slim`; TiTiler images are amd64-only and listen on port 80; the provenance heuristic initially picked Copernicus from Mapzen's generic attribution blurb over the explicit `srtm/N21E081.tif` (fixed by evidence weighting); a 30 m grid with smoothing loses the single-cell 267/298 m extremes (documented as expected, tests widened). Seven decisions logged. ADR 0013 added, ADR 0004 amended. **Next:** G1 checkpoint with the user, then P2.

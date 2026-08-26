@@ -54,3 +54,13 @@ dd { margin: 0; }
   .app { grid-template-columns: 1fr; grid-template-rows: auto 45vh 1fr; grid-template-areas: "header" "map" "aside"; }
   aside { border-right: 0; border-top: 1px solid var(--line); }
 }
+
+.sites { padding-left: 18px; margin: 6px 0; }
+.sites li { margin-bottom: 8px; }
+.sites small { display: block; }
+.linkish { background: none; color: var(--accent); padding: 0; font-weight: 700; text-decoration: underline; cursor: pointer; }
+.bars { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
+.bar-mini { position: relative; font-size: 10px; color: var(--muted); padding-left: 0; min-width: 70px; border-bottom: 1px solid var(--line); }
+.bar-mini i { position: absolute; left: 0; bottom: -1px; height: 3px; background: var(--accent); }
+select.inline { width: auto; padding: 2px 4px; margin-left: 8px; font-size: 12px; }
+details summary { cursor: pointer; }
