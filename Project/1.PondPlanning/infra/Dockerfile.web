@@ -1,4 +1,6 @@
-# syntax=docker/dockerfile:1
+# No `# syntax=` pin: it forces a registry fetch of the frontend image on every
+# build, which fails on networks that reset Docker Hub connections (seen on the
+# campus network). The builtin BuildKit in Docker >= 23 covers everything used here.
 #
 # Frontend image: build the SPA with Node, serve it with nginx. The runtime
 # layer carries no Node at all.
