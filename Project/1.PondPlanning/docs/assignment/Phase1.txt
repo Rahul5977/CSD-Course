@@ -1,2 +1,8 @@
 // HLD 
 Submitted and DONE.
+
+//Machines
+stu78_sys1 2269 ssh -p 2269 student@10.1.75.53 3269, 4269, 5269, 6269, 7269
+stu78_sys2 2270 ssh -p 2270 student@10.1.75.53 3270, 4270, 5270, 6270, 7270
+stu78_sys3 2271 ssh -p 2271 student@10.1.75.53 3271, 4271, 5271, 6271, 7271
+stu78_sys4 2272 ssh -p 2272 student@10.1.75.53 3272, 4272, 5272, 6272, 7272

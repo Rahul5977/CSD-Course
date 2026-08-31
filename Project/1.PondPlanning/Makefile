@@ -90,6 +90,7 @@ loadtest:  ## Locust: 50 users for 60 s against the running stack (records p95 i
 figures:  ## Regenerate the evidence figures in docs/figures from the sample map
 	$(UV) python scripts/make_figures.py
 	$(UV) python scripts/make_water_figure.py
+	$(UV) python scripts/make_algorithm_figures.py
 
 check: lint typecheck test  ## Everything CI runs
 

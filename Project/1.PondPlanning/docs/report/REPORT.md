@@ -2,7 +2,8 @@
 
 **Author:** Rahul Raj · **Course:** 7th semester, Assignment 1 · **Submission:** 5 September 2026
 **Repository:** https://github.com/Rahul5977/AI-BasedPondAnalysis
-**Phase 2 route:** `POST /api/v1/analyzeContour` — public URL via `make tunnel` (ngrok) during the demonstration; local `http://localhost:8000/api/v1/analyzeContour`.
+**Phase 2 route (deployed):** `POST http://10.1.75.53:4269/api/v1/analyzeContour` — running on the provided lab machine *stu78_sys1*, campus network. Interactive documentation: http://10.1.75.53:4269/docs · web app: http://10.1.75.53:4269/ .
+Also runnable anywhere: `make up && make seed` (full 11-service stack) or `make serve-single` (one process, no Docker); `make tunnel` adds a public ngrok URL for the demonstration.
 
 ---
 
@@ -120,7 +121,45 @@ relief and outlet elevation follow. A catchment reaching the map edge is flagged
 `catchment_truncated`. Uncertainty on the area is stated as max(15 %, one cell ring around
 the perimeter) — on a 38 ha catchment of 30 m cells that is ±26 %.
 
-### 4.4 Site selection (Phase 2 "where"; ADR 0014)
+### 4.4 The whole computation as a graph algorithm
+
+The pipeline's core is a single graph structure built once per upload and reused by every
+downstream engine. The figures below are generated from the real engine code on a small
+synthetic Y-valley (`make figures`), so they cannot drift from the implementation.
+
+![The analyzeContour pipeline; the highlighted stages are the graph algorithm](../figures/alg-pipeline.png)
+
+**Nodes and edges.** Every DEM cell is a node. D8 gives each node **at most one out-edge**
+— to the steepest-descending of its eight neighbours (panel b below). A graph in which every
+node has out-degree ≤ 1 is a *functional graph*; because the surface has been filled and
+given an ε-gradient it contains no cycles, so it is a **forest of in-trees rooted at the
+outlets** (edge cells where water leaves the map). Everything the API returns is a question
+about this forest:
+
+![DEM → D8 flow graph → accumulation and streams](../figures/alg-d8-graph.png)
+
+- **Flow accumulation = subtree size.** The number of cells draining through a node is the
+  size of the subtree rooted at it. Rather than recursing, the engine visits nodes in
+  descending elevation — on a filled + ε surface that order is a **topological order** of the
+  graph — and pushes each node's count onto its receiver: one exact O(n) sweep (panel c).
+- **Streams = a thresholded subgraph.** Channel cells are nodes whose subtree exceeds 5 ha
+  (a threshold in *area*, so it means the same at any grid resolution). Walking the stream
+  subgraph from sources to junctions yields links and Strahler order — order rises only
+  where two children of equal order meet, a property of the tree, not of geometry.
+- **Catchment = reverse breadth-first search.** The catchment of a pour point is the set of
+  nodes from which the outlet is reachable: a BFS over the *inverted* edges, exactly the
+  textbook traversal, shown as its wavefront below. Area, longest flow path (the deepest
+  BFS level × cell size, diagonals √2) and relief fall out of the same walk.
+
+![Catchment as a reverse BFS from the outlet; colour is the wavefront order](../figures/alg-catchment-bfs.png)
+
+**Complexity and measured cost.** Priority-Flood fill O(n log n); the elevation sort
+O(n log n); accumulation, stream extraction and each BFS O(n). The sample's 110 × 89 grid
+(9 790 nodes) completes the whole pipeline in ~2 s inside the request worker; the catchment
+BFS itself runs in about a millisecond. Nothing here needs numba or a GPU at village scale —
+a deliberate choice, because every line must be explainable live.
+
+### 4.5 Site selection (Phase 2 "where"; ADR 0014)
 
 Candidates are drainage-network cells not within three cells of the map edge, with slope
 ≤ 15 %. Each is scored by a weighted sum of four memberships in [0, 1]:
@@ -142,7 +181,7 @@ suppression at 200 m keeps the top-N distinct. The top site's catchment is delin
 returned with the ranking and every candidate's per-criterion scores, so the answer to "why
 here?" is in the response.
 
-### 4.5 Rainfall (FR5)
+### 4.6 Rainfall (FR5)
 
 Daily precipitation from Open-Meteo's ERA5-Land archive (1981–2025 for the sample's centroid),
 NASA POWER as fallback, both behind `Retry ∘ CircuitBreaker ∘ Cached` and a `FallbackChain`
@@ -152,7 +191,7 @@ plotting position** P = m/(n+1) (the design figure in Indian minor-irrigation pr
 June–September share, IMD rainy days (≥ 2.5 mm), maximum 1-day, monthly normals, and the
 25-year 1-day depth by a Gumbel EV1 fit (method of moments) on annual maxima.
 
-### 4.6 Runoff (FR6)
+### 4.7 Runoff (FR6)
 
 Land cover from ESA WorldCover 2021 (10 m), read as a window straight from the public COG;
 topsoil texture from ISRIC SoilGrids → hydrologic soil group (USDA rule of thumb; default C
@@ -168,7 +207,7 @@ daily series and report 75 % dependable annual runoff volumes:
 
 The spread between them is reported, not hidden (188 % on the sample's top site); SCS-CN is the design figure.
 
-### 4.7 Pond design (FR7; ADR 0016)
+### 4.8 Pond design (FR7; ADR 0016)
 
 Target storage = 75 % dependable runoff × 0.6 harvest efficiency, clamped to
 [2 000, 50 000] m³ (a village pond, not a reservoir; when the cap binds the response says so).
@@ -184,9 +223,28 @@ concentration, rational peak, broad-crested weir). A bill of quantities and a co
 decided by the worst input (assumed land cover or soil, cached rainfall, edge-limited
 catchment) complete the payload; the natural EAV curve of the site is reported alongside.
 
+### 4.9 Edge cases, and what the API says about them
+
+An analysis that silently produces a wrong-looking number is worse than one that refuses; the
+edge cases below are handled *and named in the response* so the caller knows what happened.
+
+| Edge case | Behaviour | Where it is proven |
+|---|---|---|
+| **A river already crosses the area** | Channel cells at or beyond the plateau's upper bound (1 000 ha default) are hard-excluded from siting — with no better cell available a soft score alone would still put the pond on the river. Any channel beyond the 10–150 ha ideal triggers the `existing_watercourse` warning naming the largest channel's size. On the sample the response says the ~416 ha watercourse is avoided and candidates sit on tributaries. | golden test `test_an_existing_river_is_excluded_from_siting_not_just_scored_down`; figure below |
+| Flat / featureless terrain | No drainage network forms → siting returns an empty candidate list, the route answers with the `no_site_found` critical warning rather than an arbitrary point | golden test `test_flat_terrain_yields_no_candidates…` |
+| Catchment cut by the map edge | The uploaded extent bounds the analysis, not a real divide: `catchment_truncated` warning; candidate sites keep a 3-cell margin from the edge so their catchments are not trivially cut | engine + API tests; visible on the sample |
+| Garbage / empty / non-XML upload | `422 unsupported_input` problem document, never a 500 | parser tests; e2e check |
+| Elevation decoy (`ID` field), missing elevation | Ordered elevation strategy with a whitelist; a file with only an `ID`-like numeric field raises `elevation_not_found` rather than guessing | parser tests on the sample's own decoy |
+| Click far from any channel | Snap searches 150 m for a cell draining ≥ 2 ha; nothing found → `422` validation problem naming the radius | `test_snap_moves_a_flank_click…` |
+| Depressions / closed basins in the TIN | Priority-Flood fills them (2 141 cells on the sample, max 8.6 m) and the fill depth is reported as a figure, not hidden | `p2-sink-fill-before-after.png` |
+| Provider outages (rainfall, soil, land cover) | Fallback chain → cache → stated defaults, each with a warning and a lowered confidence label; the demo runs fully offline | resilience tests with injected failures |
+| Geocoder unreachable | Village named from its coordinates with the `geocode_unavailable` info warning | seen live on the lab-VM deployment |
+
+![The existing-river edge case: river cells hard-excluded, candidates on tributaries](../figures/alg-river-exclusion.png)
+
 ## 5. Software design and quality
 
-- **Code quality:** `ruff` clean, `mypy --strict` on `domain/` and `engines/`, 203 tests,
+- **Code quality:** `ruff` clean, `mypy --strict` on `domain/` and `engines/`, 206 tests,
   layering enforced by an executable test; every engine module's docstring names the algorithm
   and its citation. Coverage: **engines 94.3 %, domain 97.6 %, overall 86.2 %**
   (`docs/figures/p7-coverage.jpg`).
@@ -217,6 +275,35 @@ not a network error — now handled.
 Scaling arithmetic and the distributed roadmap are in `docs/PLAN.md` Part 9; the bottleneck to
 national deployment is cadastral data and institutional trust, not compute.
 
+### 6.1 Deployment on the provided lab machines
+
+The provided machines (`student@10.1.75.53`, four systems) turn out to be unprivileged
+containers: no Docker daemon, no systemd, no root. This is exactly the situation the
+ports-and-adapters decision (ADR 0013) was made for — the same engines run behind in-memory
+persistence, an inline job runner and a local object store, so the whole system deploys as
+**one uvicorn process** serving both the API and the built SPA
+(`scripts/single_server.py`, `make serve-single`):
+
+- **URL:** http://10.1.75.53:4269 (host port 4269 → container port 4000 on *stu78_sys1*);
+  Swagger at `/docs`, the planner at `/app`.
+- **Install:** copy the tree, `uv sync --no-dev`, `~/pond/run.sh` (recorded-rainfall mode, so
+  no outbound dependency); restart is the same script.
+- **Verified:** the same 42-check end-to-end suite passes against the lab VM as against the
+  full Docker stack (`docs/figures/e2e-api-lab-vm.txt`), including a live Sentinel-2
+  suitability read from the lab network.
+- **Trade-off, stated:** raster tile layers need TiTiler and are absent in this mode; every
+  vector product (catchment, contours, streams, sites) is served by the API and renders
+  normally. The full 11-service stack remains the reference deployment (`make up`).
+
+The readiness probe originally reported this deployment as permanently degraded because it
+probed postgres and redis unconditionally; it now probes only the *configured* adapters — a
+real bug found by deploying, fixed with a test.
+
+Deploying the same codebase two ways — eleven services with bulkheads, backpressure and
+observability on Docker, and a single process on a bare student VM — is the practical
+scalability lesson of this project: the layering pays for itself when the environment
+changes, and the load numbers above say when the heavier shape is actually needed.
+
 ## 7. Validation and results
 
 | Check | Method | Result |
@@ -235,6 +322,7 @@ national deployment is cadastral data and institutional trust, not compute.
 | Design | Frustum hand calculation; optimiser feasibility; water balance on synthetic seasons | Exact; cheapest feasible design chosen; small pond fills every year, oversized pond never |
 | **Existing ponds** | OSM's two mapped tanks inside the extent, designed at their centroids | Local runoff is a tenth of their capacity (canal-fed tanks in the Durg command area); natural impoundment at +2 m within −40 % of the larger tank's capacity (`p3-existing-pond-comparison.md`) |
 | Load | Locust 50 users / 60 s | POST p95 33 ms, end-to-end p95 560 ms |
+| **End-to-end API smoke** | `make e2e` — 42 checks over HTTP: every real route in cookbook order plus the negative paths (viewer approve → 403, draft → approved → 409, missing village → 404, garbage upload → 422, the `existing_watercourse` warning) | **42/42 against the Docker stack and 42/42 against the lab-VM deployment** (`e2e-api-local-stack.txt`, `e2e-api-lab-vm.txt`) |
 
 Sample-map headline numbers (Khapri, Durg, Chhattisgarh, EPSG:32644, 830 ha): top site drains
 38.25 ha (±26 %); 75 % dependable rainfall 1 168 mm; CN 88 (HSG C); SCS-CN 99 k m³
@@ -262,12 +350,31 @@ distributed roadmap in `docs/PLAN.md` Part 9.
 
 ## 10. Use of AI tools
 
-an AI coding assistant was used throughout for drafting code, tests and documentation, for
-refactoring and for debugging, under the author's direction and review, as the assignment's
-LLM policy permits. Every design decision is recorded with its reasoning and rejected
-alternatives in `docs/adr/` (19 records) and the decision log in `docs/PROGRESS.md`; every
-algorithm is named and cited in its module docstring; the author can explain and justify each
-component live.
+An AI coding assistant (Claude Code) was used throughout, under the author's direction and
+review, as the assignment's LLM policy permits. Where it was used, concretely:
+
+- **Code drafting and refactoring** — first drafts of engines and tests, then refactoring
+  passes (extracting the workflow orchestrators, the ports-and-adapters split, tightening
+  the layering the architecture test enforces);
+- **Understanding the algorithm** — working through D8 as a functional graph, why a filled
+  + ε surface makes descending elevation a topological order, and why catchment delineation
+  is exactly a reverse BFS — the understanding §4.4 writes down;
+- **Figuring out edge cases and brainstorming** — enumerating what breaks (an existing
+  river in the area, flat maps, decoy elevation fields, truncated catchments, provider
+  outages) and designing the behaviour and warnings in §4.9;
+- **Learning how to scale the application** — the bulkhead/backpressure/outbox patterns in
+  §6, and the practical lesson of deploying the same codebase as eleven services and as a
+  single process on the lab VM (§6.1);
+- **Report writing** — drafting and editing this document and the figures script; every
+  number in it is produced by the code, not by the assistant;
+- **Debugging** — several defects were found by *running* rather than reading, and are
+  logged in `docs/PROGRESS.md` (e.g. the readiness probe reporting a Docker-less deployment
+  degraded, a saga step that failed half-way, the Otsu clamp on a two-valued image).
+
+Every design decision is recorded with its reasoning and rejected alternatives in
+`docs/adr/` (19 records) and the decision log in `docs/PROGRESS.md`; every algorithm is
+named and cited in its module docstring; the author can explain and justify each component
+live.
 
 ## Appendix A — Figures
 
@@ -294,6 +401,12 @@ component live.
 ![Offline: results served from cache with the API container stopped](../figures/p6-chaos-offline.jpg)
 
 ![Coverage report](../figures/p7-coverage.jpg)
+
+![The deployed lab-VM instance: Swagger UI at http://10.1.75.53:4269/docs](../figures/deploy-vm-swagger.jpg)
+
+![The landing page served from the lab VM](../figures/deploy-vm-landing.jpg)
+
+![The planner on the lab VM after analysing the sample: area statistics, DEM provenance, ranked sites](../figures/deploy-vm-workspace.jpg)
 
 ## References
 

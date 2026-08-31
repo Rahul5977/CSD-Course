@@ -8,11 +8,11 @@ the assistant reads this at the start of every session and updates it at the end
 
 ## Snapshot
 
-- **Last updated:** 2026-08-26
-- **Current phase:** P8 complete — awaiting the user's review at the G8 checkpoint; then demo-day steps only
+- **Last updated:** 2026-08-31
+- **Current phase:** Phase 2 submission readiness (session 17) — edge cases hardened, all APIs e2e-tested, **deployed on the lab VM with a working URL**, report updated with the graph-algorithm explainer and rendered to PDF
 - **Active gate:** G8 — closed 2026-08-27 pending the user's review. **G7 closed 2026-08-27.** **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
-- **Marks secured:** 99 / 100 targeted · the public URL (evidence row 36) is a demo-day step (`make tunnel`)
-- **Next action:** user runs the design-sync tooling to push `web/design/` into the AI design tool (optional iteration there); rehearse `docs/DEMO.md` 3× starting from the landing page; on demo day `make up && make seed && make tunnel`, paste the public URL into the report and the Phase 2 submission; run `make check` before every commit
+- **Marks secured:** 99 / 100 targeted · **the working URL now exists: http://10.1.75.53:4269 (lab VM stu78_sys1, campus network)** — evidence row 36; `make tunnel` remains the public-internet option for demo day
+- **Next action:** make the GitHub repo public (or add the professor) before submitting — it is currently **private** and the report links it; rehearse `docs/DEMO.md` 3×; on demo day `make up && make seed` (+ `make tunnel` if an off-campus URL is needed); keep the lab-VM server alive (`~/pond/run.sh` on lbsys1 restarts it)
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in the working agreement's autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -160,6 +160,11 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-08-31 | **Existing watercourse is a hard siting exclusion, not just a low score** — channel cells at/beyond the plateau's "too large" bound (1 000 ha) are excluded; any channel beyond the 150 ha ideal triggers the `existing_watercourse` warning naming the largest channel (416 ha on the sample) | The professor's named edge case; with no better cell available the soft plateau alone would still site the pond on the river. The warning makes the behaviour visible in the response | Score-only plateau (silent); excluding everything > 150 ha (kills legitimate decay-zone sites and changes the sample's shipped results) |
+| 2026-08-31 | **`/ready` probes only the configured adapters** (persistence, job runner from settings) | With memory/inline adapters there is no postgres/redis; probing them reported the healthy lab-VM deployment as degraded forever — a real bug found by deploying | Unconditional probes |
+| 2026-08-31 | **Lab-VM deployment = one uvicorn process** (`scripts/single_server.py`: API + built SPA, memory/inline/local adapters, recorded rainfall) on lbsys1 container port 4000 → **http://10.1.75.53:4269** | The provided machines are unprivileged containers: no dockerd, no systemd, no root, broken IPv6, no rsync. The ADR 0013 ports pay off: same engines, zero code change. Raster tiles (TiTiler) absent in this mode — vector products all served by the API; stated in the report | Rootless Docker (needs uidmap + sudo); asking for sudo credentials; ngrok-only URL (not on the provided machines) |
+| 2026-08-31 | **`# syntax=docker/dockerfile:1` pins removed** from both Dockerfiles | The pin forces a registry fetch of the frontend image on every build; the campus network intermittently resets Docker Hub connections, so `make up` failed on cached builds. Builtin BuildKit in Docker ≥ 23 covers everything used | Keeping the pin and retrying (fails again on demo day) |
+| 2026-08-31 | **`make e2e` — a 42-check HTTP smoke suite** (`scripts/e2e_smoke.py`) run against any base URL; passes 42/42 on the compose stack and 42/42 on the lab VM | pytest exercises the code in-process; the graded thing is a *deployed* URL. The suite walks the cookbook plus the negative paths (403/404/409/422, the watercourse warning) exactly as an evaluator would | Trusting pytest + manual curl |
 | 2026-08-27 | **UI primitives extracted into a package (`web/ds`, `pond-planner-ui`)** so the AI design tool builds with the real compiled components | The design-sync converter binds a compiled `dist/` + `.d.ts`; a hand-authored HTML bundle would give the AI design tool the look but not the parts. The app imports the same source, so there is one implementation | Lightweight HTML-only bundle (no component contract) |
 | 2026-08-27 | **Two routes, no router library** (`/` landing, `/app` workspace, resolved in `main.tsx`) | nginx `try_files` already serves both; a router is one more dependency to defend for two static paths | react-router (unneeded surface) |
 | 2026-08-27 | **Design system mirrored into the app, not imported** (`web/design/*.css` copied to `web/src/`) | the AI design tool gets a self-contained bundle; the app has no build-time coupling; drift is caught by eye in the parity screenshots | A shared package (build complexity for one consumer) |
@@ -249,6 +254,25 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-08-31 (session 17)
+
+**Phase 2 submission readiness: edge cases · e2e · lab-VM deployment · report.** The venv
+had broken shebangs from the project folder move (fixed: `rm -rf .venv && make install`).
+Professor's edge case built: existing watercourses hard-excluded from siting with the
+`existing_watercourse` warning (fires on the sample's 416 ha river), plus flat-terrain and
+river golden tests — 205 tests green. `make e2e` added: 42 HTTP checks incl. negative paths —
+**42/42 on the compose stack, 42/42 on the lab VM**. Deployed on the provided lab machine
+(no Docker there — unprivileged containers): `scripts/single_server.py` one-process mode →
+**http://10.1.75.53:4269** (port map: host X269 → container X000; 3269 occupied by the old
+Assignment-5 app, left untouched). Defects found by deploying: `/ready` probed unconfigured
+services; the SPA fallback missed Starlette's 404-as-exception; `pkill -f` matching its own
+ssh command line; dockerfile syntax pins failing on campus-network registry resets. Report:
+new §4.4 (the computation as a graph algorithm, 4 generated explainer figures,
+`make figures`), §4.9 edge-case table, §6.1 lab-VM deployment, e2e validation row, expanded
+AI-usage section; steel-blue colour grading; PDF re-rendered (3.4 MB). **Next:** make the
+GitHub repo public (or invite the professor) — the report links it and it is private; keep
+the VM server alive.
 
 ### 2026-08-27 (session 16)
 

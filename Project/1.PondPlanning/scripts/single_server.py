@@ -19,6 +19,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException
 from starlette.requests import Request
 from starlette.responses import Response
 
@@ -31,8 +32,17 @@ class SPAStaticFiles(StaticFiles):
     """Serve the bundle; unknown paths fall back to index.html (client routing)."""
 
     async def get_response(self, path: str, scope) -> Response:  # type: ignore[no-untyped-def]
-        """Return the file, or index.html for extension-less SPA paths."""
-        response = await super().get_response(path, scope)
+        """Return the file, or index.html for extension-less SPA paths.
+
+        Starlette raises ``HTTPException(404)`` for a missing file rather than
+        returning a 404 response, so the fallback must catch, not inspect.
+        """
+        try:
+            response = await super().get_response(path, scope)
+        except HTTPException as exc:
+            if exc.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
+                return await super().get_response("index.html", scope)
+            raise
         if response.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
             response = await super().get_response("index.html", scope)
         return response

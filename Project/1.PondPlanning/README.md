@@ -54,7 +54,7 @@ and press *Design a pond at the outlet*.
 | `docker compose -f infra/docker-compose.yml ps` | 11 services, `healthy` where a healthcheck exists |
 | http://localhost:8000/docs | Swagger UI, 40+ operations |
 | http://localhost:3001 | Grafana, dashboard *Pond Planner* (anonymous viewer) |
-| `make check` (dev install) | ruff, mypy `--strict`, 202 tests (+1 skipped without the sample), no Docker needed |
+| `make check` (dev install) | ruff, mypy `--strict`, 205 tests (+1 skipped without the sample), no Docker needed |
 
 Demo users (`POND_USERS` in `.env`): `viewer/viewer-demo`, `planner/planner-demo`,
 `officer/officer-demo`. Only a planner can save a recommendation; only an officer can approve.
@@ -92,6 +92,9 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | First `make up` on a fresh volume: `alembic` says *connection refused* | Postgres's initdb restarts the server once; the healthcheck now probes TCP and `make up` retries the migration | Run `make up` again if it still fails on a slow disk |
 | `beat` restarts with *Permission denied: 'celerybeat-schedule'* | The image runs unprivileged; the schedule file is written to `/tmp` | Pull and `make up` (rebuilds the compose command) |
 | An old `worker` container lingers after upgrading | The single worker was split into two bulkheads | `docker compose -f infra/docker-compose.yml up -d --remove-orphans` |
+| `make up` build fails with *failed to fetch anonymous token … connection reset* | The network resets Docker Hub connections (seen on the campus network) | The `# syntax=` pins were removed so cached builds work; retry `make up` — the resets are intermittent |
+| `uv run mypy` (or pytest) fails with *Failed to spawn* / *bad interpreter* after moving the project folder | The venv's script shebangs still point at the old path | `rm -rf .venv && make install` |
+| `make e2e` fails only at `/ready` on a no-Docker deployment | Old images probed postgres/redis unconditionally | Fixed: `/ready` now probes only the configured adapters; pull and restart |
 | `make check` fails on a fresh clone with a network error | Nothing should — tests use recorded fixtures | Check `POND_RAINFALL_SOURCE` is unset in your shell (tests force `recorded`) |
 
 ### Public URL for the Phase 2 route
