@@ -30,12 +30,28 @@ def health() -> HealthResponse:
 
 @router.get("/ready", response_model=ReadinessResponse, summary="Readiness probe")
 def ready(response: Response) -> ReadinessResponse:
-    """Report whether every backing service is reachable.
+    """Report whether every *configured* backing service is reachable.
 
-    Returns ``503`` when degraded so that a load balancer can act on the status
-    code without parsing the body.
+    The adapters are chosen by settings (ADR 0013): with in-memory persistence
+    there is no postgres to probe, and with the inline job runner no redis —
+    probing them anyway would report a healthy single-process deployment as
+    degraded forever. Returns ``503`` when degraded so that a load balancer
+    can act on the status code without parsing the body.
     """
-    dependencies = [_check_postgres(), _check_redis(), _check_object_store()]
+    settings = get_settings()
+    dependencies = [_check_object_store()]
+    if settings.persistence == "postgres":
+        dependencies.insert(0, _check_postgres())
+    else:
+        dependencies.insert(
+            0, DependencyStatus(name="persistence", reachable=True, detail="in-memory adapter")
+        )
+    if settings.job_runner == "celery":
+        dependencies.insert(1, _check_redis())
+    else:
+        dependencies.insert(
+            1, DependencyStatus(name="job_runner", reachable=True, detail="inline adapter")
+        )
     all_up = all(d.reachable for d in dependencies)
     if not all_up:
         response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
