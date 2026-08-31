@@ -93,6 +93,12 @@ figures:  ## Regenerate the evidence figures in docs/figures from the sample map
 
 check: lint typecheck test  ## Everything CI runs
 
+e2e:  ## Smoke-test every real route against a running deployment (BASE=http://host:port, default :8000)
+	$(UV) python scripts/e2e_smoke.py $${BASE:-http://localhost:8000}
+
+serve-single:  ## API + built SPA from one uvicorn process (for hosts without Docker; run `make web-build` first)
+	POND_PERSISTENCE=memory POND_JOB_RUNNER=inline POND_OBJECT_STORE=local POND_RAINFALL_SOURCE=recorded $(UV) uvicorn scripts.single_server:app --host 0.0.0.0 --port $${PORT:-8080}
+
 api-dev:  ## Run the API locally without Docker (in-memory persistence, inline jobs, local store)
 	POND_PERSISTENCE=memory POND_JOB_RUNNER=inline POND_OBJECT_STORE=local $(UV) uvicorn app.main:app --reload --port 8000
 
