@@ -23,10 +23,16 @@ hectares is a river — the structure becomes a dam with a spillway passing
 almost everything, which is not a village pond. The bounds are parameters.
 
 Hard constraints first (slope ≤ 15 %, on the drainage network, not within
-a margin of the grid edge where the catchment would be truncated), then the
-score, then **non-maximum suppression** so the top-N are distinct places
-rather than ten adjacent cells on the same reach. Weights are declared,
-returned in the result, and revisited with AHP in P4.
+a margin of the grid edge where the catchment would be truncated, and not
+on an **existing watercourse** — any channel cell whose upstream area is at
+or beyond the plateau's upper "too large" bound is a river, and is excluded
+outright rather than merely scored down: with no better cell available the
+soft plateau alone would still put the pond on the river), then the score,
+then **non-maximum suppression** so the top-N are distinct places rather
+than ten adjacent cells on the same reach. Weights are declared, returned
+in the result, and revisited with AHP in P4. The count of excluded river
+cells is returned so the API can tell the caller a watercourse crosses the
+area and why no site sits on it.
 """
 
 from __future__ import annotations
@@ -80,6 +86,8 @@ class SitingResult:
     edge_margin_cells: int
     considered: int
     area_bounds_ha: tuple[float, float, float, float] = DEFAULT_AREA_BOUNDS_HA
+    river_cells_excluded: int = 0
+    max_upstream_area_ha: float = 0.0
 
 
 def impoundment(
@@ -133,7 +141,14 @@ def rank_sites(
     """Score every eligible drainage cell and return the top-N distinct sites."""
     w = dict(DEFAULT_WEIGHTS if weights is None else weights)
     slope_pct = np.tan(np.radians(slope_deg)) * 100.0
-    eligible = stream & (slope_pct <= max_slope_pct)
+    # An existing watercourse is a hard exclusion, not a low score: any channel
+    # cell at or beyond the plateau's "too large" bound is a river reach, and a
+    # bund there is a dam that must pass river floods — not a village pond.
+    area_ha_all = model.upstream_area_m2() / 1e4
+    river = stream & (area_ha_all >= area_bounds_ha[3])
+    river_cells = int(np.count_nonzero(river))
+    max_upstream_ha = float(area_ha_all[stream].max()) if bool(stream.any()) else 0.0
+    eligible = stream & (slope_pct <= max_slope_pct) & ~river
     m = edge_margin_cells
     eligible[:m, :] = eligible[-m:, :] = eligible[:, :m] = eligible[:, -m:] = False
     if inside is not None:
@@ -141,7 +156,16 @@ def rank_sites(
     rr, cc = np.nonzero(eligible)
     if rr.size == 0:
         return SitingResult(
-            [], w, rise_m, max_slope_pct, suppression_radius_m, m, 0, area_bounds_ha
+            [],
+            w,
+            rise_m,
+            max_slope_pct,
+            suppression_radius_m,
+            m,
+            0,
+            area_bounds_ha,
+            river_cells,
+            max_upstream_ha,
         )
 
     area = model.accumulation[rr, cc].astype(np.float64) * model.filled.grid.cell_area
@@ -198,6 +222,8 @@ def rank_sites(
         edge_margin_cells=m,
         considered=int(rr.size),
         area_bounds_ha=area_bounds_ha,
+        river_cells_excluded=river_cells,
+        max_upstream_area_ha=max_upstream_ha,
     )
 
 

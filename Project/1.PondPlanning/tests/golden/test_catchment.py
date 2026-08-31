@@ -117,3 +117,41 @@ def test_siting_prefers_the_valley_floor_and_separates_candidates() -> None:
     volume, area = impoundment(model, 30, 30, 2.0)
     assert volume > 0 and area > 0
     assert sum(result.weights.values()) == pytest.approx(1.0)
+
+
+def test_an_existing_river_is_excluded_from_siting_not_just_scored_down() -> None:
+    """Channel cells at or beyond the plateau's upper bound are rivers: hard-excluded.
+
+    The lower trunk of the valley accumulates more than 5 ha (500 cells at
+    10 m); with the "too large" bound set there, no candidate may sit on it
+    even though those cells are flat, wet and convergent — the best score in
+    the map. The exclusion count and the largest channel size are reported
+    so the API can say a watercourse crosses the area.
+    """
+    dem = v_valley()
+    model = build_flow_model(fill_depressions(dem).filled)
+    slope = slope_degrees(dem).data
+    twi = topographic_wetness_index(dem, model.accumulation).data
+    stream = stream_mask(model, 50 * GRID.cell_area)
+    bounds = (0.1, 0.5, 2.0, 5.0)  # hectares; 5 ha = 500 cells on this grid
+    result = rank_sites(
+        model, slope, twi, stream, top_n=3, suppression_radius_m=100.0, area_bounds_ha=bounds
+    )
+    assert result.river_cells_excluded > 0, "the lower trunk qualifies as a river"
+    assert result.max_upstream_area_ha >= 5.0
+    assert result.candidates, "tributary reaches upstream remain eligible"
+    for c in result.candidates:
+        assert c.upstream_area_m2 < 5.0 * 1e4, "no candidate sits on the river itself"
+
+
+def test_flat_terrain_yields_no_candidates_rather_than_arbitrary_ones() -> None:
+    """A featureless plane has no drainage network: siting must return empty, not guess."""
+    rows, cols = GRID.shape
+    dem = Raster(GRID, np.full((rows, cols), 100.0))
+    model = build_flow_model(fill_depressions(dem).filled)
+    slope = slope_degrees(dem).data
+    twi = topographic_wetness_index(dem, model.accumulation).data
+    stream = stream_mask(model, 500 * GRID.cell_area)
+    result = rank_sites(model, slope, twi, stream, top_n=3)
+    assert result.candidates == []
+    assert result.considered == 0

@@ -255,6 +255,16 @@ class SitingMethod(BaseModel):
         description="[too small, ideal from, ideal to, too large] — the upstream-area plateau"
     )
     candidates_considered: int
+    river_cells_excluded: int = Field(
+        0,
+        description="Channel cells whose upstream area is at or beyond the plateau's upper "
+        "bound — an existing river — excluded from siting outright",
+    )
+    max_upstream_area_ha: float = Field(
+        0.0,
+        description="Largest upstream area draining through any channel cell, in hectares — "
+        "the size of the biggest watercourse in the map",
+    )
     description: str
 
 

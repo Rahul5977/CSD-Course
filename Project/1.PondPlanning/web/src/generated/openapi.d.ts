@@ -363,11 +363,15 @@ export interface paths {
         };
         /**
          * List recommendations
-         * @description Return saved pond recommendations.
+         * @description Saved pond recommendations, newest first.
          */
         get: operations["list_recommendations_api_v1_recommendations_get"];
         put?: never;
-        post?: never;
+        /**
+         * Save a design
+         * @description Turn a succeeded pond-design job into a draft recommendation (planner role).
+         */
+        post: operations["create_recommendation_api_v1_recommendations_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -405,13 +409,33 @@ export interface paths {
         put?: never;
         /**
          * Change Status
-         * @description Approve or reject a recommendation.
+         * @description Move a recommendation through its lifecycle.
          *
-         *     Role-gated in P6: a viewer receives ``403``. Every transition writes an
-         *     ``audit_log`` row, and that table is append-only in the database — the rules
-         *     are already in migration 0001, so the trail cannot be rewritten later.
+         *     The state machine rejects illegal moves (``409 illegal_transition``); the
+         *     role table rejects under-privileged callers (``403``); every accepted move
+         *     writes an outbox event that becomes an append-only audit row.
          */
         post: operations["change_status_api_v1_recommendations__recommendation_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/recommendations/{recommendation_id}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Audit trail
+         * @description Audit rows (drained from the outbox) plus any events still pending.
+         */
+        get: operations["audit_trail_api_v1_recommendations__recommendation_id__audit_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -539,6 +563,66 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Log in
+         * @description RS256 access (15 min) + refresh (7 d) tokens for a configured user.
+         */
+        post: operations["token_api_v1_auth_token_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh tokens
+         * @description A valid refresh token yields a new pair.
+         */
+        post: operations["refresh_api_v1_auth_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Who am I
+         * @description The caller's username and role (viewer when anonymous).
+         */
+        get: operations["me_api_v1_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/analysis/catchment": {
         parameters: {
             query?: never;
@@ -552,8 +636,8 @@ export interface paths {
          * Analyse Catchment
          * @description FR4: delineate the upstream contributing area of a clicked point.
          *
-         *     Real since P2. Snap → D8 upstream BFS → polygon, in a worker; the pipeline
-         *     is :mod:`app.engines.workflows.catchment`.
+         *     Real since P2. Snap → D8 upstream BFS → polygon, in a worker on the
+         *     ``interactive`` queue; the pipeline is :mod:`app.engines.workflows.catchment`.
          *
          *     Result shape: :class:`~app.schemas.analysis.CatchmentResult`.
          */
@@ -626,8 +710,8 @@ export interface paths {
          * Analyse Suitability
          * @description FR3: land constraints, then rank candidate pond sites by AHP-weighted criteria.
          *
-         *     Real since P4. Also produces the available-land parcels, the NDWI water mask
-         *     and the suitability heat-map for the village.
+         *     Real since P4, on the ``heavy`` queue. Also produces the available-land
+         *     parcels, the NDWI water mask and the suitability heat-map for the village.
          *
          *     Result shape: :class:`~app.schemas.analysis.SuitabilityResult`.
          */
@@ -749,19 +833,39 @@ export interface paths {
         put?: never;
         /**
          * Analyse an uploaded contour map (KML/KMZ)
-         * @description Derive terrain — and, from P2, a pond location and its catchment — from an upload.
+         * @description Derive terrain, a pond location and its catchment from an uploaded contour map.
          *
          *     Everything in the result is derived from the upload: the UTM zone from the
          *     file's own centroid, the grid resolution from its own mean contour spacing,
          *     the source accuracy from its own metadata. No coordinate, extent or CRS
          *     specific to any one map exists in this codebase.
          *
-         *     Validate → store the upload → create the job → dispatch → ``202``. The
-         *     pipeline itself runs in :mod:`app.engines.workflows.contour_analysis`.
+         *     Validate → store the upload → create the job → dispatch (``heavy`` queue)
+         *     → ``202``. The pipeline is :mod:`app.engines.workflows.contour_analysis`.
          *
          *     Result shape: :class:`~app.schemas.analysis.ContourAnalysisResult`.
          */
         post: operations["analyze_contour_api_v1_analyzeContour_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/exports/{export_id}.{export_format}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Download an export
+         * @description Serve a generated export from the object store.
+         */
+        get: operations["download_export_api_v1_exports__export_id___export_format__get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1646,6 +1750,18 @@ export interface components {
             dependencies: components["schemas"]["DependencyStatus"][];
         };
         /**
+         * RecommendationCreate
+         * @description Save a finished pond design as a draft recommendation.
+         */
+        RecommendationCreate: {
+            /**
+             * Design Job Id
+             * Format: uuid
+             * @description A succeeded pond-design job
+             */
+            design_job_id: string;
+        };
+        /**
          * RecommendationOut
          * @description A saved pond recommendation, in its current lifecycle state.
          */
@@ -1693,6 +1809,14 @@ export interface components {
              * Format: date-time
              */
             updated_at: string;
+        };
+        /**
+         * RefreshRequest
+         * @description Exchange a refresh token for a new pair.
+         */
+        RefreshRequest: {
+            /** Refresh Token */
+            refresh_token: string;
         };
         /**
          * ResultWarning
@@ -1834,6 +1958,18 @@ export interface components {
             upstream_area_bounds_ha: number[];
             /** Candidates Considered */
             candidates_considered: number;
+            /**
+             * River Cells Excluded
+             * @description Channel cells whose upstream area is at or beyond the plateau's upper bound — an existing river — excluded from siting outright
+             * @default 0
+             */
+            river_cells_excluded: number;
+            /**
+             * Max Upstream Area Ha
+             * @description Largest upstream area draining through any channel cell, in hectares — the size of the biggest watercourse in the map
+             * @default 0
+             */
+            max_upstream_area_ha: number;
             /** Description */
             description: string;
         };
@@ -2007,6 +2143,32 @@ export interface components {
             catchment?: null;
             /** Warnings */
             warnings?: components["schemas"]["ResultWarning"][];
+        };
+        /**
+         * TokenRequest
+         * @description Username/password grant.
+         */
+        TokenRequest: {
+            /** Username */
+            username: string;
+            /** Password */
+            password: string;
+        };
+        /**
+         * TokenResponse
+         * @description Bearer tokens.
+         */
+        TokenResponse: {
+            /** Access Token */
+            access_token: string;
+            /** Refresh Token */
+            refresh_token: string;
+            /** Token Type */
+            token_type: string;
+            /** Expires In */
+            expires_in: number;
+            /** Role */
+            role: string;
         };
         /**
          * Unit
@@ -2698,6 +2860,41 @@ export interface operations {
             };
         };
     };
+    create_recommendation_api_v1_recommendations_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecommendationCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RecommendationOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_recommendation_api_v1_recommendations__recommendation_id__get: {
         parameters: {
             query?: never;
@@ -2732,7 +2929,9 @@ export interface operations {
     change_status_api_v1_recommendations__recommendation_id__status_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                authorization?: string | null;
+            };
             path: {
                 recommendation_id: string;
             };
@@ -2764,10 +2963,43 @@ export interface operations {
             };
         };
     };
+    audit_trail_api_v1_recommendations__recommendation_id__audit_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                recommendation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_export_api_v1_recommendations__recommendation_id__exports_post: {
         parameters: {
             query?: {
-                export_format?: string;
+                export_format?: "pdf" | "geojson" | "csv";
             };
             header?: never;
             path: {
@@ -2936,10 +3168,111 @@ export interface operations {
             };
         };
     };
-    analyse_catchment_api_v1_analysis_catchment_post: {
+    token_api_v1_auth_token_post: {
         parameters: {
             query?: never;
             header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    refresh_api_v1_auth_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_api_v1_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyse_catchment_api_v1_analysis_catchment_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -2972,7 +3305,9 @@ export interface operations {
     analyse_runoff_api_v1_analysis_runoff_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3005,7 +3340,9 @@ export interface operations {
     analyse_pond_design_api_v1_analysis_pond_design_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3038,7 +3375,9 @@ export interface operations {
     analyse_suitability_api_v1_analysis_suitability_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3226,7 +3565,9 @@ export interface operations {
     analyze_contour_api_v1_analyzeContour_post: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
             path?: never;
             cookie?: never;
         };
@@ -3243,6 +3584,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    download_export_api_v1_exports__export_id___export_format__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+                export_format: "pdf" | "geojson" | "csv";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

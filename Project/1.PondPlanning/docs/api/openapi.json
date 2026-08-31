@@ -4195,6 +4195,18 @@
             "type": "integer",
             "title": "Candidates Considered"
           },
+          "river_cells_excluded": {
+            "type": "integer",
+            "title": "River Cells Excluded",
+            "description": "Channel cells whose upstream area is at or beyond the plateau's upper bound \u2014 an existing river \u2014 excluded from siting outright",
+            "default": 0
+          },
+          "max_upstream_area_ha": {
+            "type": "number",
+            "title": "Max Upstream Area Ha",
+            "description": "Largest upstream area draining through any channel cell, in hectares \u2014 the size of the biggest watercourse in the map",
+            "default": 0.0
+          },
           "description": {
             "type": "string",
             "title": "Description"
