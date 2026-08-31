@@ -94,7 +94,7 @@ A gate is closed until **every** box has evidence a third party can see. Do not 
 - [x] Coverage: engines 94.3 %, domain 97.6 %, overall 86.2 % — `docs/figures/p7-coverage.jpg`
 - [x] `docs/report/REPORT.md` — §7 validation table with the measured numbers, 20 references
 - [x] `docs/DEMO.md` script, timed at 7 min; backup recording `docs/media/chaos-test.gif` + the figure set; rehearsals are the user's (demo-day)
-- [x] Evidence register: every row ticked except 20 (deliberately not produced, ADR 0017) and 36 (public URL — `make tunnel` on demo day)
+- [x] Evidence register: every row ticked except 20 (deliberately not produced, ADR 0017); row 36 closed 2026-08-31 with the lab-VM URL
 
 ### G8 — Landing page & UI/UX
 - [x] Landing page at `/` on the Docker stack (nginx 200; `p8-landing.jpg`); every claim maps to a shipped feature; links to `/app`, `/docs`, the report, ADRs, licences, the repo
@@ -231,7 +231,7 @@ Added for the **Phase 2 submission**, which is graded separately (§4):
 | # | Artifact | Defends | Phase | ✓ |
 |---|---|---|---|---|
 | 35 | `POST /analyzeContour` working on `data/samples/contours_1m.kml` | Working endpoint + catchment estimation | P2 | ☑ `make seed`; browser + API |
-| 36 | Public URL for that route, reachable from another machine | Phase 2 report requirement | P2 | ◐ `make tunnel` (ngrok) — started on demo day, URL pasted into the report |
+| 36 | Public URL for that route, reachable from another machine | Phase 2 report requirement | P2 | ☑ **http://10.1.75.53:4269/api/v1/analyzeContour** — deployed on lab VM stu78_sys1 (campus network), 42/42 e2e checks; `make tunnel` remains the off-campus option |
 | 37 | A second contour KML (elevation in Z or `ExtendedData`, not `<name>`) parsing through the same code path | "Extensibility to generalized contour maps" | P2 | ☑ `tests/test_contour_kml.py` (Z, `ExtendedData`, KMZ, `<Folder>` root, ID decoy rejected) |
 | 39 | Design brief + design-system bundle pushed to the AI design tool | Frontend 2 · UX 1 | P8 | ☑ `pond-planner-ui` (19 components, authored previews) synced to the AI design tool via the design-sync tooling |
 | 40 | Landing-page prototype and coded page, screenshot pair | Frontend 2 | P8 | ☑ `p8-proto-landing.jpg` / `p8-landing.jpg` |
