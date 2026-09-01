@@ -3,7 +3,7 @@ PASS  GET /ready
 PASS  GET /metrics
 PASS  GET /meta/implementation-status  — fixtures: []
 PASS  GET /meta/errors
-PASS  POST /analyzeContour -> 202  — job ed899cd1
+PASS  POST /analyzeContour -> 202  — job c8895a35
 PASS  job succeeds  — stage done
 PASS  GET /analysis/results/contour/{job}  — village Khapri, catchment 38.25 ha (±26.3529 %)
 PASS  existing watercourse edge case is reported  — warnings: ['interpolated_precision', 'existing_watercourse', 'catchment_truncated']
@@ -31,7 +31,7 @@ PASS  POST /analysis/suitability -> 202
 PASS  GET /analysis/results/suitability/{job}
 PASS  GET /villages/{id}/available-land
 PASS  POST /auth/token (3 roles)
-PASS  POST /recommendations (planner)  — rec be353779
+PASS  POST /recommendations (planner)  — rec 464c5768
 PASS  draft -> approved is 409 illegal_transition  — illegal_transition
 PASS  planner submits
 PASS  viewer approve -> 403  — forbidden

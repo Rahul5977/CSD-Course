@@ -12,7 +12,7 @@ the assistant reads this at the start of every session and updates it at the end
 - **Current phase:** Phase 2 submission readiness (session 17) — edge cases hardened, all APIs e2e-tested, **deployed on the lab VM with a working URL**, report updated with the graph-algorithm explainer and rendered to PDF
 - **Active gate:** G8 — closed 2026-08-27 pending the user's review. **G7 closed 2026-08-27.** **G6 closed 2026-08-27. G1–G5 closed 2026-08-26. G0 closed 2026-08-18.**
 - **Marks secured:** 99 / 100 targeted · **the working URL now exists: http://10.1.75.53:4269 (lab VM stu78_sys1, campus network)** — evidence row 36; `make tunnel` remains the public-internet option for demo day
-- **Next action:** make the GitHub repo public (or add the professor) before submitting — it is currently **private** and the report links it; rehearse `docs/DEMO.md` 3×; on demo day `make up && make seed` (+ `make tunnel` if an off-campus URL is needed); keep the lab-VM server alive (`~/pond/run.sh` on lbsys1 restarts it)
+- **Next action:** ~~make the repo public~~ **done 2026-09-01 — repo is public and submission-ready**; rehearse `docs/DEMO.md` 3×; on demo day `make up && make seed` (+ `make tunnel` if an off-campus URL is needed); before the demo, check the lab-VM server is alive (`curl http://10.1.75.53:4269/health`; restart over ssh with `~/pond/run.sh` on lbsys1)
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in the working agreement's autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
