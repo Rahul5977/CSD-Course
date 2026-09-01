@@ -34,7 +34,7 @@
           "health"
         ],
         "summary": "Readiness probe",
-        "description": "Report whether every backing service is reachable.\n\nReturns ``503`` when degraded so that a load balancer can act on the status\ncode without parsing the body.",
+        "description": "Report whether every *configured* backing service is reachable.\n\nThe adapters are chosen by settings (ADR 0013): with in-memory persistence\nthere is no postgres to probe, and with the inline job runner no redis \u2014\nprobing them anyway would report a healthy single-process deployment as\ndegraded forever. Returns ``503`` when degraded so that a load balancer\ncan act on the status code without parsing the body.",
         "operationId": "ready_ready_get",
         "responses": {
           "200": {
@@ -4198,8 +4198,19 @@
           "river_cells_excluded": {
             "type": "integer",
             "title": "River Cells Excluded",
-            "description": "Channel cells whose upstream area is at or beyond the plateau's upper bound \u2014 an existing river \u2014 excluded from siting outright",
+            "description": "Drainage cells excluded as an existing river: channel cells at or beyond the plateau's upper bound, plus every cell inside the flood-belt buffer around channels beyond the ideal band",
             "default": 0
+          },
+          "river_buffer": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuantityOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Flood-belt setback: no candidate within this distance of a channel whose upstream area exceeds the plateau's ideal band \u2014 a bund there would face the large channel's spates"
           },
           "max_upstream_area_ha": {
             "type": "number",

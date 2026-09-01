@@ -97,6 +97,8 @@ class Settings(BaseSettings):
     # Site selection: nominal water-level rise for impoundment scoring, and how many sites.
     siting_rise_m: float = Field(default=2.0, gt=0)
     siting_top_n: int = Field(default=5, ge=1, le=25)
+    # No candidate within this distance of a channel beyond the ideal band: its flood belt.
+    siting_river_buffer_m: float = Field(default=200.0, ge=0)
     # Reverse-geocode the AOI centroid to name the village. Off in CI.
     geocode_enabled: bool = True
     # Nominatim timeout. The lookup runs inside the analysis job, so on a slow

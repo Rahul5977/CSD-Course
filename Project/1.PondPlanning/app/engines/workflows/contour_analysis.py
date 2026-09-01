@@ -81,6 +81,7 @@ class WorkflowContext:
     snap_min_upstream_area_m2: float = 20_000.0
     siting_rise_m: float = 2.0
     siting_top_n: int = 5
+    siting_river_buffer_m: float = 200.0
     rainfall: Any = None  # FallbackChain; typed loosely to keep this module free of providers' HTTP
 
 
@@ -189,6 +190,7 @@ def _run(
         streams,
         top_n=ctx.siting_top_n,
         rise_m=ctx.siting_rise_m,
+        river_buffer_m=ctx.siting_river_buffer_m,
     )
 
     # ---- persistence as a saga (P6) ------------------------------------
@@ -379,8 +381,8 @@ def _run(
         )
     if siting.max_upstream_area_ha >= siting.area_bounds_ha[2] or siting.river_cells_excluded:
         excluded = (
-            f" {siting.river_cells_excluded} channel cells beyond "
-            f"{siting.area_bounds_ha[3]:g} ha were excluded from siting outright."
+            f" {siting.river_cells_excluded} drainage cells on the channel or inside its "
+            f"{siting.river_buffer_m:g} m flood belt were excluded from siting outright."
             if siting.river_cells_excluded
             else ""
         )
@@ -391,7 +393,8 @@ def _run(
                     f"An existing watercourse crosses this area (largest channel drains "
                     f"{siting.max_upstream_area_ha:,.0f} ha, beyond the "
                     f"{siting.area_bounds_ha[1]:g}-{siting.area_bounds_ha[2]:g} ha ideal for a "
-                    f"village pond). Candidate sites avoid the river itself — impounding it "
+                    f"village pond). Candidate sites avoid the river and keep "
+                    f"{siting.river_buffer_m:g} m clear of its flood belt — impounding it "
                     f"would need a dam with a flood-rated spillway — and sit on its "
                     f"tributaries instead.{excluded}"
                 ),
@@ -502,6 +505,14 @@ def _run(
         candidates_considered=siting.considered,
         river_cells_excluded=siting.river_cells_excluded,
         max_upstream_area_ha=siting.max_upstream_area_ha,
+        river_buffer=QuantityOut.from_domain(
+            Quantity(
+                siting.river_buffer_m,
+                Unit.METRE,
+                None,
+                "flood-belt setback from channels beyond the ideal band",
+            )
+        ),
         description=(
             "Weighted sum over drainage-network cells of an upstream-area plateau (1 between "
             f"{siting.area_bounds_ha[1]:g} and {siting.area_bounds_ha[2]:g} ha, 0 at "

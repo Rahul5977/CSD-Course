@@ -27,7 +27,9 @@ a margin of the grid edge where the catchment would be truncated, and not
 on an **existing watercourse** — any channel cell whose upstream area is at
 or beyond the plateau's upper "too large" bound is a river, and is excluded
 outright rather than merely scored down: with no better cell available the
-soft plateau alone would still put the pond on the river), then the score,
+soft plateau alone would still put the pond on the river — and nothing
+within ``river_buffer_m`` of a channel beyond the ideal band, because a bund
+in the flood belt of a large channel is overtopped by its spates), the score,
 then **non-maximum suppression** so the top-N are distinct places rather
 than ten adjacent cells on the same reach. Weights are declared, returned
 in the result, and revisited with AHP in P4. The count of excluded river
@@ -41,6 +43,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.ndimage import distance_transform_edt
 
 from app.engines.hydrology.conditioning import NEIGHBOURS
 from app.engines.hydrology.flow import FlowModel
@@ -88,6 +91,7 @@ class SitingResult:
     area_bounds_ha: tuple[float, float, float, float] = DEFAULT_AREA_BOUNDS_HA
     river_cells_excluded: int = 0
     max_upstream_area_ha: float = 0.0
+    river_buffer_m: float = 0.0
 
 
 def impoundment(
@@ -137,6 +141,7 @@ def rank_sites(
     edge_margin_cells: int = 3,
     inside: NDArray[np.bool_] | None = None,
     area_bounds_ha: tuple[float, float, float, float] = DEFAULT_AREA_BOUNDS_HA,
+    river_buffer_m: float = 200.0,
 ) -> SitingResult:
     """Score every eligible drainage cell and return the top-N distinct sites."""
     w = dict(DEFAULT_WEIGHTS if weights is None else weights)
@@ -144,11 +149,23 @@ def rank_sites(
     # An existing watercourse is a hard exclusion, not a low score: any channel
     # cell at or beyond the plateau's "too large" bound is a river reach, and a
     # bund there is a dam that must pass river floods — not a village pond.
+    # The channel *corridor* is excluded too: a tributary-mouth cell 30 m from
+    # a 400 ha channel sits in its flood belt, and a spate would overtop the
+    # bund — so nothing within ``river_buffer_m`` of any channel beyond the
+    # plateau's ideal band (``area_bounds_ha[2]``) is a candidate either.
     area_ha_all = model.upstream_area_m2() / 1e4
     river = stream & (area_ha_all >= area_bounds_ha[3])
-    river_cells = int(np.count_nonzero(river))
     max_upstream_ha = float(area_ha_all[stream].max()) if bool(stream.any()) else 0.0
     eligible = stream & (slope_pct <= max_slope_pct) & ~river
+    major = stream & (area_ha_all >= area_bounds_ha[2])
+    if river_buffer_m > 0 and bool(major.any()):
+        cell = model.filled.grid.cell_size
+        dist_to_major = distance_transform_edt(~major) * cell
+        flood_belt = dist_to_major < river_buffer_m
+        river_cells = int(np.count_nonzero(eligible & flood_belt)) + int(np.count_nonzero(river))
+        eligible &= ~flood_belt
+    else:
+        river_cells = int(np.count_nonzero(river))
     m = edge_margin_cells
     eligible[:m, :] = eligible[-m:, :] = eligible[:, :m] = eligible[:, -m:] = False
     if inside is not None:
@@ -166,6 +183,7 @@ def rank_sites(
             area_bounds_ha,
             river_cells,
             max_upstream_ha,
+            river_buffer_m,
         )
 
     area = model.accumulation[rr, cc].astype(np.float64) * model.filled.grid.cell_area
@@ -224,6 +242,7 @@ def rank_sites(
         area_bounds_ha=area_bounds_ha,
         river_cells_excluded=river_cells,
         max_upstream_area_ha=max_upstream_ha,
+        river_buffer_m=river_buffer_m,
     )
 
 

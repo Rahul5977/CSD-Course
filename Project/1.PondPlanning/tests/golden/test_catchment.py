@@ -135,7 +135,14 @@ def test_an_existing_river_is_excluded_from_siting_not_just_scored_down() -> Non
     stream = stream_mask(model, 50 * GRID.cell_area)
     bounds = (0.1, 0.5, 2.0, 5.0)  # hectares; 5 ha = 500 cells on this grid
     result = rank_sites(
-        model, slope, twi, stream, top_n=3, suppression_radius_m=100.0, area_bounds_ha=bounds
+        model,
+        slope,
+        twi,
+        stream,
+        top_n=3,
+        suppression_radius_m=100.0,
+        area_bounds_ha=bounds,
+        river_buffer_m=0.0,  # isolate the channel-exclusion tier; the belt has its own test
     )
     assert result.river_cells_excluded > 0, "the lower trunk qualifies as a river"
     assert result.max_upstream_area_ha >= 5.0
@@ -155,3 +162,32 @@ def test_flat_terrain_yields_no_candidates_rather_than_arbitrary_ones() -> None:
     result = rank_sites(model, slope, twi, stream, top_n=3)
     assert result.candidates == []
     assert result.considered == 0
+
+
+def test_the_flood_belt_around_a_major_channel_is_excluded_too() -> None:
+    """No candidate may sit inside the buffer around a beyond-ideal channel.
+
+    On this valley every stream cell lies within 100 m of the trunk once the
+    trunk qualifies as a major channel, so with the belt applied the correct
+    answer is *no site* — not a site pressed against the river bank. The
+    excluded count reports how much the belt removed.
+    """
+    dem = v_valley()
+    model = build_flow_model(fill_depressions(dem).filled)
+    slope = slope_degrees(dem).data
+    twi = topographic_wetness_index(dem, model.accumulation).data
+    stream = stream_mask(model, 50 * GRID.cell_area)
+    bounds = (0.1, 0.5, 2.0, 5.0)
+    result = rank_sites(
+        model,
+        slope,
+        twi,
+        stream,
+        top_n=3,
+        suppression_radius_m=100.0,
+        area_bounds_ha=bounds,
+        river_buffer_m=100.0,
+    )
+    assert result.candidates == [], "every stream cell is inside the trunk's flood belt"
+    assert result.river_cells_excluded > 0
+    assert result.river_buffer_m == 100.0

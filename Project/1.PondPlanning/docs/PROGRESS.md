@@ -257,6 +257,17 @@ Newest first. One entry per working session: what changed, what is next.
 
 ### 2026-09-01 (session 18)
 
+**Flood-belt buffer added to siting — the user caught candidates hugging the river.** On the
+sample, sites 2/3/5 sat 30–67 m from the 416 ha channel (tributary-mouth cells): legal by the
+old rules, but inside the river's flood belt. New hard constraint: no candidate within
+`POND_SITING_RIVER_BUFFER_M` (200 m default) of any channel beyond the ideal band
+(`area_bounds_ha[2]`), via a distance transform; excluded count and setback reported in
+`siting` and in the `existing_watercourse` warning. Sample now: 157 cells excluded, all five
+sites 469–1 466 m clear, top site (38.25 ha) unchanged. Golden test added; 206 tests green;
+OpenAPI + web types regenerated; VM redeployed and verified live; report §4.9 updated with a
+fresh UI screenshot.
+
+
 **UI end-to-end on the deployed URL; one real defect found and fixed.** Clicking the map on
 http://10.1.75.53:4269 threw `crypto.randomUUID is not a function`: that API exists only in
 secure contexts (HTTPS/localhost), so the Idempotency-Key generator crashed on the plain-HTTP

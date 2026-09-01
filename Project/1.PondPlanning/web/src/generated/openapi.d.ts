@@ -33,10 +33,13 @@ export interface paths {
         };
         /**
          * Readiness probe
-         * @description Report whether every backing service is reachable.
+         * @description Report whether every *configured* backing service is reachable.
          *
-         *     Returns ``503`` when degraded so that a load balancer can act on the status
-         *     code without parsing the body.
+         *     The adapters are chosen by settings (ADR 0013): with in-memory persistence
+         *     there is no postgres to probe, and with the inline job runner no redis —
+         *     probing them anyway would report a healthy single-process deployment as
+         *     degraded forever. Returns ``503`` when degraded so that a load balancer
+         *     can act on the status code without parsing the body.
          */
         get: operations["ready_ready_get"];
         put?: never;
@@ -1960,10 +1963,12 @@ export interface components {
             candidates_considered: number;
             /**
              * River Cells Excluded
-             * @description Channel cells whose upstream area is at or beyond the plateau's upper bound — an existing river — excluded from siting outright
+             * @description Drainage cells excluded as an existing river: channel cells at or beyond the plateau's upper bound, plus every cell inside the flood-belt buffer around channels beyond the ideal band
              * @default 0
              */
             river_cells_excluded: number;
+            /** @description Flood-belt setback: no candidate within this distance of a channel whose upstream area exceeds the plateau's ideal band — a bund there would face the large channel's spates */
+            river_buffer?: components["schemas"]["QuantityOut"] | null;
             /**
              * Max Upstream Area Ha
              * @description Largest upstream area draining through any channel cell, in hectares — the size of the biggest watercourse in the map

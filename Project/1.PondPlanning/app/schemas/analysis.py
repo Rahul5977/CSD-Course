@@ -257,8 +257,15 @@ class SitingMethod(BaseModel):
     candidates_considered: int
     river_cells_excluded: int = Field(
         0,
-        description="Channel cells whose upstream area is at or beyond the plateau's upper "
-        "bound — an existing river — excluded from siting outright",
+        description="Drainage cells excluded as an existing river: channel cells at or "
+        "beyond the plateau's upper bound, plus every cell inside the flood-belt buffer "
+        "around channels beyond the ideal band",
+    )
+    river_buffer: QuantityOut | None = Field(
+        None,
+        description="Flood-belt setback: no candidate within this distance of a channel "
+        "whose upstream area exceeds the plateau's ideal band — a bund there would face "
+        "the large channel's spates",
     )
     max_upstream_area_ha: float = Field(
         0.0,
