@@ -7,6 +7,32 @@ Also runnable anywhere: `make up && make seed` (full 11-service stack) or `make 
 
 ---
 
+## Abbreviations
+
+| Abbreviation | Meaning | Abbreviation | Meaning |
+|---|---|---|---|
+| **ADR** | Architecture Decision Record | **JWT** | JSON Web Token |
+| **AHP** | Analytic Hierarchy Process | **KML / KMZ** | Keyhole Markup Language (KMZ: zipped) |
+| **AMC** | Antecedent Moisture Condition | **LLM** | Large Language Model |
+| **API** | Application Programming Interface | **MCDA** | Multi-Criteria Decision Analysis |
+| **BFS** | Breadth-First Search | **ML** | Machine Learning |
+| **BoQ** | Bill of Quantities | **NASA POWER** | NASA Prediction Of Worldwide Energy Resources |
+| **CN** | Curve Number | **NDWI** | Normalised Difference Water Index |
+| **COG** | Cloud-Optimised GeoTIFF | **OSM** | OpenStreetMap |
+| **CR** | Consistency Ratio (of the AHP matrix) | **RMS** | Root Mean Square |
+| **CV** | Coefficient of Variation | **RS256** | RSA signature with SHA-256 (JWT signing) |
+| **D8** | eight-direction flow routing — each cell drains to one of its 8 neighbours | **SCS-CN** | Soil Conservation Service Curve Number (runoff method) |
+| **DEM** | Digital Elevation Model | **SHAP** | SHapley Additive exPlanations |
+| **EAV** | Elevation–Area–Volume (curve) | **SPA** | Single-Page Application |
+| **EPSG** | coordinate reference system code registry | **SRTM** | Shuttle Radar Topography Mission (the ~30 m elevation source) |
+| **ERA5-Land** | ECMWF Reanalysis v5, land component (rainfall dataset) | **TIN** | Triangulated Irregular Network |
+| **ESA** | European Space Agency | **TR-55** | USDA Technical Release 55 (urban hydrology handbook) |
+| **FR** | Functional Requirement | **TWI** | Topographic Wetness Index |
+| **GIS** | Geographic Information System | **UI** | User Interface |
+| **HSG** | Hydrologic Soil Group | **UTM** | Universal Transverse Mercator (map projection) |
+| **HTTP** | Hypertext Transfer Protocol | **VM** | Virtual Machine |
+| **IMD** | India Meteorological Department | **XML** | Extensible Markup Language |
+
 ## 1. Problem statement and objectives
 
 Water conservation in rural India depends on small ponds built where the terrain will
@@ -405,25 +431,3 @@ live.
 
 ![The planner on the lab VM after analysing the sample: area statistics, DEM provenance, ranked sites](../figures/deploy-vm-workspace.jpg)
 
-## References
-
-- Barnes, R., Lehman, C., Mulla, D. (2014). Priority-flood: an optimal depression-filling and watershed-labeling algorithm. *Computers & Geosciences* 62.
-- Wang, L., Liu, H. (2006). An efficient method for identifying and filling surface depressions. *IJGIS* 20(2).
-- O'Callaghan, J. F., Mark, D. M. (1984). The extraction of drainage networks from digital elevation data. *CVGIP* 28.
-- Horn, B. K. P. (1981). Hill shading and the reflectance map. *Proc. IEEE* 69(1).
-- Zevenbergen, L. W., Thorne, C. R. (1987). Quantitative analysis of land surface topography. *ESPL* 12.
-- Beven, K. J., Kirkby, M. J. (1979). A physically based, variable contributing area model of basin hydrology. *Hydrol. Sci. Bull.* 24.
-- Strahler, A. N. (1957). Quantitative analysis of watershed geomorphology. *Trans. AGU* 38.
-- Bartos, M. (2020). pysheds: simple and fast watershed delineation in Python. doi:10.5281/zenodo.3822494.
-- USDA-SCS (1972). *National Engineering Handbook*, Section 4; USDA-NRCS (1986). *TR-55 Urban Hydrology for Small Watersheds*.
-- Hawkins, R. H., et al. (1985). Runoff probability, storm depth, and curve numbers. *J. Irrig. Drain. Eng.* 111(4).
-- Strange, W. L. (1928). *Indian Storage Reservoirs*; as tabulated in Subramanya, K. *Engineering Hydrology*, 4th ed.
-- Saaty, T. L. (1980). *The Analytic Hierarchy Process*. McGraw-Hill.
-- McFeeters, S. K. (1996). The use of the Normalized Difference Water Index (NDWI). *IJRS* 17(7).
-- Otsu, N. (1979). A threshold selection method from gray-level histograms. *IEEE SMC* 9(1).
-- Kirpich, Z. P. (1940). Time of concentration of small agricultural watersheds. *Civil Engineering* 10(6).
-- Gumbel, E. J. (1958). *Statistics of Extremes*. Columbia University Press.
-- Weibull, W. (1939). A statistical theory of the strength of materials. *Ing. Vetensk. Akad. Handl.* 151.
-- Zanaga, D., et al. (2022). ESA WorldCover 10 m 2021 v200. doi:10.5281/zenodo.7254221.
-- Poggio, L., et al. (2021). SoilGrids 2.0. *SOIL* 7.
-- Muñoz-Sabater, J., et al. (2021). ERA5-Land. *ESSD* 13.
