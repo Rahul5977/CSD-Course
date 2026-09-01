@@ -268,6 +268,52 @@ edge cases below are handled *and named in the response* so the caller knows wha
 
 ![The existing-river edge case: river cells hard-excluded, candidates on tributaries](../figures/alg-river-exclusion.png)
 
+### 4.10 Demonstration on the provided contour map
+
+The Phase 2 route, run against the deployed URL with the provided sample
+(`data/samples/contours_1m.kml`, 6.4 MB, 1 355 contour lines):
+
+```bash
+curl -s -F "file=@data/samples/contours_1m.kml" \
+  http://10.1.75.53:4269/api/v1/analyzeContour          # → 202 {"job_id": …}
+curl -s http://10.1.75.53:4269/api/v1/jobs/$JOB          # → "succeeded" in ~8 s
+curl -s http://10.1.75.53:4269/api/v1/analysis/results/contour/$JOB
+```
+
+The response (trimmed to the headline fields; captured live from the URL above):
+
+```json
+{
+  "village_name": "Khapri",
+  "contour_count": 1355,
+  "utm_epsg": 32644,
+  "suggested_pond_location": {"lon": 81.28415, "lat": 21.26222},
+  "location_rationale": "Highest composite score (0.93) of 672 drainage cells:
+      upstream area 38.2 ha, local slope 1.1 %, TWI 14.0, impounds 255,031 m3
+      behind a 2 m rise (mean depth 1.50 m).",
+  "catchment": {
+    "area": "38.25 ha (±26 %)",
+    "longest_flow_path": "902.13 m (±10 %)",
+    "relief": "13.00 m (±65 %)"
+  },
+  "candidate_sites": 5,
+  "siting": {
+    "weights": {"upstream_area": 0.35, "flatness": 0.2,
+                "wetness": 0.15, "impoundment": 0.3},
+    "candidates_considered": 672,
+    "max_upstream_area_ha": 415.7
+  },
+  "warnings": ["interpolated_precision", "existing_watercourse", "catchment_truncated"]
+}
+```
+
+Everything above is derived from the upload: the village name by reverse-geocoding the
+file's own centroid, the UTM zone from its coordinates, the 30 m working grid from its
+contour spacing and stated SRTM provenance, the pond location and catchment from the flow
+graph of §4.4. The same map in the browser — upload, layers, click-to-catchment, results —
+is shown in the Appendix figures, and the full payload for every route is captured in
+`docs/api/samples/`.
+
 ## 5. Software design and quality
 
 - **Code quality:** `ruff` clean, `mypy --strict` on `domain/` and `engines/`, 206 tests,
@@ -356,7 +402,23 @@ Sample-map headline numbers (Khapri, Durg, Chhattisgarh, EPSG:32644, 830 ha): to
 126 × 126 m top, fills in 100 % of years, ₹97 lakh indicative, confidence *low* (soil assumed);
 27 ha of eligible land in 16 patches.
 
-## 8. Limitations and uncertainty
+## 8. API documentation
+
+The API is documented in four forms, all generated from or verified against the running code:
+
+| Artifact | Where | What it gives |
+|---|---|---|
+| Interactive documentation (Swagger UI / ReDoc) | http://10.1.75.53:4269/docs · `/redoc` (any deployment) | Every route, schema and example, try-it-out enabled |
+| Machine-readable contract | `docs/api/openapi.json` (regenerate: `make openapi`) | The full OpenAPI 3.1 document — 40+ operations; the frontend's types are generated from it |
+| Cookbook | `docs/api/cookbook.md` | Every workflow as copy-paste `curl`, with real captured responses in `docs/api/samples/` |
+| Error catalogue | `docs/api/errors.md` · live at `GET /api/v1/meta/errors` | Every stable error `code` with its HTTP status — generated from the same table the handlers use, so it cannot drift |
+
+Conventions: long analyses are jobs (`202` + `job_id`, poll `GET /jobs/{id}` or the WebSocket);
+every number is a quantity object with value, unit, uncertainty band and method; errors are
+RFC 9457 problem documents with stable codes; fixture-backed routes (only parcel import)
+label themselves with `X-Fixture-Data: true`.
+
+## 9. Limitations and uncertainty
 
 The DEM is interpolated from contours that are themselves interpolated from ~30 m SRTM
 (±6 m relative): relief below about 5 m is not real, single-cell extremes are lost, and the
@@ -367,14 +429,14 @@ gauges. The three runoff methods disagree by up to 2×; the design uses SCS-CN a
 SoilGrids is slow and the default soil group is a stated assumption. The ML scoring path is
 deferred by the plan's own fallback: two mapped tanks are not a training set (ADR 0017).
 
-## 9. Future work
+## 10. Future work
 
 Ground-truth against 20–30 existing ponds in one block; a cadastral import with ownership
 *class* only (DPDP Act 2023); local CN calibration; the provider-DEM adapter (Copernicus
 GLO-30) for villages without a contour map; the ML/SHAP path once labels exist; the
 distributed roadmap in `docs/PLAN.md` Part 9.
 
-## 10. Use of AI tools
+## 11. Use of AI tools
 
 An AI coding assistant (Claude Code) was used, under the author's direction and review, as
 the assignment's LLM policy permits. It was used for:
