@@ -48,8 +48,16 @@ async function json<T>(response: Response): Promise<T> {
 /** Poll a job until it settles; resolves with the final status. */
 export type Progress = (status: JobStatus) => void;
 
-/** A fresh Idempotency-Key per user action: a double-tap must not queue two jobs. */
-const idem = () => ({ "Idempotency-Key": crypto.randomUUID() });
+/** A fresh Idempotency-Key per user action: a double-tap must not queue two jobs.
+ * `crypto.randomUUID` exists only in secure contexts (HTTPS / localhost); a plain-HTTP
+ * deployment (the lab VM by IP) needs the manual v4 fallback or every map click throws. */
+const uuid = (): string =>
+  typeof crypto.randomUUID === "function"
+    ? crypto.randomUUID()
+    : "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
+        (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16),
+      );
+const idem = () => ({ "Idempotency-Key": uuid() });
 
 /** Try the WebSocket first (one frame per change); fall back to polling. */
 function watchSocket(jobId: string, onProgress?: Progress): Promise<JobStatus | null> {

@@ -255,6 +255,18 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 Newest first. One entry per working session: what changed, what is next.
 
+### 2026-09-01 (session 18)
+
+**UI end-to-end on the deployed URL; one real defect found and fixed.** Clicking the map on
+http://10.1.75.53:4269 threw `crypto.randomUUID is not a function`: that API exists only in
+secure contexts (HTTPS/localhost), so the Idempotency-Key generator crashed on the plain-HTTP
+lab deployment before any request was sent — invisible on localhost and ngrok. Fixed with a
+v4 fallback in `web/src/api.ts`; bundle redeployed to the VM and the web image rebuilt.
+Verified from the browser on the deployed URL: select Khapri → click map → catchment (1.98 ha,
+snapped 42 m) → site-2 catchment (38 ha) → pond design (38,077 m³, 111 × 111 × 3.5 m,
+₹74.9 lakh, fills 25/25 years, confidence low with reasons). Two fresh UI screenshots in the
+report appendix. **Next:** unchanged — make the repo public before submission.
+
 ### 2026-08-31 (session 17)
 
 **Phase 2 submission readiness: edge cases · e2e · lab-VM deployment · report.** The venv

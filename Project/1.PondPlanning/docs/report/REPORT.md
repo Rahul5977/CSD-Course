@@ -491,5 +491,7 @@ live.
 
 ![The landing page served from the lab VM](../figures/deploy-vm-landing.jpg)
 
-![The planner on the lab VM after analysing the sample: area statistics, DEM provenance, ranked sites](../figures/deploy-vm-workspace.jpg)
+![The planner on the lab VM: click-to-catchment on the analysed sample — snapped outlet, catchment polygon, ranked sites](../figures/deploy-vm-workspace.jpg)
+
+![The full chain from the deployed UI: catchment 38 ha → runoff 63,461 m³ → 38,077 m³ pond, 111 × 111 m × 3.5 m, with its confidence label](../figures/deploy-vm-design.jpg)
 
