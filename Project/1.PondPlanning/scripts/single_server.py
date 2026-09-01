@@ -16,7 +16,9 @@ serving ``web/dist`` with ``index.html`` fallback for the SPA routes.
 
 from __future__ import annotations
 
+import socket
 from pathlib import Path
+from typing import Any
 
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException
@@ -26,6 +28,20 @@ from starlette.responses import Response
 from app.main import app
 
 DIST = Path(__file__).resolve().parent.parent / "web" / "dist"
+
+# The lab hosts advertise IPv6 routes that never connect, so every stdlib
+# client burns its whole timeout on the AAAA record before trying IPv4 —
+# which is why reverse geocoding fell back to a coordinate name there.
+# Sorting IPv4 first is a deployment-scoped fix: app code stays untouched.
+_getaddrinfo = socket.getaddrinfo
+
+
+def _ipv4_first(*args: Any, **kwargs: Any) -> Any:
+    infos = _getaddrinfo(*args, **kwargs)
+    return sorted(infos, key=lambda info: info[0] != socket.AF_INET)
+
+
+socket.getaddrinfo = _ipv4_first
 
 
 class SPAStaticFiles(StaticFiles):

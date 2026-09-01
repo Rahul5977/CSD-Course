@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import lru_cache, partial
 
 from app.core.config import Settings, get_settings
 from app.engines.workflows.contour_analysis import WorkflowContext
@@ -21,7 +21,11 @@ def build_context(settings: Settings) -> WorkflowContext:
         rainfall=build_rainfall_provider(settings, store),
         default_floor_m=settings.default_dem_floor_m,
         tiles_public_base=settings.tiles_public_base,
-        geocode=reverse_geocode if settings.geocode_enabled else None,
+        geocode=(
+            partial(reverse_geocode, timeout_s=settings.geocode_timeout_s)
+            if settings.geocode_enabled
+            else None
+        ),
         stream_threshold_area_m2=settings.stream_threshold_area_m2,
         snap_radius_m=settings.pour_point_snap_radius_m,
         snap_min_upstream_area_m2=settings.snap_min_upstream_area_m2,

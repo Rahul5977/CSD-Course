@@ -1,12 +1,12 @@
 PASS  GET /health  — AI-based Village Pond Planning System
 PASS  GET /ready
 PASS  GET /metrics
-PASS  GET /meta/implementation-status  — fixtures: ['._available_land', '._catchment', '._contour_analysis', '._contours', '._dem_asset', '._derived_surfaces', '._imagery', '._pond_design', '._rainfall_series', '._rainfall_statistics', '._recommendations', '._runoff', '._streams', '._suitability', '._terrain_layers', '._village_summary', '._villages']
+PASS  GET /meta/implementation-status  — fixtures: []
 PASS  GET /meta/errors
-PASS  POST /analyzeContour -> 202  — job eaa41db5
+PASS  POST /analyzeContour -> 202  — job ed899cd1
 PASS  job succeeds  — stage done
-PASS  GET /analysis/results/contour/{job}  — village AOI 21.2517N 81.2970E, catchment 38.25 ha (±26.3529 %)
-PASS  existing watercourse edge case is reported  — warnings: ['interpolated_precision', 'geocode_unavailable', 'existing_watercourse', 'catchment_truncated']
+PASS  GET /analysis/results/contour/{job}  — village Khapri, catchment 38.25 ha (±26.3529 %)
+PASS  existing watercourse edge case is reported  — warnings: ['interpolated_precision', 'existing_watercourse', 'catchment_truncated']
 PASS  POST /analyzeContour (garbage) -> 4xx problem  — 422 unsupported_input
 PASS  GET /villages
 PASS  GET /villages/{id}/summary
@@ -31,7 +31,7 @@ PASS  POST /analysis/suitability -> 202
 PASS  GET /analysis/results/suitability/{job}
 PASS  GET /villages/{id}/available-land
 PASS  POST /auth/token (3 roles)
-PASS  POST /recommendations (planner)  — rec 9749dce7
+PASS  POST /recommendations (planner)  — rec be353779
 PASS  draft -> approved is 409 illegal_transition  — illegal_transition
 PASS  planner submits
 PASS  viewer approve -> 403  — forbidden

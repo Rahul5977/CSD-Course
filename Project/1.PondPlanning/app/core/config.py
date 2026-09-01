@@ -99,6 +99,10 @@ class Settings(BaseSettings):
     siting_top_n: int = Field(default=5, ge=1, le=25)
     # Reverse-geocode the AOI centroid to name the village. Off in CI.
     geocode_enabled: bool = True
+    # Nominatim timeout. The lookup runs inside the analysis job, so on a slow
+    # or busy host the socket read competes with the pipeline for CPU — a tight
+    # budget times out and the village falls back to a coordinate name.
+    geocode_timeout_s: float = Field(default=10.0, gt=0)
     # Rainfall: live providers (Open-Meteo → NASA POWER, cached in the object
     # store) or the recorded fixture (tests, CI, offline demo).
     rainfall_source: Literal["live", "recorded"] = "live"

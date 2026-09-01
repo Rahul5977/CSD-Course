@@ -350,26 +350,23 @@ distributed roadmap in `docs/PLAN.md` Part 9.
 
 ## 10. Use of AI tools
 
-An AI coding assistant (Claude Code) was used throughout, under the author's direction and
-review, as the assignment's LLM policy permits. Where it was used, concretely:
+An AI coding assistant (Claude Code) was used, under the author's direction and review, as
+the assignment's LLM policy permits. It was used for:
 
-- **Code drafting and refactoring** — first drafts of engines and tests, then refactoring
-  passes (extracting the workflow orchestrators, the ports-and-adapters split, tightening
-  the layering the architecture test enforces);
-- **Understanding the algorithm** — working through D8 as a functional graph, why a filled
-  + ε surface makes descending elevation a topological order, and why catchment delineation
-  is exactly a reverse BFS — the understanding §4.4 writes down;
-- **Figuring out edge cases and brainstorming** — enumerating what breaks (an existing
-  river in the area, flat maps, decoy elevation fields, truncated catchments, provider
-  outages) and designing the behaviour and warnings in §4.9;
-- **Learning how to scale the application** — the bulkhead/backpressure/outbox patterns in
-  §6, and the practical lesson of deploying the same codebase as eleven services and as a
-  single process on the lab VM (§6.1);
-- **Report writing** — drafting and editing this document and the figures script; every
-  number in it is produced by the code, not by the assistant;
-- **Debugging** — several defects were found by *running* rather than reading, and are
-  logged in `docs/PROGRESS.md` (e.g. the readiness probe reporting a Docker-less deployment
-  degraded, a saga step that failed half-way, the Otsu clamp on a two-valued image).
+1. **Code refactoring** — refactoring passes over the author-directed implementation:
+   extracting the workflow orchestrators, the ports-and-adapters split, and tightening the
+   layering that the architecture test enforces;
+2. **Brainstorming to understand the algorithm (D8)** — working through D8 flow routing as
+   a functional graph, why a filled + ε surface makes descending elevation a topological
+   order, why catchment delineation is exactly a reverse breadth-first search, and what the
+   edge cases are (an existing river in the area, flat terrain, truncated catchments) — the
+   understanding written down in §4.4 and §4.9;
+3. **Writing structured code** — keeping the code organised in the layered structure of
+   §3.1 (routers free of business logic, pure engines, adapters behind ports), with typed
+   contracts, docstrings that name each algorithm, and tests alongside every engine;
+4. **Enhancing the report** — editing this document, generating the explainer figures
+   (`scripts/make_algorithm_figures.py`), and improving its structure and presentation;
+   every number in it is produced by the code, not by the assistant.
 
 Every design decision is recorded with its reasoning and rejected alternatives in
 `docs/adr/` (19 records) and the decision log in `docs/PROGRESS.md`; every algorithm is
