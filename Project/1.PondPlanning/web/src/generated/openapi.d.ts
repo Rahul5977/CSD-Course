@@ -1028,7 +1028,8 @@ export interface components {
             suggested_pond_location: components["schemas"]["PourPoint"];
             /** Location Rationale */
             location_rationale: string;
-            catchment: components["schemas"]["CatchmentResult"];
+            /** @description Catchment of the suggested location. Null only when the map has no modelled drainage at all (too small or too flat) — the warnings say so */
+            catchment?: components["schemas"]["CatchmentResult"] | null;
             /** Candidate Sites */
             candidate_sites: components["schemas"]["SiteCandidateOut"][];
             siting: components["schemas"]["SitingMethod"];

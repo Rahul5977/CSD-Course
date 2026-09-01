@@ -2430,7 +2430,15 @@
             "title": "Location Rationale"
           },
           "catchment": {
-            "$ref": "#/components/schemas/CatchmentResult"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CatchmentResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Catchment of the suggested location. Null only when the map has no modelled drainage at all (too small or too flat) \u2014 the warnings say so"
           },
           "candidate_sites": {
             "items": {
@@ -2467,7 +2475,6 @@
           "grid_resolution",
           "suggested_pond_location",
           "location_rationale",
-          "catchment",
           "candidate_sites",
           "siting",
           "terrain"

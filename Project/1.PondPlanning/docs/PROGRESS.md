@@ -258,6 +258,16 @@ Newest first. One entry per working session: what changed, what is next.
 
 ### 2026-09-01 (session 18)
 
+**Degenerate-map path finished (algorithm review).** Re-reading the whole chain found one
+unfinished edge case: with no eligible site, the fallback delineation at the map centre
+raised through `snap_to_drainage` and **failed the entire job** on a map with no usable
+drainage. Now: the snap widens once to the whole grid (`catchment_from_map_outlet` caution),
+and if nothing drains 2 ha the result returns `catchment: null` + `catchment_unavailable`
+(critical) with terrain products intact — never a failure. Schema field made nullable,
+frontend guarded, API-level test with a 3-contour tiny KML; 207 tests green; VM redeployed,
+sample path verified unchanged.
+
+
 **Flood-belt buffer added to siting — the user caught candidates hugging the river.** On the
 sample, sites 2/3/5 sat 30–67 m from the 416 ha channel (tributary-mouth cells): legal by the
 old rules, but inside the river's flood belt. New hard constraint: no candidate within

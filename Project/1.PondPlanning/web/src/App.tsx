@@ -125,7 +125,7 @@ export default function App() {
       setSites(result.candidate_sites);
       setSiting(result.siting);
       setRationale(result.location_rationale);
-      setCatchment(result.catchment);
+      if (result.catchment) setCatchment(result.catchment);
     });
   }, [job?.status, jobId, refreshVillages, selectVillage, setCatchment]);
 

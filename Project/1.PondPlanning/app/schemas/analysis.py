@@ -301,7 +301,11 @@ class ContourAnalysisResult(BaseModel):
     )
     suggested_pond_location: PourPoint
     location_rationale: str
-    catchment: CatchmentResult
+    catchment: CatchmentResult | None = Field(
+        None,
+        description="Catchment of the suggested location. Null only when the map has no "
+        "modelled drainage at all (too small or too flat) — the warnings say so",
+    )
     candidate_sites: list[SiteCandidateOut]
     siting: SitingMethod
     terrain: TerrainPreparationResult

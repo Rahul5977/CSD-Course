@@ -193,3 +193,37 @@ def test_cancel_is_idempotent(client: TestClient) -> None:
     assert client.delete(f"/api/v1/jobs/{job_id}").status_code == 204
     assert client.delete(f"/api/v1/jobs/{job_id}").status_code == 204
     assert client.delete("/api/v1/jobs/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93").status_code == 404
+
+
+def test_a_map_with_no_drainage_still_returns_terrain_not_a_failure(
+    client: TestClient,
+) -> None:
+    """A tiny upload (< the 2 ha snap minimum) has no usable drainage anywhere.
+
+    The route must still succeed: terrain products, the no_site_found and
+    catchment_unavailable warnings, and a null catchment — never a failed job.
+    This is the degenerate end of the professor's edge-case list.
+    """
+    # Three short parallel contours ~60 m long, 20 m apart: a 9-cell-scale map.
+    lines = "".join(
+        f"<Placemark><name>{100 + i}</name><LineString><coordinates>"
+        + " ".join(f"{81.2970 + j * 0.0001:.6f},{21.2517 + i * 0.0002:.6f}" for j in range(6))
+        + "</coordinates></LineString></Placemark>"
+        for i in range(3)
+    )
+    kml = f'<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>{lines}</Document></kml>'
+    response = client.post(
+        "/api/v1/analyzeContour",
+        files={"file": ("tiny.kml", kml.encode(), "application/vnd.google-earth.kml+xml")},
+    )
+    assert response.status_code == 202
+    job_id = response.json()["job_id"]
+    status = client.get(f"/api/v1/jobs/{job_id}").json()
+    assert status["status"] == "succeeded", status.get("error")
+    result = client.get(f"/api/v1/analysis/results/contour/{job_id}").json()
+    codes = {w["code"] for w in result["warnings"]}
+    assert "no_site_found" in codes
+    assert "catchment_unavailable" in codes
+    assert result["catchment"] is None
+    assert result["candidate_sites"] == []
+    assert result["terrain"]["contour_count"] == 3

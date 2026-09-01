@@ -28,7 +28,7 @@ from uuid import UUID
 import numpy as np
 from pyproj import Transformer
 
-from app.domain.errors import DomainError, NotFoundError
+from app.domain.errors import DomainError, NotFoundError, ValidationError
 from app.domain.raster import Raster
 from app.domain.units import Quantity, Unit
 from app.engines.hydrology.catchment import delineate
@@ -473,14 +473,52 @@ def _run(
             f"TWI {best.twi:.1f}, impounds {best.impoundment_volume_m3:,.0f} m³ behind a "
             f"{siting.rise_m:g} m rise (mean depth {best.impoundment_efficiency_m:.2f} m)."
         )
-    catchment = delineate(
-        model,
-        top_row,
-        top_col,
-        radius_m=ctx.snap_radius_m,
-        min_area_m2=ctx.snap_min_upstream_area_m2,
-    )
-    catchment_out = catchment_result(village.id, model, slope.data, catchment, top, rel)
+    # A ranked site is on the drainage network by construction, so its snap
+    # always succeeds. The map-centre fallback has no such guarantee: widen
+    # the search once to the whole grid (the map's principal drainage line),
+    # and if even that drains too little, return the terrain honestly with no
+    # catchment rather than failing the whole analysis.
+    catchment_out = None
+    try:
+        catchment = delineate(
+            model,
+            top_row,
+            top_col,
+            radius_m=ctx.snap_radius_m,
+            min_area_m2=ctx.snap_min_upstream_area_m2,
+        )
+    except ValidationError:
+        try:
+            whole_map = float(np.hypot(grid.rows, grid.cols)) * grid.cell_size
+            catchment = delineate(
+                model,
+                top_row,
+                top_col,
+                radius_m=whole_map,
+                min_area_m2=ctx.snap_min_upstream_area_m2,
+            )
+            warnings.append(
+                ResultWarning(
+                    code="catchment_from_map_outlet",
+                    message="No drainage near the fallback point; the catchment shown is the "
+                    "map's principal drainage line, found by widening the snap to the whole "
+                    "grid. Check the snap distance before trusting it.",
+                    severity="caution",
+                )
+            )
+        except ValidationError:
+            catchment = None
+            warnings.append(
+                ResultWarning(
+                    code="catchment_unavailable",
+                    message="No cell in this map drains the minimum area for a catchment "
+                    "(2 ha default). The upload is too small or too flat to analyse "
+                    "hydrologically; terrain products are still returned.",
+                    severity="critical",
+                )
+            )
+    if catchment is not None:
+        catchment_out = catchment_result(village.id, model, slope.data, catchment, top, rel)
 
     siting_method = SitingMethod(
         weights=siting.weights,
@@ -538,7 +576,12 @@ def _run(
         candidate_sites=candidates,
         siting=siting_method,
         terrain=terrain,
-        warnings=warnings + [w for w in catchment_out.warnings if w.code == "catchment_truncated"],
+        warnings=warnings
+        + [
+            w
+            for w in (catchment_out.warnings if catchment_out else [])
+            if w.code == "catchment_truncated"
+        ],
     ).model_dump(mode="json")
     ctx.store.put(
         f"{prefix}/{SITING_KEY}",
