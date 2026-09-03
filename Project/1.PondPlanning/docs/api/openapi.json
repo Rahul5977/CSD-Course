@@ -2218,10 +2218,10 @@
       },
       "Body_analyze_contour_api_v1_analyzeContour_post": {
         "properties": {
-          "file": {
+          "contour_map": {
             "type": "string",
             "contentMediaType": "application/octet-stream",
-            "title": "File",
+            "title": "Contour Map",
             "description": "Contour map, KML or KMZ"
           },
           "target_interval": {
@@ -2238,7 +2238,7 @@
         },
         "type": "object",
         "required": [
-          "file"
+          "contour_map"
         ],
         "title": "Body_analyze_contour_api_v1_analyzeContour_post"
       },

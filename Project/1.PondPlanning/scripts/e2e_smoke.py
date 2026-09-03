@@ -67,7 +67,7 @@ def main() -> int:
     with SAMPLE.open("rb") as f:
         r = client.post(
             f"{API}/analyzeContour",
-            files={"file": (SAMPLE.name, f, "application/vnd.google-earth.kml+xml")},
+            files={"contour_map": (SAMPLE.name, f, "application/vnd.google-earth.kml+xml")},
             headers={"Idempotency-Key": str(uuid.uuid4())},
         )
     check(
@@ -95,7 +95,9 @@ def main() -> int:
     )
 
     # -- unsupported upload is a clean 4xx, not a 500 -------------------
-    r = client.post(f"{API}/analyzeContour", files={"file": ("x.txt", b"not a map", "text/plain")})
+    r = client.post(
+        f"{API}/analyzeContour", files={"contour_map": ("x.txt", b"not a map", "text/plain")}
+    )
     check(
         "POST /analyzeContour (garbage) -> 4xx problem",
         400 <= r.status_code < 500,

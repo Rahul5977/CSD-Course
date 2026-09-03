@@ -97,7 +97,7 @@ export async function waitForJob(jobId: string, intervalMs = 800, maxMs = 120_00
 export const api = {
   uploadContour(file: File): Promise<JobAccepted> {
     const body = new FormData();
-    body.append("file", file);
+    body.append("contour_map", file);
     return fetch(`${BASE}/analyzeContour`, { method: "POST", body }).then(json<JobAccepted>);
   },
   job(id: string): Promise<JobStatus> {

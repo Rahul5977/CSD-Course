@@ -20,7 +20,9 @@ def analysed(client: TestClient) -> tuple[TestClient, dict]:  # type: ignore[typ
     with SAMPLE_KML.open("rb") as handle:
         response = client.post(
             "/api/v1/analyzeContour",
-            files={"file": (SAMPLE_KML.name, handle, "application/vnd.google-earth.kml+xml")},
+            files={
+                "contour_map": (SAMPLE_KML.name, handle, "application/vnd.google-earth.kml+xml")
+            },
         )
     assert response.status_code == 202, response.text
     job_id = response.json()["job_id"]
@@ -162,7 +164,7 @@ def test_unknown_village_is_404_problem(client: TestClient) -> None:
 
 
 def test_wrong_extension_is_rejected_before_any_work(client: TestClient) -> None:
-    response = client.post("/api/v1/analyzeContour", files={"file": ("notes.txt", b"hello")})
+    response = client.post("/api/v1/analyzeContour", files={"contour_map": ("notes.txt", b"hello")})
     assert response.status_code == 422
     assert response.json()["code"] == "unsupported_input"
 
@@ -175,7 +177,7 @@ def test_a_map_without_elevations_fails_the_job_honestly(client: TestClient) -> 
         b"</ExtendedData><LineString><coordinates>81,21 81.001,21</coordinates></LineString>"
         b"</Placemark></Document></kml>"
     )
-    accepted = client.post("/api/v1/analyzeContour", files={"file": ("decoy.kml", kml)})
+    accepted = client.post("/api/v1/analyzeContour", files={"contour_map": ("decoy.kml", kml)})
     assert accepted.status_code == 202
     job_id = accepted.json()["job_id"]
     status = client.get(f"/api/v1/jobs/{job_id}").json()
@@ -189,7 +191,9 @@ def test_cancel_is_idempotent(client: TestClient) -> None:
         b"<kml><Document><Placemark><name>10</name><LineString><coordinates>"
         b"81,21 81.001,21</coordinates></LineString></Placemark></Document></kml>"
     )
-    job_id = client.post("/api/v1/analyzeContour", files={"file": ("t.kml", kml)}).json()["job_id"]
+    job_id = client.post("/api/v1/analyzeContour", files={"contour_map": ("t.kml", kml)}).json()[
+        "job_id"
+    ]
     assert client.delete(f"/api/v1/jobs/{job_id}").status_code == 204
     assert client.delete(f"/api/v1/jobs/{job_id}").status_code == 204
     assert client.delete("/api/v1/jobs/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93").status_code == 404
@@ -214,7 +218,7 @@ def test_a_map_with_no_drainage_still_returns_terrain_not_a_failure(
     kml = f'<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document>{lines}</Document></kml>'
     response = client.post(
         "/api/v1/analyzeContour",
-        files={"file": ("tiny.kml", kml.encode(), "application/vnd.google-earth.kml+xml")},
+        files={"contour_map": ("tiny.kml", kml.encode(), "application/vnd.google-earth.kml+xml")},
     )
     assert response.status_code == 202
     job_id = response.json()["job_id"]

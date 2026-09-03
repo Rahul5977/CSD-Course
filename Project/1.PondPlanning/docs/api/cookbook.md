@@ -18,7 +18,7 @@ Conventions:
 ## 1. Analyse a contour map (the Phase 2 route)
 
 ```bash
-curl -s -F "file=@data/samples/contours_1m.kml" -H "Idempotency-Key: $(uuidgen)" \
+curl -s -F "contour_map=@data/samples/contours_1m.kml" -H "Idempotency-Key: $(uuidgen)" \
   http://localhost:8000/api/v1/analyzeContour
 ```
 → `202` — `samples/job_accepted.json`

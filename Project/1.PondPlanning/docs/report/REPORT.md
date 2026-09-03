@@ -274,7 +274,7 @@ The Phase 2 route, run against the deployed URL with the provided sample
 (`data/samples/contours_1m.kml`, 6.4 MB, 1 355 contour lines):
 
 ```bash
-curl -s -F "file=@data/samples/contours_1m.kml" \
+curl -s -F "contour_map=@data/samples/contours_1m.kml" \
   http://10.1.75.53:4269/api/v1/analyzeContour          # → 202 {"job_id": …}
 curl -s http://10.1.75.53:4269/api/v1/jobs/$JOB          # → "succeeded" in ~8 s
 curl -s http://10.1.75.53:4269/api/v1/analysis/results/contour/$JOB

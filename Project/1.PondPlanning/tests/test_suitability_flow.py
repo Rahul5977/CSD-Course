@@ -25,7 +25,7 @@ def test_suitability_job_yields_parcels_and_ahp_ranked_sites(
     monkeypatch.setattr(workflow, "season_composite", _no_sentinel)
     with SAMPLE_KML.open("rb") as handle:
         job = client.post(
-            "/api/v1/analyzeContour", files={"file": (SAMPLE_KML.name, handle)}
+            "/api/v1/analyzeContour", files={"contour_map": (SAMPLE_KML.name, handle)}
         ).json()["job_id"]
     village_id = client.get(f"/api/v1/jobs/{job}/result").json()["result"]["village_id"]
 

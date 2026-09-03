@@ -36,7 +36,7 @@ def test_runoff_job_produces_a_three_method_range(
 
     with SAMPLE_KML.open("rb") as handle:
         job = client.post(
-            "/api/v1/analyzeContour", files={"file": (SAMPLE_KML.name, handle)}
+            "/api/v1/analyzeContour", files={"contour_map": (SAMPLE_KML.name, handle)}
         ).json()["job_id"]
     contour = client.get(f"/api/v1/jobs/{job}/result").json()["result"]
     village_id = contour["village_id"]
@@ -78,7 +78,7 @@ def test_runoff_job_produces_a_three_method_range(
 def test_runoff_for_a_missing_catchment_job_fails_honestly(client: TestClient) -> None:
     with SAMPLE_KML.open("rb") as handle:
         job = client.post(
-            "/api/v1/analyzeContour", files={"file": (SAMPLE_KML.name, handle)}
+            "/api/v1/analyzeContour", files={"contour_map": (SAMPLE_KML.name, handle)}
         ).json()["job_id"]
     village_id = client.get(f"/api/v1/jobs/{job}/result").json()["result"]["village_id"]
     runoff_job = client.post(

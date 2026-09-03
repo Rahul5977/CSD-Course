@@ -220,7 +220,7 @@ contour_router = APIRouter(tags=["analysis"])
     summary="Analyse an uploaded contour map (KML/KMZ)",
 )
 def analyze_contour(
-    file: Annotated[UploadFile, File(description="Contour map, KML or KMZ")],
+    contour_map: Annotated[UploadFile, File(description="Contour map, KML or KMZ")],
     repos: ReposDep,
     store: StoreDep,
     runner: RunnerDep,
@@ -243,7 +243,7 @@ def analyze_contour(
     if idempotency_key and (existing := repos.jobs.find_by_idempotency_key(idempotency_key)):
         return _accepted(str(existing.id), 35)
     accept_or_429(settings, HEAVY)
-    filename, payload = read_contour_upload(file, settings.max_upload_mb)
+    filename, payload = read_contour_upload(contour_map, settings.max_upload_mb)
     job = repos.jobs.create(
         CONTOUR_ANALYSIS_KIND, {"filename": filename}, None, idempotency_key=idempotency_key
     )

@@ -915,10 +915,10 @@ export interface components {
         /** Body_analyze_contour_api_v1_analyzeContour_post */
         Body_analyze_contour_api_v1_analyzeContour_post: {
             /**
-             * File
+             * Contour Map
              * @description Contour map, KML or KMZ
              */
-            file: string;
+            contour_map: string;
             /** Target Interval */
             target_interval?: number | null;
         };

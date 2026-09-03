@@ -20,7 +20,7 @@ def test_pond_design_returns_the_full_payload(
     monkeypatch.setattr(runoff_workflow, "SoilGridsAdapter", lambda: DefaultSoilAdapter("C"))
     with SAMPLE_KML.open("rb") as handle:
         job = client.post(
-            "/api/v1/analyzeContour", files={"file": (SAMPLE_KML.name, handle)}
+            "/api/v1/analyzeContour", files={"contour_map": (SAMPLE_KML.name, handle)}
         ).json()["job_id"]
     contour = client.get(f"/api/v1/jobs/{job}/result").json()["result"]
     village_id, point = contour["village_id"], contour["suggested_pond_location"]

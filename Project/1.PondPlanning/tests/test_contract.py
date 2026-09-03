@@ -121,7 +121,11 @@ def test_contour_upload_accepts_a_kml_and_returns_a_job(client: TestClient) -> N
     response = client.post(
         "/api/v1/analyzeContour",
         files={
-            "file": ("contours.kml", b"<Folder></Folder>", "application/vnd.google-earth.kml+xml")
+            "contour_map": (
+                "contours.kml",
+                b"<Folder></Folder>",
+                "application/vnd.google-earth.kml+xml",
+            )
         },
     )
 

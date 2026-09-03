@@ -29,7 +29,7 @@ def test_failure_after_village_creation_rolls_the_village_back(
     monkeypatch.setattr("app.engines.workflows.contour_analysis.write_cog", flaky_write_cog)
     with SAMPLE_KML.open("rb") as handle:
         job_id = client.post(
-            "/api/v1/analyzeContour", files={"file": (SAMPLE_KML.name, handle)}
+            "/api/v1/analyzeContour", files={"contour_map": (SAMPLE_KML.name, handle)}
         ).json()["job_id"]
     status = client.get(f"/api/v1/jobs/{job_id}").json()
     assert status["status"] == "failed"

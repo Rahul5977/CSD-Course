@@ -27,7 +27,7 @@ def design(client: TestClient, monkeypatch: pytest.MonkeyPatch) -> tuple[str, st
     monkeypatch.setattr(runoff_workflow, "SoilGridsAdapter", lambda: DefaultSoilAdapter("C"))
     with SAMPLE_KML.open("rb") as handle:
         job = client.post(
-            "/api/v1/analyzeContour", files={"file": (SAMPLE_KML.name, handle)}
+            "/api/v1/analyzeContour", files={"contour_map": (SAMPLE_KML.name, handle)}
         ).json()["job_id"]
     contour = client.get(f"/api/v1/jobs/{job}/result").json()["result"]
     accepted = client.post(
