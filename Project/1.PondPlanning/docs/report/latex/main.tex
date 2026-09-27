@@ -27,10 +27,10 @@
 \title{AI-based Village Pond Planning System}
 \subtitle{CSD Assignment 1 -- Final Technical Report}
 
-\author{Rahul Raj}
+\author{Rahul Raj\protect\\ \protect\normalfont\protect\small Student ID: 12341680}
 \affiliation{%
-  \institution{[Your Institute / Department]}
-  \city{[Your City]}
+  \institution{Indian Institute of Technology Bhilai}
+  \city{Bhilai}
   \country{India}}
 \email{rahul.raj9237@gmail.com}
 
@@ -72,13 +72,12 @@ and the CSD themes; Section~\ref{sec:results} evaluates; Section~\ref{sec:discus
 limits.
 
 \subsection{Motivation}
-Selecting a site by hand needs a topographic survey, a rainfall record, a runoff estimate and
-a storage calculation. Contour sheets are not digitised for most villages, rainfall gauges
-are sparse, and land records are not public. The questions, however, are computable: where
-does water converge, how much land drains there, how much rain falls in a normal (75\,\%
-dependable) year, and what pond does that fill? An automated tool that answers them in
-seconds, with stated uncertainty, lets an administrator shortlist sites before paying for a
-survey.
+Siting by hand needs a survey, a rainfall record and runoff and storage calculations;
+contour sheets are rarely digitised, gauges are sparse and land records are not public. Yet
+the questions are computable --- where does water converge, how much land drains there, how
+much rain falls in a 75\,\%-dependable year, what pond does that fill --- so a tool that
+answers them in seconds, with stated uncertainty, lets an administrator shortlist sites
+before paying for a survey.
 
 \subsection{Scope of the Project}
 \textbf{In scope:} selecting a land area on a map (a drawn box) or uploading a KML/KMZ
@@ -469,7 +468,7 @@ cached results under an ``Offline'' badge.
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{figures/p9-area-select.jpg}
+  \includegraphics[width=0.82\linewidth]{figures/p9-area-select.jpg}
   \caption{Application interface: a 14.5\,km$^2$ box drawn at Ralegan Siddhi (Maharashtra),
   analysed from Copernicus GLO-30 --- contours, streams, five ranked sites, the top site's
   74\,ha catchment and the results overlay (runoff 33\,490\,m$^3$, storage 20\,094\,m$^3$).}
@@ -510,21 +509,15 @@ Version control / CI & conventional commits, GitHub Actions (ruff, mypy strict, 
 \end{tabularx}
 \end{table*}
 
-\textbf{Load balancing without shared state.} The lab VMs cannot run PostgreSQL or Redis for
-this app, so replicas keep villages and jobs in memory; a user must keep reaching the replica
-that ran their analysis. nginx \texttt{ip\_hash} gives that affinity, \texttt{max\_fails}
-removes a dead replica and \texttt{proxy\_next\_upstream} retries on another --- the failover a
-single VM cannot give (one lab VM's process died twice during the project). The cost is
-stated: a failed-over user re-runs a 2\,s analysis. The Docker shape removes the limitation
-with shared PostGIS/Redis/MinIO.
-\textbf{Bulkheads over more threads.} The first lab load test showed \texttt{POST /analyzeArea}
-blocking 11--21\,s: the inline runner ran the job inside the request. A thread-pool runner with
-separate \emph{interactive} and \emph{heavy} pools returns \texttt{202} in milliseconds; the heavy
-pool is deliberately small because the hydrology loops are GIL-bound Python --- more threads
-would add waiting, not throughput; throughput comes from replicas.
-\textbf{Single-flight caching.} Ten users opening the same village all missed the rainfall
-cache and called Open-Meteo ten times (p95 43\,s). A per-key lock makes concurrent misses wait
-for one upstream call (p95 63\,ms).
+\textbf{Load balancing without shared state.} Lab replicas keep villages and jobs in memory
+(no PostgreSQL/Redis on the VMs), so nginx \texttt{ip\_hash} keeps a user on one replica,
+\texttt{max\_fails} drops a dead one and \texttt{proxy\_next\_upstream} retries elsewhere; the
+stated cost is a 2\,s re-analysis after failover. \textbf{Bulkheads over more threads.} The
+first lab load test showed \texttt{POST /analyzeArea} blocking 11--21\,s (the job ran inside the
+request); separate \emph{interactive} and \emph{heavy} thread pools return \texttt{202} in
+milliseconds, and the heavy pool stays small because the hydrology loops are GIL-bound ---
+throughput comes from replicas. \textbf{Single-flight caching} cut a cold-herd rainfall p95
+from 43\,s to 63\,ms: concurrent misses wait for one upstream call.
 
 %% =================================================================================
 \section{Results and Evaluation}\label{sec:results}
@@ -542,7 +535,7 @@ unreachable and the soil group is assumed).
 
 \begin{figure}[h]
   \centering
-  \includegraphics[width=\linewidth]{figures/p9-sample-results.jpg}
+  \includegraphics[width=0.82\linewidth]{figures/p9-sample-results.jpg}
   \caption{Example results overlay for the provided contour map: ranked sites (all
   $\ge$\,295\,m from mapped water), the top site's 103\,ha catchment, and the pond result.}
   \Description{Screenshot of the planner on the provided contour map: ranked sites away from the river, a 103 hectare catchment and the results panel.}
