@@ -16,7 +16,10 @@ serving ``web/dist`` with ``index.html`` fallback for the SPA routes.
 
 from __future__ import annotations
 
+import contextlib
 import socket
+import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -33,15 +36,63 @@ DIST = Path(__file__).resolve().parent.parent / "web" / "dist"
 # client burns its whole timeout on the AAAA record before trying IPv4 —
 # which is why reverse geocoding fell back to a coordinate name there.
 # Sorting IPv4 first is a deployment-scoped fix: app code stays untouched.
+#
+# Their resolvers (1.1.1.1, 8.8.8.8 over a lossy uplink) also fail ~40 % of
+# lookups ("Temporary failure in name resolution", measured 2026-09-27), which
+# stalled a runoff job for minutes on provider retries. So lookups are also
+# retried quickly, cached for an hour, and served stale when the resolver is
+# down — the provider hosts barely ever change address.
 _getaddrinfo = socket.getaddrinfo
+_DNS_TTL_S = 3600.0
+_dns_cache: dict[tuple[Any, ...], tuple[float, Any]] = {}
+_dns_lock = threading.Lock()
 
 
 def _ipv4_first(*args: Any, **kwargs: Any) -> Any:
-    infos = _getaddrinfo(*args, **kwargs)
-    return sorted(infos, key=lambda info: info[0] != socket.AF_INET)
+    key = (*args, *sorted(kwargs.items()))
+    with _dns_lock:
+        hit = _dns_cache.get(key)
+    if hit is not None and time.monotonic() - hit[0] < _DNS_TTL_S:
+        return hit[1]
+    error: OSError | None = None
+    for attempt in range(3):
+        try:
+            infos = sorted(
+                _getaddrinfo(*args, **kwargs), key=lambda info: info[0] != socket.AF_INET
+            )
+        except socket.gaierror as exc:  # transient resolver failure
+            error = exc
+            time.sleep(0.3 * (attempt + 1))
+            continue
+        with _dns_lock:
+            _dns_cache[key] = (time.monotonic(), infos)
+        return infos
+    if hit is not None:  # stale-if-error
+        return hit[1]
+    raise error  # type: ignore[misc]
 
 
 socket.getaddrinfo = _ipv4_first
+
+# Warm the cache for the providers in the background, so the first user does not pay.
+_PROVIDER_HOSTS = (
+    "archive-api.open-meteo.com",
+    "power.larc.nasa.gov",
+    "rest.isric.org",
+    "esa-worldcover.s3.eu-central-1.amazonaws.com",
+    "copernicus-dem-30m.s3.amazonaws.com",
+    "nominatim.openstreetmap.org",
+    "earth-search.aws.element84.com",
+)
+
+
+def _warm_dns() -> None:
+    for host in _PROVIDER_HOSTS:
+        with contextlib.suppress(OSError):
+            socket.getaddrinfo(host, 443, type=socket.SOCK_STREAM)
+
+
+threading.Thread(target=_warm_dns, name="dns-warm", daemon=True).start()
 
 
 class SPAStaticFiles(StaticFiles):
