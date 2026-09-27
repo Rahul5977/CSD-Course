@@ -120,6 +120,45 @@ def _lookup(*args: Any, **kwargs: Any) -> Any:
 
 socket.getaddrinfo = _ipv4_first
 
+
+# Python's HTTP clients give every address the *full* request timeout (12-30 s) and try
+# a dead host again on every request. From the lab some providers are unreachable
+# outright (SoilGrids) and some of an address set are (S3, CloudFront), so: 3 s per
+# address, the last address that answered first, and a short memory of hosts that just
+# failed so the next request falls back to its stated default at once.
+_create_connection = socket.create_connection
+_CONNECT_TIMEOUT_S = 3.0
+_DOWN_FOR_S = 120.0
+_down_until: dict[str, float] = {}
+
+
+def _connect(
+    address: Any, timeout: Any = socket._GLOBAL_DEFAULT_TIMEOUT, *args: Any, **kwargs: Any
+) -> Any:  # type: ignore[attr-defined]
+    host, port = address[0], address[1]
+    if time.monotonic() < _down_until.get(host, 0.0):
+        msg = f"{host} did not accept connections recently; not retrying yet"
+        raise OSError(msg)
+    error: OSError | None = None
+    for family, kind, proto, _, sockaddr in socket.getaddrinfo(host, port, type=socket.SOCK_STREAM):
+        sock = socket.socket(family, kind, proto)
+        try:
+            sock.settimeout(_CONNECT_TIMEOUT_S)
+            sock.connect(sockaddr)
+        except OSError as exc:
+            error = exc
+            sock.close()
+            continue
+        sock.settimeout(None if timeout is socket._GLOBAL_DEFAULT_TIMEOUT else timeout)  # type: ignore[attr-defined]
+        _good_ip[host] = sockaddr[0]
+        _down_until.pop(host, None)
+        return sock
+    _down_until[host] = time.monotonic() + _DOWN_FOR_S
+    raise error or OSError(f"no address for {host}")
+
+
+socket.create_connection = _connect
+
 # Warm the cache for the providers in the background, so the first user does not pay.
 _PROVIDER_HOSTS = (
     "archive-api.open-meteo.com",
