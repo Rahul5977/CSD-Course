@@ -132,7 +132,15 @@ class SoilTexture:
 
 
 class SoilGridsAdapter:
-    """ISRIC SoilGrids v2 point query, 0-30 cm mean clay and sand."""
+    """ISRIC SoilGrids v2 point query: clay and sand, thickness-weighted over 0-30 cm.
+
+    SoilGrids publishes fixed layers (0-5, 5-15, 15-30 cm, ...). An earlier version asked
+    for a ``0-30cm`` depth that does not exist, got no values back, and so assumed the
+    default soil group on every call — found by checking why every design was "low".
+    """
+
+    #: (label, thickness in cm) of the layers that make up 0-30 cm.
+    LAYERS = (("0-5cm", 5.0), ("5-15cm", 10.0), ("15-30cm", 15.0))
 
     name = "soilgrids_v2"
 
@@ -148,7 +156,7 @@ class SoilGridsAdapter:
                 ("lat", f"{lat:.4f}"),
                 ("property", "clay"),
                 ("property", "sand"),
-                ("depth", "0-30cm"),
+                *(("depth", label) for label, _ in self.LAYERS),
                 ("value", "mean"),
             ]
         )
@@ -160,13 +168,19 @@ class SoilGridsAdapter:
             with urllib.request.urlopen(request, timeout=self._timeout) as response:
                 doc = json.loads(response.read().decode("utf-8"))
             values: dict[str, float] = {}
+            weights = dict(self.LAYERS)
             for layer in doc["properties"]["layers"]:
-                depth = layer["depths"][0]
-                # SoilGrids reports g/kg scaled x10; convert to per cent.
-                values[layer["name"]] = float(depth["values"]["mean"]) / 10.0
+                # SoilGrids reports g/kg; / 10 gives per cent. Thickness-weighted mean.
+                pairs = [
+                    (float(d["values"]["mean"]) / 10.0, weights[d["label"]])
+                    for d in layer["depths"]
+                    if d["label"] in weights and d["values"].get("mean") is not None
+                ]
+                if pairs:
+                    values[layer["name"]] = sum(v * w for v, w in pairs) / sum(w for _, w in pairs)
             clay, sand = values["clay"], values["sand"]
         except Exception as exc:
-            msg = f"SoilGrids unreachable or unparseable: {exc}"
+            msg = f"SoilGrids unreachable or no data here: {exc}"
             raise UpstreamUnavailableError(msg, {"lon": lon, "lat": lat}) from exc
         return SoilTexture(
             clay, sand, hsg_from_texture(clay, sand), "ISRIC SoilGrids v2.0 (0-30 cm mean)"

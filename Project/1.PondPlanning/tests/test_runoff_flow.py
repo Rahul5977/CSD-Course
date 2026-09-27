@@ -87,3 +87,52 @@ def test_runoff_for_a_missing_catchment_job_fails_honestly(client: TestClient) -
     ).json()["job_id"]
     status = client.get(f"/api/v1/jobs/{runoff_job}").json()
     assert status["status"] == "failed" and status["error"]["code"] == "not_found"
+
+
+def test_soilgrids_query_uses_published_layers_and_weights_them(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Ask SoilGrids for its published layers and weight them by thickness.
+
+    SoilGrids has 0-5/5-15/15-30 cm layers, not a 0-30 cm one. Response shape recorded
+    from the live API at 74.41 E, 18.91 N.
+    """
+    import io
+    import json as _json
+    import urllib.request
+
+    from app.providers.landcover import SoilGridsAdapter
+
+    seen: list[str] = []
+    doc = {
+        "properties": {
+            "layers": [
+                {
+                    "name": "clay",
+                    "depths": [
+                        {"label": "0-5cm", "values": {"mean": 435}},
+                        {"label": "5-15cm", "values": {"mean": 423}},
+                        {"label": "15-30cm", "values": {"mean": 426}},
+                    ],
+                },
+                {
+                    "name": "sand",
+                    "depths": [
+                        {"label": "0-5cm", "values": {"mean": 294}},
+                        {"label": "5-15cm", "values": {"mean": 301}},
+                        {"label": "15-30cm", "values": {"mean": 291}},
+                    ],
+                },
+            ]
+        }
+    }
+
+    def fake_urlopen(request, timeout):  # type: ignore[no-untyped-def]
+        seen.append(request.full_url)
+        return io.BytesIO(_json.dumps(doc).encode())
+
+    monkeypatch.setattr(urllib.request, "urlopen", fake_urlopen)
+    texture = SoilGridsAdapter(5).texture(74.41, 18.91)
+    assert "depth=0-5cm" in seen[0] and "depth=15-30cm" in seen[0] and "0-30cm" not in seen[0]
+    assert texture.clay_pct == pytest.approx((43.5 * 5 + 42.3 * 10 + 42.6 * 15) / 30)
+    assert texture.hsg == "D" and texture.assumed is False

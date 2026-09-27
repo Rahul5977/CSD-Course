@@ -63,7 +63,8 @@ def _soil(store: ObjectStore, lon: float, lat: float, warnings: list[ResultWarni
     key = f"soil/{lat:.3f}_{lon:.3f}.json"
     if store.exists(key):
         doc = json.loads(store.get(key))
-        if time.time() - float(doc["stored_at"]) < SOIL_CACHE_TTL_S:
+        # A cached *assumption* is not data: retry the live lookup instead.
+        if not doc["assumed"] and time.time() - float(doc["stored_at"]) < SOIL_CACHE_TTL_S:
             return SoilTexture(doc["clay"], doc["sand"], doc["hsg"], doc["source"], doc["assumed"])
     try:
         texture = SoilGridsAdapter().texture(lon, lat)
@@ -78,6 +79,8 @@ def _soil(store: ObjectStore, lon: float, lat: float, warnings: list[ResultWarni
                 severity="caution",
             )
         )
+    if texture.assumed:
+        return texture  # never cache a fallback: the next design should try SoilGrids again
     store.put(
         key,
         json.dumps(

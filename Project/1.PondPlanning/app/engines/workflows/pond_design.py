@@ -177,7 +177,8 @@ class PondDesignBuilder:
             level = "low"
             reasons.append("coarse catchment (edge-limited or few cells)")
         reasons.append(
-            "DEM is contour-interpolated from a ~30 m source: planning grade, not survey grade"
+            "elevation from a ~30 m source (SRTM contours or Copernicus GLO-30): "
+            "planning grade, not survey grade"
         )
         return level, "; ".join(reasons)
 
