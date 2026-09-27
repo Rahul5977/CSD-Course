@@ -21,6 +21,7 @@ selection (the demo, a second user on the same village) free.
 from __future__ import annotations
 
 import math
+import time
 from functools import lru_cache
 
 import numpy as np
@@ -76,7 +77,11 @@ def read_glo30(
         UpstreamUnavailableError: If no tile could be read at all.
         ValidationError: If the box has no land elevation (open sea).
     """
-    data = _warp_cached(grid, base_url, "dem")
+    try:
+        data = _warp_cached(grid, base_url, "dem")
+    except TransientReadError as exc:
+        msg = "Copernicus GLO-30 tiles could not be reached (network); retry in a moment"
+        raise UpstreamUnavailableError(msg, {"bounds": list(bounds), "error": str(exc)}) from exc
     if data is None:
         msg = "Copernicus GLO-30 tiles could not be read for this area"
         raise UpstreamUnavailableError(msg, {"bounds": list(bounds)})
@@ -94,7 +99,10 @@ def read_glo30_water(grid: GridSpec, base_url: str = DEFAULT_BASE_URL) -> np.nda
     accumulates enough to be recognised as a river and siting would put a
     pond in it. The mask restores what the elevations hide.
     """
-    data = _warp_cached(grid, base_url, "wbm")
+    try:
+        data = _warp_cached(grid, base_url, "wbm")
+    except TransientReadError:
+        return None
     if data is None:
         return None
     return (data >= 1.5) & (data <= 3.5)  # nearest-resampled classes 2 (lake) and 3 (river)
@@ -115,7 +123,6 @@ def _warp_cached(grid: GridSpec, base_url: str, product: str) -> np.ndarray | No
         densify_pts=21,
     )
     dst = np.full((grid.rows, grid.cols), np.nan, dtype=np.float64)
-    dst_transform = Affine(grid.cell_size, 0, grid.x_min, 0, -grid.cell_size, grid.y_max)
     url = tile_url if product == "dem" else wbm_url
     resampling = Resampling.bilinear if product == "dem" else Resampling.nearest
     read_any = False
@@ -125,38 +132,80 @@ def _warp_cached(grid: GridSpec, base_url: str, product: str) -> np.ndarray | No
         "GDAL_HTTP_RETRY_DELAY": "1",
         "CPL_VSIL_CURL_ALLOWED_EXTENSIONS": ".tif",
     }
+    transient: list[str] = []
     with rasterio.Env(**env):
         for name in tiles_for((west, south, east, north)):
-            try:
-                with rasterio.open(url(base_url, name)) as src:
-                    # Two source cells of margin, at the tile's own resolution.
-                    mx, my = 2 * abs(src.res[0]), 2 * abs(src.res[1])
-                    window = (
-                        from_bounds(west - mx, south - my, east + mx, north + my, src.transform)
-                        .round_offsets(op="floor")
-                        .round_lengths(op="ceil")
-                    )
-                    window = window.intersection(
-                        rasterio.windows.Window(0, 0, src.width, src.height)
-                    )
-                    block = src.read(1, window=window, out_dtype="float64")
-                    if src.nodata is not None:
-                        block[block == src.nodata] = np.nan
-                    tile = np.full_like(dst, np.nan)
-                    reproject(
-                        source=block,
-                        destination=tile,
-                        src_transform=src.window_transform(window),
-                        src_crs=src.crs,
-                        dst_transform=dst_transform,
-                        dst_crs=f"EPSG:{grid.epsg}",
-                        src_nodata=np.nan,
-                        dst_nodata=np.nan,
-                        resampling=resampling,
-                    )
-                    fill = np.isnan(dst) & ~np.isnan(tile)
-                    dst[fill] = tile[fill]
-                    read_any = True
-            except (RasterioIOError, rasterio.errors.WindowError):
+            tile = _read_tile(url(base_url, name), (west, south, east, north), grid, resampling)
+            if isinstance(tile, str):
+                transient.append(f"{name}: {tile}")
+                continue
+            if tile is None:
                 continue  # open sea has no tile; a missing aux file is not fatal
+            fill = np.isnan(dst) & ~np.isnan(tile)
+            dst[fill] = tile[fill]
+            read_any = True
+    if not read_any and transient:
+        # Raised, not returned: lru_cache must not remember a network blip.
+        raise TransientReadError("; ".join(transient)[:300])
     return dst if read_any else None
+
+
+class TransientReadError(Exception):
+    """Every tile read failed on the network (DNS, connect, timeout) — worth retrying later."""
+
+
+_TRANSIENT = ("resolve host", "couldn't connect", "could not connect", "timed out", "timeout")
+
+
+def _read_tile(
+    path: str,
+    bounds: tuple[float, float, float, float],
+    grid: GridSpec,
+    resampling: Resampling,
+    attempts: int = 3,
+) -> np.ndarray | str | None:
+    """Warp one tile onto ``grid``.
+
+    Returns the array; ``None`` when the tile does not exist (open sea, no aux
+    file); or the error text when the network failed on every attempt. GDAL's
+    libcurl does its own DNS, and the lab VMs' resolvers drop ~40 % of lookups,
+    so a transient failure is retried with a short backoff; a 404 is not.
+    """
+    west, south, east, north = bounds
+    dst_transform = Affine(grid.cell_size, 0, grid.x_min, 0, -grid.cell_size, grid.y_max)
+    error = ""
+    for attempt in range(attempts):
+        try:
+            with rasterio.open(path) as src:
+                # Two source cells of margin, at the tile's own resolution.
+                mx, my = 2 * abs(src.res[0]), 2 * abs(src.res[1])
+                window = (
+                    from_bounds(west - mx, south - my, east + mx, north + my, src.transform)
+                    .round_offsets(op="floor")
+                    .round_lengths(op="ceil")
+                )
+                window = window.intersection(rasterio.windows.Window(0, 0, src.width, src.height))
+                block = src.read(1, window=window, out_dtype="float64")
+                if src.nodata is not None:
+                    block[block == src.nodata] = np.nan
+                tile = np.full((grid.rows, grid.cols), np.nan, dtype=np.float64)
+                reproject(
+                    source=block,
+                    destination=tile,
+                    src_transform=src.window_transform(window),
+                    src_crs=src.crs,
+                    dst_transform=dst_transform,
+                    dst_crs=f"EPSG:{grid.epsg}",
+                    src_nodata=np.nan,
+                    dst_nodata=np.nan,
+                    resampling=resampling,
+                )
+                return tile
+        except rasterio.errors.WindowError:
+            return None
+        except RasterioIOError as exc:
+            error = str(exc)
+            if not any(marker in error.lower() for marker in _TRANSIENT):
+                return None
+            time.sleep(1.0 * (attempt + 1))
+    return error or "unreadable"

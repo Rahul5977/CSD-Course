@@ -155,3 +155,19 @@ def test_out_of_range_area_is_a_stable_422(client: TestClient) -> None:
 def test_malformed_box_is_rejected(client: TestClient) -> None:
     response = client.post("/api/v1/analyzeArea", json={"bbox": [78.5, 10.4, 78.4, 10.5]})
     assert response.status_code == 422
+
+
+def test_a_network_blip_is_not_cached(tiles: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """A transient read failure is a 503 now and a success on the next try — never cached."""
+    import app.providers.copernicus_dem as cop
+    from app.domain.errors import UpstreamUnavailableError
+
+    grid = grid_for_bounds((78.491, 10.401, 78.519, 10.429), 30.0)  # a grid no other test cached
+    real = cop._read_tile
+    monkeypatch.setattr(cop, "_read_tile", lambda *a, **k: "Could not resolve host")
+    with pytest.raises(UpstreamUnavailableError):
+        read_glo30((78.491, 10.401, 78.519, 10.429), grid, str(tiles))
+    assert cop.read_glo30_water(grid, str(tiles)) is None
+    monkeypatch.setattr(cop, "_read_tile", real)
+    raster = read_glo30((78.491, 10.401, 78.519, 10.429), grid, str(tiles))
+    assert not np.isnan(raster.data).all()
