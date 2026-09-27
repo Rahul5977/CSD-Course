@@ -23,7 +23,8 @@ hectares is a river — the structure becomes a dam with a spillway passing
 almost everything, which is not a village pond. The bounds are parameters.
 
 Hard constraints first (slope ≤ 15 %, on the drainage network, not within
-a margin of the grid edge where the catchment would be truncated, and not
+a margin of the grid edge, **with a complete catchment** — no cell of its
+upstream area on the map edge, else area and runoff are lower bounds — and not
 on an **existing watercourse** — any channel cell whose upstream area is at
 or beyond the plateau's upper "too large" bound is a river, and is excluded
 outright rather than merely scored down: with no better cell available the
@@ -46,7 +47,7 @@ from numpy.typing import NDArray
 from scipy.ndimage import distance_transform_edt
 
 from app.engines.hydrology.conditioning import NEIGHBOURS
-from app.engines.hydrology.flow import FlowModel
+from app.engines.hydrology.flow import FlowModel, edge_fed
 
 FloatArray = NDArray[np.float64]
 
@@ -92,6 +93,8 @@ class SitingResult:
     river_cells_excluded: int = 0
     max_upstream_area_ha: float = 0.0
     river_buffer_m: float = 0.0
+    edge_fed_excluded: int = 0
+    catchments_complete: bool = True
 
 
 def impoundment(
@@ -142,8 +145,21 @@ def rank_sites(
     inside: NDArray[np.bool_] | None = None,
     area_bounds_ha: tuple[float, float, float, float] = DEFAULT_AREA_BOUNDS_HA,
     river_buffer_m: float = 200.0,
+    require_complete_catchment: bool = True,
+    water: NDArray[np.bool_] | None = None,
 ) -> SitingResult:
-    """Score every eligible drainage cell and return the top-N distinct sites."""
+    """Score every eligible drainage cell and return the top-N distinct sites.
+
+    With ``require_complete_catchment`` a cell whose upstream area reaches the
+    map edge is excluded (its catchment and runoff would be lower bounds) —
+    unless that leaves nothing, in which case the constraint is relaxed and
+    ``catchments_complete`` is False so the caller can say so.
+
+    ``water`` is mapped standing or running water (e.g. the GLO-30 water body
+    mask). It is treated exactly like a major channel: excluded, with the
+    flood-belt buffer around it — a DEM that flattens a river hides it from
+    the accumulation test, and the mask puts it back.
+    """
     w = dict(DEFAULT_WEIGHTS if weights is None else weights)
     slope_pct = np.tan(np.radians(slope_deg)) * 100.0
     # An existing watercourse is a hard exclusion, not a low score: any channel
@@ -155,21 +171,35 @@ def rank_sites(
     # plateau's ideal band (``area_bounds_ha[2]``) is a candidate either.
     area_ha_all = model.upstream_area_m2() / 1e4
     river = stream & (area_ha_all >= area_bounds_ha[3])
+    major = stream & (area_ha_all >= area_bounds_ha[2])
+    if water is not None:
+        river = river | water
+        major = major | water
     max_upstream_ha = float(area_ha_all[stream].max()) if bool(stream.any()) else 0.0
     eligible = stream & (slope_pct <= max_slope_pct) & ~river
-    major = stream & (area_ha_all >= area_bounds_ha[2])
     if river_buffer_m > 0 and bool(major.any()):
         cell = model.filled.grid.cell_size
         dist_to_major = distance_transform_edt(~major) * cell
         flood_belt = dist_to_major < river_buffer_m
-        river_cells = int(np.count_nonzero(eligible & flood_belt)) + int(np.count_nonzero(river))
+        river_cells = int(np.count_nonzero(eligible & flood_belt)) + int(
+            np.count_nonzero(river & stream)
+        )
         eligible &= ~flood_belt
     else:
-        river_cells = int(np.count_nonzero(river))
+        river_cells = int(np.count_nonzero(river & stream))
     m = edge_margin_cells
     eligible[:m, :] = eligible[-m:, :] = eligible[:, :m] = eligible[:, -m:] = False
     if inside is not None:
         eligible &= inside
+    edge_excluded, complete = 0, True
+    if require_complete_catchment and bool(eligible.any()):
+        truncated = edge_fed(model.filled, model.receiver)
+        whole = eligible & ~truncated
+        edge_excluded = int(np.count_nonzero(eligible & truncated))
+        if whole.any():
+            eligible = whole
+        else:
+            complete, edge_excluded = False, 0
     rr, cc = np.nonzero(eligible)
     if rr.size == 0:
         return SitingResult(
@@ -243,6 +273,8 @@ def rank_sites(
         river_cells_excluded=river_cells,
         max_upstream_area_ha=max_upstream_ha,
         river_buffer_m=river_buffer_m,
+        edge_fed_excluded=edge_excluded,
+        catchments_complete=complete,
     )
 
 

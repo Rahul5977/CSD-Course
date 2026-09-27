@@ -12,6 +12,9 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 
+import numpy as np
+from numpy.typing import NDArray
+
 from app.domain.raster import Raster
 
 ProgressCallback = Callable[[int, str], None]
@@ -44,6 +47,8 @@ class DEMProduct:
     method: str
     warnings: tuple[tuple[str, str, str], ...] = ()  # (code, message, severity)
     details: dict[str, Any] = field(default_factory=dict)
+    #: Mapped water (lakes, rivers) on the DEM grid, when the source publishes it.
+    water: NDArray[np.bool_] | None = None
 
 
 class DEMProvider(Protocol):

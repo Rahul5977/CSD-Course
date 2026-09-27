@@ -1,6 +1,7 @@
 import type { FeatureCollection, MultiPolygon, Polygon } from "geojson";
 import { useCallback, useEffect, useState } from "react";
 import { api, staleState } from "./api";
+import { AreaPanel, type Box } from "./components/AreaPanel";
 import { CatchmentPanel } from "./components/CatchmentPanel";
 import { LandPanel } from "./components/LandPanel";
 import { LayerControl } from "./components/LayerControl";
@@ -70,6 +71,10 @@ export default function App() {
   const [rationale, setRationale] = useState<string | null>(null);
   const [land, setLand] = useState<AvailableLand | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [jobSource, setJobSource] = useState<"area" | "upload" | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selection, setSelection] = useState<Box | null>(null);
+  const [flyTo, setFlyTo] = useState<{ lon: number; lat: number } | null>(null);
 
   // --- the analyses: each one result · busy · error · progress ---
   const catchment = useTask<CatchmentResult>();
@@ -101,7 +106,7 @@ export default function App() {
   }, [refreshVillages]);
 
   const { set: setCatchment, reset: resetCatchment } = catchment;
-  const { reset: resetDesign } = design;
+  const { reset: resetDesign, run: runDesignTask } = design;
   const { reset: resetSuitability } = suitability;
 
   /** Switch village: clear everything derived from the previous one. */
@@ -116,18 +121,25 @@ export default function App() {
     setSelected(id);
   }, [resetCatchment, resetDesign, resetSuitability]);
 
-  // When the upload job finishes: select its village and show its sites + catchment.
+  // When an analysis finishes (upload or map selection): select its village, show its
+  // sites + catchment, and size the pond at the top site straight away, so location,
+  // catchment and expected water volume are all on the map with no further click.
   useEffect(() => {
     if (job?.status !== "succeeded" || !jobId) return;
     api.contourResult(jobId).then(async (result) => {
       await refreshVillages();
       selectVillage(result.village_id);
+      setSelection(null);
       setSites(result.candidate_sites);
       setSiting(result.siting);
       setRationale(result.location_rationale);
-      if (result.catchment) setCatchment(result.catchment);
+      if (result.catchment) {
+        setCatchment(result.catchment);
+        const outlet = result.catchment.snapped_point;
+        void runDesignTask((onProgress) => api.pondDesign(result.village_id, outlet, 0.75, onProgress));
+      }
     });
-  }, [job?.status, jobId, refreshVillages, selectVillage, setCatchment]);
+  }, [job?.status, jobId, refreshVillages, selectVillage, setCatchment, runDesignTask]);
 
   // Selecting a village loads its summary, layers, boundary, streams, sites and land.
   useEffect(() => {
@@ -209,9 +221,18 @@ export default function App() {
         <button className="btn btn-sm lang" onClick={() => setLang(lang === "en" ? "hi" : "en")} aria-label="Toggle language" lang={lang === "en" ? "hi" : "en"}>{lang === "en" ? "हिन्दी" : "EN"}</button>
       </header>
       <aside className="rail" aria-label="Analysis panels">
-        <UploadPanel job={job} hasVillages={villages.length > 0} onSubmitted={(id) => { setBounds(null); resetCatchment(); setSites([]); setJobId(id); }} />
+        <AreaPanel
+          job={jobSource === "area" ? job : null}
+          selecting={selecting}
+          selection={selection}
+          onStartSelect={() => { setSelection(null); setSelecting(true); }}
+          onCancel={() => setSelecting(false)}
+          onFlyTo={(lon, lat) => setFlyTo({ lon, lat })}
+          onSubmitted={(id) => { setBounds(null); resetCatchment(); resetDesign(); setSites([]); setJobSource("area"); setJobId(id); }}
+        />
+        <UploadPanel job={jobSource === "upload" ? job : null} hasVillages={villages.length > 0} onSubmitted={(id) => { setBounds(null); resetCatchment(); resetDesign(); setSites([]); setJobSource("upload"); setJobId(id); }} />
         {loadError && <div className="callout callout-critical"><b>Could not load</b> — {loadError}</div>}
-        {!villages.length && !job && <div className="empty"><span>No analysed areas yet. Upload a contour map to begin.</span></div>}
+        {!villages.length && !job && <div className="empty"><span>No analysed areas yet. Draw an area on the map or upload a contour map to begin.</span></div>}
         {summary && <SummaryCard summary={summary} />}
         <SitesPanel sites={sites} method={siting} rationale={rationale} onPick={(s) => delineate(s.location)} />
         {selected && <CatchmentPanel catchment={catchment.value} busy={catchment.busy} error={catchment.error} progress={catchment.progress} onDesign={designPond} designBusy={design.busy} />}
@@ -222,8 +243,11 @@ export default function App() {
         {layers.length > 0 && <LayerControl layers={layers} visible={visible} onToggle={toggle} contourInterval={contourInterval} onInterval={setContourInterval} />}
       </aside>
       <main className="mapwrap">
-        <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment.value} sites={sites} land={land?.geojson ?? null} pond={pond} onClick={delineate} />
-        {selected && !catchment.value && !catchment.busy && <span className="hint" role="status">Click anywhere on the map for the catchment of that point</span>}
+        <MapView layers={layers} visible={visible} boundary={boundary} bounds={bounds} contours={contours} streams={streams} catchment={catchment.value} sites={sites} land={land?.geojson ?? null} pond={pond} onClick={delineate}
+          selecting={selecting} selection={selection} flyTo={flyTo}
+          onSelect={(box) => { setSelection(box); setSelecting(false); }} />
+        {selecting && <span className="hint" role="status">Click one corner of the land, then the opposite corner</span>}
+        {!selecting && selected && !catchment.value && !catchment.busy && <span className="hint" role="status">Click anywhere on the map for the catchment of that point</span>}
         <ResultsOverlay site={outlet} catchment={catchment.value} rain={rain.value} design={design.value} villageName={summary?.village.name ?? null} />
       </main>
     </div>

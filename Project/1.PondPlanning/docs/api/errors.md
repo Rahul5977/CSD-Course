@@ -5,6 +5,7 @@ Generated from `GET /api/v1/meta/errors` (the same table the handlers use), so i
 
 | code | HTTP | exception | meaning |
 |---|---|---|---|
+| `area_out_of_range` | 422 | `AreaOutOfRangeError` | A map-selected area is too small to hold a catchment or too large to analyse fast. |
 | `crs_error` | 422 | `CRSError` | An array or geometry reached a computation in the wrong CRS. |
 | `elevation_not_found` | 422 | `ElevationNotFoundError` | No elevation could be read from an uploaded contour map. |
 | `forbidden` | 403 | `AuthorizationError` | The caller is known but lacks the role. |

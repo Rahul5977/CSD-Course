@@ -191,3 +191,35 @@ def test_the_flood_belt_around_a_major_channel_is_excluded_too() -> None:
     assert result.candidates == [], "every stream cell is inside the trunk's flood belt"
     assert result.river_cells_excluded > 0
     assert result.river_buffer_m == 100.0
+
+
+def test_mapped_water_is_excluded_with_its_flood_belt() -> None:
+    """Mapped water is a hard exclusion with the same flood belt as a major channel.
+
+    A DEM that flattens a river hides it from the accumulation test; a water mask puts
+    it back. Water over the lower valley axis: no candidate on it or within the buffer,
+    and the siting still finds the upper valley.
+    """
+    dem = v_valley()
+    model = build_flow_model(fill_depressions(dem).filled)
+    slope = slope_degrees(dem).data
+    twi = topographic_wetness_index(dem, model.accumulation).data
+    stream = stream_mask(model, 50 * GRID.cell_area)
+    water = np.zeros(GRID.shape, dtype=bool)
+    water[25:, 28:33] = True
+    buffer_m = 50.0
+    result = rank_sites(
+        model,
+        slope,
+        twi,
+        stream,
+        top_n=3,
+        suppression_radius_m=50.0,
+        river_buffer_m=buffer_m,
+        water=water,
+    )
+    assert result.candidates, "the upper valley is still available"
+    for c in result.candidates:
+        assert not water[c.row, c.col]
+        assert c.row < 25 - buffer_m / CELL, "outside the water's flood belt"
+    assert result.river_cells_excluded > 0

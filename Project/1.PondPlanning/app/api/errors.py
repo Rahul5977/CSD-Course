@@ -11,12 +11,14 @@ from __future__ import annotations
 import logging
 
 from fastapi import FastAPI, Request, status
+from fastapi.encoders import jsonable_encoder
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from app.api.backpressure import BackpressureError
 from app.core.security import AuthenticationError, AuthorizationError
 from app.domain.errors import (
+    AreaOutOfRangeError,
     CRSError,
     DomainError,
     ElevationNotFoundError,
@@ -40,6 +42,7 @@ DOC_BASE = "https://github.com/Rahul5977/AI-BasedPondAnalysis/blob/main/docs/api
 STATUS_BY_ERROR: dict[type[DomainError], int] = {
     NotFoundError: status.HTTP_404_NOT_FOUND,
     ValidationError: status.HTTP_400_BAD_REQUEST,
+    AreaOutOfRangeError: status.HTTP_422_UNPROCESSABLE_CONTENT,
     GeometryError: status.HTTP_422_UNPROCESSABLE_CONTENT,
     CRSError: status.HTTP_422_UNPROCESSABLE_CONTENT,
     UnsupportedInputError: status.HTTP_422_UNPROCESSABLE_CONTENT,
@@ -96,7 +99,9 @@ def register_exception_handlers(app: FastAPI) -> None:
             title="The request body or parameters failed validation",
             status=status.HTTP_422_UNPROCESSABLE_CONTENT,
             code="request_validation_error",
-            detail={"errors": exc.errors()},
+            # jsonable_encoder: a model validator's ValueError sits in ``ctx`` as
+            # an exception object, which is not JSON — stringify it, don't 500.
+            detail={"errors": jsonable_encoder(exc.errors(), custom_encoder={Exception: str})},
             instance=request.url.path,
         )
         return JSONResponse(

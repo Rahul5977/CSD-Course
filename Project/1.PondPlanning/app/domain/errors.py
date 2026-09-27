@@ -43,6 +43,18 @@ class ValidationError(DomainError):
     code = "validation_error"
 
 
+class AreaOutOfRangeError(ValidationError):
+    """A map-selected area is too small to hold a catchment or too large to analyse fast.
+
+    The bounds are configuration (``POND_AREA_MIN_KM2`` / ``POND_AREA_MAX_KM2``),
+    and the upper one is the stress limit that keeps one request from
+    monopolising a lab VM: a 25 km² box at 30 m is ~28 000 cells, analysed in
+    seconds; a district would be minutes and hundreds of MB.
+    """
+
+    code = "area_out_of_range"
+
+
 class UnsupportedInputError(DomainError):
     """The uploaded file parsed, but this system cannot analyse it."""
 

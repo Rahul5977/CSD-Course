@@ -36,7 +36,7 @@ from app.engines.hydrology.conditioning import fill_depressions
 from app.engines.hydrology.flow import build_flow_model, stream_mask, threshold_cells
 from app.engines.hydrology.siting import SitingResult, rank_sites
 from app.engines.hydrology.streams import extract_links
-from app.engines.terrain.adapters import ContourKMLAdapter
+from app.engines.terrain.adapters import ContourKMLAdapter, ProviderTileAdapter
 from app.engines.terrain.derived import curvatures, topographic_wetness_index
 from app.engines.terrain.layers import dem_asset_out, layer_descriptors
 from app.engines.terrain.surfaces import (
@@ -48,6 +48,7 @@ from app.engines.terrain.surfaces import (
 from app.engines.workflows.catchment import catchment_result
 from app.engines.workflows.saga import Saga, SagaError, Step
 from app.engines.workflows.terrain_products import PRODUCTS, SITING_KEY, STREAMS_KEY
+from app.providers.copernicus_dem import DEFAULT_BASE_URL, read_glo30, read_glo30_water
 from app.providers.geocoding import PlaceName, fallback_name
 from app.providers.raster_io import write_cog
 from app.providers.storage import ObjectStore
@@ -83,6 +84,7 @@ class WorkflowContext:
     siting_top_n: int = 5
     siting_river_buffer_m: float = 200.0
     rainfall: Any = None  # FallbackChain; typed loosely to keep this module free of providers' HTTP
+    dem_tile_base_url: str = DEFAULT_BASE_URL
 
 
 def _boundary_geojson(details: dict[str, Any]) -> dict[str, Any]:
@@ -152,12 +154,23 @@ def _run(
     ctx: WorkflowContext,
     progress: Callable[[int, str], None],
 ) -> dict[str, Any]:
-    progress(2, "loading upload")
-    payload = ctx.store.get(str(params["upload_key"]))
-    filename = str(params.get("filename", "upload.kml"))
-
     # ---- terrain ------------------------------------------------------
-    adapter = ContourKMLAdapter(payload, filename, default_floor_m=ctx.default_floor_m)
+    # The one branch on input kind: which DEMProvider adapter. Everything after
+    # this line is the same validated chain for an upload and a map selection.
+    adapter: ContourKMLAdapter | ProviderTileAdapter
+    if params.get("bbox"):
+        west, south, east, north = (float(v) for v in params["bbox"])
+        filename = "map selection"
+        adapter = ProviderTileAdapter(
+            (west, south, east, north),
+            read=lambda bounds, grid: read_glo30(bounds, grid, ctx.dem_tile_base_url),
+            read_water=lambda grid: read_glo30_water(grid, ctx.dem_tile_base_url),
+        )
+    else:
+        progress(2, "loading upload")
+        payload = ctx.store.get(str(params["upload_key"]))
+        filename = str(params.get("filename", "upload.kml"))
+        adapter = ContourKMLAdapter(payload, filename, default_floor_m=ctx.default_floor_m)
     product = adapter.produce(progress)
     details = product.details
     dem = product.raster
@@ -191,6 +204,7 @@ def _run(
         top_n=ctx.siting_top_n,
         rise_m=ctx.siting_rise_m,
         river_buffer_m=ctx.siting_river_buffer_m,
+        water=product.water,
     )
 
     # ---- persistence as a saga (P6) ------------------------------------
@@ -379,7 +393,12 @@ def _run(
                 severity="info",
             )
         )
-    if siting.max_upstream_area_ha >= siting.area_bounds_ha[2] or siting.river_cells_excluded:
+    water_cells = 0 if product.water is None else int(product.water.sum())
+    if (
+        siting.max_upstream_area_ha >= siting.area_bounds_ha[2]
+        or siting.river_cells_excluded
+        or water_cells
+    ):
         excluded = (
             f" {siting.river_cells_excluded} drainage cells on the channel or inside its "
             f"{siting.river_buffer_m:g} m flood belt were excluded from siting outright."
@@ -391,7 +410,14 @@ def _run(
                 code="existing_watercourse",
                 message=(
                     f"An existing watercourse crosses this area (largest channel drains "
-                    f"{siting.max_upstream_area_ha:,.0f} ha, beyond the "
+                    f"{siting.max_upstream_area_ha:,.0f} ha"
+                    + (
+                        f"; {water_cells * grid.cell_area / 1e4:,.1f} ha mapped as water by the "
+                        "DEM's water body mask"
+                        if water_cells
+                        else ""
+                    )
+                    + f", beyond the "
                     f"{siting.area_bounds_ha[1]:g}-{siting.area_bounds_ha[2]:g} ha ideal for a "
                     f"village pond). Candidate sites avoid the river and keep "
                     f"{siting.river_buffer_m:g} m clear of its flood belt — impounding it "
@@ -399,6 +425,16 @@ def _run(
                     f"tributaries instead.{excluded}"
                 ),
                 severity="info",
+            )
+        )
+    if not siting.catchments_complete and siting.candidates:
+        warnings.append(
+            ResultWarning(
+                code="no_complete_catchment",
+                message="Every candidate's catchment extends beyond the selected area, so the "
+                "ranked sites' catchments and volumes are lower bounds. Select a larger area "
+                "that includes the land upslope of the site.",
+                severity="caution",
             )
         )
     rel = product.provenance.vertical_accuracy_relative_m
@@ -421,15 +457,21 @@ def _run(
         provider=adapter.name,
         elevation_source=str(details["elevation_source"]),
         contour_count=int(details["contour_count"]),
-        contour_interval=QuantityOut.from_domain(
-            Quantity(float(details["contour_interval_m"]), Unit.METRE, None, "median level gap")
+        contour_interval=(
+            None
+            if details.get("contour_interval_m") is None
+            else QuantityOut.from_domain(
+                Quantity(float(details["contour_interval_m"]), Unit.METRE, None, "median level gap")
+            )
         ),
         grid_resolution=QuantityOut.from_domain(
             Quantity(
                 product.working_resolution_m,
                 Unit.METRE,
                 None,
-                f"mean contour spacing {float(details['contour_spacing_m']):.0f} m / 4, "
+                str(details["resolution_note"])
+                if "resolution_note" in details
+                else f"mean contour spacing {float(details['contour_spacing_m']):.0f} m / 4, "
                 f"floored at {product.provenance.native_resolution_m:g} m",
             )
         ),
@@ -542,6 +584,8 @@ def _run(
         upstream_area_bounds_ha=list(siting.area_bounds_ha),
         candidates_considered=siting.considered,
         river_cells_excluded=siting.river_cells_excluded,
+        edge_fed_cells_excluded=siting.edge_fed_excluded,
+        catchments_complete=siting.catchments_complete,
         max_upstream_area_ha=siting.max_upstream_area_ha,
         river_buffer=QuantityOut.from_domain(
             Quantity(

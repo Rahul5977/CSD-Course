@@ -106,7 +106,7 @@ class TerrainPreparationResult(BaseModel):
     provider: str
     elevation_source: str
     contour_count: int
-    contour_interval: QuantityOut
+    contour_interval: QuantityOut | None = None
     grid_resolution: QuantityOut
     utm_epsg: int
     bounds: list[float] = Field(description="[min_lon, min_lat, max_lon, max_lat]")

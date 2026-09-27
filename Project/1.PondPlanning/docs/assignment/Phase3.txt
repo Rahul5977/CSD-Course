@@ -1,2 +1,23 @@
-//Build end to end 
-and submit final report.
+VIVA & Demo
+VIVA and Demo sessions will be conducted on 29th 30th septembet.
+The detailed schedule will be announced separately.
+
+Required Submissions
+Final Report
+GitHub Repository URL
+Final Working Front-end URL
+A demo public youtube link of max 5 minutes explaining the working, algorithm and providing demo of the website
+Report Guidelines
+Report Template: https://www.overleaf.com/read/pzfvwbrjswhz#d2b10f
+The provided template must be used. The report formatting must not be changed.
+The template is indicative; sections may be added or omitted as required.
+Sections marked [MUST BE INCLUDED] are mandatory.
+Maximum report length: 10 pages.
+Additional information, if required, should be included in the Appendix.
+Expected System Requirements
+A fully working front-end.
+An option to select the land area on a map.
+Generation of results based on the selected land area.
+Results must include: Suggested pond location, Catchment area and Expected water volume that can be collected
+The pond location, catchment area, and expected water volume must be overlaid and visualized on the map.
+The solution should be fast and functional, with appropriate consideration for stress, scaling, and system limitations within the four systems provided

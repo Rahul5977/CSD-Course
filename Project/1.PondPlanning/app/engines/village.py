@@ -75,11 +75,15 @@ def village_summary(record: VillageRecord, asset: DEMAssetRecord) -> VillageSumm
 
     relief = float(stats["relief"])
     relief_pct = 100.0 * (2**0.5) * rel / relief if relief else None
+    selected = asset.provider == "copernicus_glo30"
     warnings = [
         ResultWarning(
-            code="boundary_is_upload_extent",
+            code="boundary_is_selection" if selected else "boundary_is_upload_extent",
             message=(
-                "The boundary is the extent drawn in the uploaded contour map, not an "
+                "The boundary is the area selected on the map, not an administrative "
+                "village boundary."
+                if selected
+                else "The boundary is the extent drawn in the uploaded contour map, not an "
                 "administrative village boundary."
             ),
             severity="info",

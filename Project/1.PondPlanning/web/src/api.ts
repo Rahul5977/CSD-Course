@@ -100,6 +100,14 @@ export const api = {
     body.append("contour_map", file);
     return fetch(`${BASE}/analyzeContour`, { method: "POST", body }).then(json<JobAccepted>);
   },
+  /** Phase 3: analyse a box drawn on the map (elevation from Copernicus GLO-30). */
+  analyzeArea(bbox: [number, number, number, number]): Promise<JobAccepted> {
+    return fetch(`${BASE}/analyzeArea`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...idem() },
+      body: JSON.stringify({ bbox }),
+    }).then(json<JobAccepted>);
+  },
   job(id: string): Promise<JobStatus> {
     return fetch(`${BASE}/jobs/${id}`).then(json<JobStatus>);
   },

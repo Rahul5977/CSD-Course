@@ -20,6 +20,7 @@ from dataclasses import dataclass
 import numpy as np
 from numpy.typing import NDArray
 
+from app.core.config import get_settings
 from app.domain.errors import UpstreamUnavailableError
 from app.domain.soil import HSG, hsg_from_texture
 
@@ -56,9 +57,9 @@ class WorldCoverAdapter:
 
     name = "esa_worldcover_2021"
 
-    def __init__(self, timeout_s: float = 60.0) -> None:
+    def __init__(self, timeout_s: float | None = None) -> None:
         """GDAL's HTTP timeout is set through the environment inside :meth:`window`."""
-        self._timeout = timeout_s
+        self._timeout = timeout_s or get_settings().landcover_timeout_s
 
     def window(self, bounds_lonlat: tuple[float, float, float, float]) -> LandCoverWindow:
         """Read the classes covering ``bounds``. Raises ``UpstreamUnavailableError`` on failure."""
@@ -135,9 +136,9 @@ class SoilGridsAdapter:
 
     name = "soilgrids_v2"
 
-    def __init__(self, timeout_s: float = 60.0) -> None:
+    def __init__(self, timeout_s: float | None = None) -> None:
         """SoilGrids is slow (tens of seconds); this runs in the worker, cached."""
-        self._timeout = timeout_s
+        self._timeout = timeout_s or get_settings().landcover_timeout_s
 
     def texture(self, lon: float, lat: float) -> SoilTexture:
         """Fetch clay/sand and classify. Raises ``UpstreamUnavailableError`` on failure."""

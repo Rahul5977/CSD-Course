@@ -25,4 +25,9 @@ def build_rainfall_provider(settings: Settings, store: ObjectStore) -> FallbackC
         Cached(CircuitBreaker(Retry(OpenMeteoAdapter()), failures=3, reset_s=300), store, ttl),
         Cached(CircuitBreaker(Retry(NASAPowerAdapter()), failures=3, reset_s=300), store, ttl),
     ]
+    # Last resort: the checked-in record. It refuses any point more than 0.5° from
+    # where it was recorded, so it can only ever answer for its own area.
+    recorded = Path(settings.rainfall_recorded_path)
+    if recorded.exists():
+        live.append(RecordedAdapter(recorded))
     return FallbackChain(live)

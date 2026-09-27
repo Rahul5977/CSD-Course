@@ -10,7 +10,7 @@ from __future__ import annotations
 from typing import Annotated, Literal, get_args
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.schemas.common import GeoJSONFeatureCollection, QuantityOut, ResultWarning
 from app.schemas.terrain import TerrainPreparationResult
@@ -261,6 +261,16 @@ class SitingMethod(BaseModel):
         "beyond the plateau's upper bound, plus every cell inside the flood-belt buffer "
         "around channels beyond the ideal band",
     )
+    edge_fed_cells_excluded: int = Field(
+        0,
+        description="Drainage cells excluded because their upstream area reaches the map "
+        "edge (catchment truncated, so area and runoff would be lower bounds)",
+    )
+    catchments_complete: bool = Field(
+        True,
+        description="False when no site with a complete catchment existed and the "
+        "constraint was relaxed",
+    )
     river_buffer: QuantityOut | None = Field(
         None,
         description="Flood-belt setback: no candidate within this distance of a channel "
@@ -273,6 +283,30 @@ class SitingMethod(BaseModel):
         "the size of the biggest watercourse in the map",
     )
     description: str
+
+
+class AreaAnalysisRequest(BaseModel):
+    """A land area selected on the map: a lon/lat box, analysed from Copernicus GLO-30.
+
+    The Phase 3 counterpart of the contour upload. The result has the same shape
+    (:class:`ContourAnalysisResult`) because it is the same chain behind a
+    different :class:`~app.domain.dem.DEMProvider` adapter.
+    """
+
+    bbox: list[float] = Field(
+        min_length=4,
+        max_length=4,
+        description="[min_lon, min_lat, max_lon, max_lat] in EPSG:4326",
+        examples=[[81.2814, 21.2398, 81.3126, 21.2636]],
+    )
+
+    @model_validator(mode="after")
+    def _ordered(self) -> AreaAnalysisRequest:
+        west, south, east, north = self.bbox
+        if not (-180 <= west < east <= 180 and -60 <= south < north <= 60):
+            msg = "bbox must be [min_lon, min_lat, max_lon, max_lat] within GLO-30 land coverage"
+            raise ValueError(msg)
+        return self
 
 
 class ContourAnalysisResult(BaseModel):
@@ -289,11 +323,16 @@ class ContourAnalysisResult(BaseModel):
     village_id: UUID
     village_name: str
     contour_count: int
-    elevation_source: Literal["z_coordinate", "extended_data", "placemark_name"] = Field(
-        description="Which parsing strategy succeeded, so the result is auditable"
+    elevation_source: Literal["z_coordinate", "extended_data", "placemark_name", "dem_raster"] = (
+        Field(
+            description="Which parsing strategy succeeded, so the result is auditable; "
+            "``dem_raster`` for a map-selected area read from Copernicus GLO-30"
+        )
     )
     elevation_range: dict[str, QuantityOut]
-    contour_interval: QuantityOut
+    contour_interval: QuantityOut | None = Field(
+        None, description="Median gap between contour levels; null for a map-selected area"
+    )
     bounds: list[float] = Field(description="[min_lon, min_lat, max_lon, max_lat]")
     utm_epsg: int = Field(description="Derived from the uploaded file's centroid")
     grid_resolution: QuantityOut = Field(

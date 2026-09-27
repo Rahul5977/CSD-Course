@@ -103,6 +103,36 @@ def flow_accumulation(filled: Raster, receiver: IntArray) -> IntArray:
     return acc.reshape(filled.grid.shape)
 
 
+def edge_fed(filled: Raster, receiver: IntArray, margin: int = 1) -> NDArray[np.bool_]:
+    """Cells whose upstream area includes a cell on the grid edge (or beside nodata).
+
+    Such a cell's catchment is *truncated*: the map boundary cuts through it, so
+    its upstream area — and every volume computed from it — is a lower bound.
+    Same single pass as :func:`flow_accumulation`, with OR instead of +: in
+    descending filled elevation (a topological order), a cell passes its flag
+    to its receiver. O(n log n) for the sort, O(n) for the pass.
+    """
+    z = filled.data
+    rows, cols = z.shape
+    flag = np.zeros(z.shape, dtype=bool)
+    flag[:margin, :] = flag[-margin:, :] = flag[:, :margin] = flag[:, -margin:] = True
+    nodata = np.isnan(z)
+    if nodata.any():  # a nodata hole is an edge too: unknown terrain drains in
+        grown = nodata.copy()
+        grown[1:, :] |= nodata[:-1, :]
+        grown[:-1, :] |= nodata[1:, :]
+        grown[:, 1:] |= nodata[:, :-1]
+        grown[:, :-1] |= nodata[:, 1:]
+        flag |= grown & ~nodata
+    flat = flag.ravel()
+    flat_receiver = receiver.ravel()
+    for index in np.argsort(-z.ravel(), kind="stable"):
+        target = flat_receiver[index]
+        if target >= 0 and flat[index]:
+            flat[target] = True
+    return flat.reshape(rows, cols)
+
+
 def build_flow_model(filled: Raster) -> FlowModel:
     """Direction + accumulation in one object."""
     direction, receiver = flow_direction(filled)

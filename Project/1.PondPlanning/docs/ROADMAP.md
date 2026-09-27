@@ -238,3 +238,29 @@ Added for the **Phase 2 submission**, which is graded separately (§4):
 | 41 | Workspace redesign — six panel states, screenshot sheet | UX 1 | P8 | ☑ `p8-proto-states.jpg`, `p8-app-workspace.jpg`, `p8-app-design.jpg` |
 | 42 | Lighthouse accessibility report ≥ 90 on `/` and `/app` | Frontend 1 | P8 | ☑ 100 / 100 — `docs/figures/p8-lighthouse-*.html` |
 | 38 | Data-source licence register (SRTM · GMTED2010 · HydroSHEDS · Mapzen) | Docs report 3 | P7 | ☑ `docs/LICENSES.md` |
+
+## 9. P9 — Phase 3 final submission (added 2026-09-27)
+
+`docs/assignment/Phase3.txt` was updated after v1.0: viva and demo on **29–30 September**. The brief
+now fixes the submission set and adds one functional requirement the v1.0 build did not meet.
+
+### What Phase 3 asks for → where it lands
+
+| Phase 3 requirement | v1.0 status | P9 work |
+|---|---|---|
+| Final report on the Overleaf template, ≤ 10 pages + appendix, `[MUST BE INCLUDED]` sections | 36 kB Markdown report, ~30 pages | `docs/report/latex/` — condensed to 10 pages: HLD, LLD, algorithms, strategies, validation, scaling; long material to the appendix |
+| GitHub repository URL | public | links re-checked |
+| Final working front-end URL | lbsys1 (`:4269`) **unreachable** since the VM went down | redeploy on the lab VMs; update every link |
+| ≤ 5 min public YouTube demo | none | `docs/DEMO_VIDEO.md` — timed 5-minute script; the user records and uploads |
+| **Option to select the land area on a map** | ✗ — terrain only from an uploaded KML | **draw a rectangle on the map → `POST /analyzeArea`** → Copernicus GLO-30 DEM for that box (`ProviderTileAdapter`, the stub the port was designed for) → the same validated chain |
+| Results for the selected area: suggested pond location, catchment area, expected water volume | location + catchment automatic; volume only after a manual "Design pond" click | the design (SCS-CN daily runoff at 75 % dependability + storage) runs **automatically** on the top site when an analysis finishes |
+| Location, catchment and volume overlaid on the map | overlay exists | the overlay shows all three as soon as the chain finishes |
+| Fast, functional; stress, scaling and limits within the four systems | Locust on Docker only | area-size limits + DEM cache; replicas on the lab VMs; Locust against the deployed URL; a scaling section in the report |
+
+### G9 — exit criteria
+- [ ] Draw a box in the browser → pond location, catchment and expected water volume on the map, with no other input (`p9-area-select.jpg`)
+- [ ] `POST /analyzeArea` has unit and API tests; a golden check that the GLO-30 path and the KML path agree on the sample AOI (`p9-dem-crosscheck`)
+- [ ] Area limits enforced (too small / too large → 422 with a stable code); the DEM window is cached
+- [ ] Working front-end URL on the lab VMs; `make e2e` green against it; Locust numbers from the deployed system
+- [ ] LaTeX report ≤ 10 pages + appendix; `docs/DEMO_VIDEO.md`; README and landing links verified by a link check
+- [ ] `make check` green · commit · push · `docs/progress/DAY_09.md`

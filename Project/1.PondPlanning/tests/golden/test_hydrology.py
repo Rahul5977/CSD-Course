@@ -9,6 +9,7 @@ from app.engines.hydrology.conditioning import fill_depressions
 from app.engines.hydrology.flow import (
     build_flow_model,
     donors,
+    edge_fed,
     flow_accumulation,
     flow_direction,
     stream_mask,
@@ -92,3 +93,23 @@ def test_donor_lists_invert_the_receivers() -> None:
     assert list(idx[offsets[cell] : offsets[cell + 1]]) == [5 * cols + 11]
     acc = flow_accumulation(model.filled, model.receiver)
     assert acc[5, 10] == cols - 10
+
+
+def test_edge_fed_marks_truncated_catchments_only() -> None:
+    """Only cells whose upstream area touches the map edge are flagged.
+
+    A hill in the middle of the grid: water runs outward, so the summit and its
+    neighbours have complete (tiny) catchments, and every border cell is edge-fed.
+    A plane tilted east is the opposite case: every row's flow starts at the west
+    edge, so every cell's catchment is truncated.
+    """
+    rr, cc = np.mgrid[0 : GRID.rows, 0 : GRID.cols]
+    hill = Raster(GRID, 200.0 - np.hypot(rr - 10, cc - 15))
+    model = build_flow_model(fill_depressions(hill).filled)
+    truncated = edge_fed(model.filled, model.receiver)
+    assert not truncated[8:13, 13:18].any(), "summit area drains nothing from the edge"
+    assert truncated[0, :].all() and truncated[-1, :].all()
+    assert truncated[:, 0].all() and truncated[:, -1].all()
+
+    tilted = build_flow_model(fill_depressions(plane(gradient_x=-0.01)).filled)
+    assert edge_fed(tilted.filled, tilted.receiver).all()

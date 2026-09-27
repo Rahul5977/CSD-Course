@@ -32,6 +32,7 @@ def build_context(settings: Settings) -> WorkflowContext:
         siting_rise_m=settings.siting_rise_m,
         siting_top_n=settings.siting_top_n,
         siting_river_buffer_m=settings.siting_river_buffer_m,
+        dem_tile_base_url=settings.dem_tile_base_url,
     )
 
 

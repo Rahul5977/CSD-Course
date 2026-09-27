@@ -85,6 +85,12 @@ class Settings(BaseSettings):
     # overridden per request, and none of them is specific to any one input
     # map. See docs/ROADMAP.md §6, "derive everything from the input".
     max_upload_mb: int = Field(default=64, ge=1, le=512)
+    # Map-selected areas (POST /analyzeArea): the DEM source and the size limits.
+    # 25 km² at 30 m is ~28 000 cells — seconds on one core; the cap is the
+    # stress guard that keeps one request from monopolising a lab VM.
+    dem_tile_base_url: str = "https://copernicus-dem-30m.s3.amazonaws.com"
+    area_min_km2: float = Field(default=0.25, gt=0)
+    area_max_km2: float = Field(default=25.0, gt=0)
     pour_point_snap_radius_m: float = Field(default=150.0, gt=0)
     # Finest DEM cell size when an upload does not identify its source DEM.
     default_dem_floor_m: float = Field(default=10.0, gt=0)
@@ -108,6 +114,10 @@ class Settings(BaseSettings):
     # Rainfall: live providers (Open-Meteo → NASA POWER, cached in the object
     # store) or the recorded fixture (tests, CI, offline demo).
     rainfall_source: Literal["live", "recorded"] = "live"
+    # Land-cover (WorldCover) and soil (SoilGrids) lookups. Both degrade to a stated
+    # default on failure; a short timeout on a host that cannot reach them keeps a
+    # pond design at seconds instead of minutes.
+    landcover_timeout_s: float = Field(default=60.0, gt=0)
     rainfall_recorded_path: str = "tests/fixtures/open_meteo_khapri_1981_2025.json"
     rainfall_years: int = Field(default=30, ge=5, le=50)
     rainfall_cache_ttl_s: float = Field(default=86_400.0, gt=0)

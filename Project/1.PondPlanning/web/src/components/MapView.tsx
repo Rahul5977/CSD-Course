@@ -16,6 +16,20 @@ interface Props {
   land: FeatureCollection | null;
   pond: { lon: number; lat: number; lengthM: number; widthM: number } | null;
   onClick: (point: PourPoint) => void;
+  /** Box-select mode (Phase 3): two clicks on opposite corners define the land area. */
+  selecting?: boolean;
+  selection?: [number, number, number, number] | null;
+  onSelect?: (box: [number, number, number, number]) => void;
+  /** Recentre request from the place search; a new object each time. */
+  flyTo?: { lon: number; lat: number } | null;
+}
+
+function boxFeature([w, s, e, n]: [number, number, number, number]): Feature {
+  return { type: "Feature", properties: {}, geometry: { type: "Polygon", coordinates: [[[w, s], [e, s], [e, n], [w, n], [w, s]]] } };
+}
+
+function ordered(a: [number, number], b: [number, number]): [number, number, number, number] {
+  return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
 }
 
 /** Axis-aligned rectangle of L×W metres centred on a lon/lat, as a GeoJSON polygon. */
@@ -46,11 +60,27 @@ function setGeoJSON(m: MLMap, id: string, data: FeatureCollection | Feature) {
 }
 
 /** The map workspace. Raster layers come straight from the API's layer list; vectors are GeoJSON. */
-export function MapView({ layers, visible, boundary, bounds, contours, streams, catchment, sites, land, pond, onClick }: Props) {
+export function MapView({ layers, visible, boundary, bounds, contours, streams, catchment, sites, land, pond, onClick, selecting = false, selection = null, onSelect, flyTo = null }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const map = useRef<MLMap | null>(null);
   const clickHandler = useRef(onClick);
   clickHandler.current = onClick;
+  const selectingRef = useRef(selecting);
+  selectingRef.current = selecting;
+  const selectHandler = useRef(onSelect);
+  selectHandler.current = onSelect;
+  const corner = useRef<[number, number] | null>(null);
+  // isStyleLoaded() is false while tiles stream in; the style itself is ready after "load".
+  const styleReady = useRef(false);
+
+  const drawSelection = (m: MLMap, box: [number, number, number, number] | null) => {
+    if (!styleReady.current) return;
+    setGeoJSON(m, "selection", box ? boxFeature(box) : EMPTY);
+    if (!m.getLayer("vec-selection-fill")) {
+      m.addLayer({ id: "vec-selection-fill", type: "fill", source: "selection", paint: { "fill-color": "#ffd166", "fill-opacity": 0.12 } });
+      m.addLayer({ id: "vec-selection-line", type: "line", source: "selection", paint: { "line-color": "#ffd166", "line-width": 2.5, "line-dasharray": [3, 2] } });
+    }
+  };
 
   useEffect(() => {
     if (!container.current || map.current) return;
@@ -68,11 +98,29 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
     });
     m.addControl(new maplibregl.NavigationControl(), "top-right");
     m.addControl(new maplibregl.ScaleControl({ unit: "metric" }));
-    m.on("click", (e: MapMouseEvent) => clickHandler.current({ lon: e.lngLat.lng, lat: e.lngLat.lat }));
+    m.on("click", (e: MapMouseEvent) => {
+      const here: [number, number] = [e.lngLat.lng, e.lngLat.lat];
+      if (!selectingRef.current) {
+        clickHandler.current({ lon: here[0], lat: here[1] });
+        return;
+      }
+      if (!corner.current) {
+        corner.current = here;
+        drawSelection(m, ordered(here, here));
+        return;
+      }
+      const box = ordered(corner.current, here);
+      corner.current = null;
+      drawSelection(m, box);
+      selectHandler.current?.(box);
+    });
+    m.on("mousemove", (e: MapMouseEvent) => {
+      if (selectingRef.current && corner.current) drawSelection(m, ordered(corner.current, [e.lngLat.lng, e.lngLat.lat]));
+    });
     m.getCanvas().style.cursor = "crosshair";
     // First frame: the container is laid out by CSS grid after construction, so force a
     // resize once the style is in; a ResizeObserver keeps it right on phone rotation.
-    m.once("load", () => m.resize());
+    m.once("load", () => { styleReady.current = true; m.resize(); });
     const observer = new ResizeObserver(() => m.resize());
     observer.observe(container.current);
     map.current = m;
@@ -181,6 +229,20 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
     if (m.isStyleLoaded()) apply();
     else m.once("load", apply);
   }, [boundary, contours, streams, catchment, sites, land, pond, visible]);
+
+  // Selection box from the parent (redraw after a style reload, clear on cancel).
+  useEffect(() => {
+    const m = map.current;
+    if (!m) return;
+    if (!selecting) corner.current = null;
+    m.getCanvas().style.cursor = selecting ? "cell" : "crosshair";
+    if (styleReady.current) drawSelection(m, selection);
+    else m.once("load", () => drawSelection(m, selection));
+  }, [selecting, selection]);
+
+  useEffect(() => {
+    if (map.current && flyTo) map.current.flyTo({ center: [flyTo.lon, flyTo.lat], zoom: 14, duration: 1200 });
+  }, [flyTo]);
 
   useEffect(() => {
     if (map.current && bounds) {

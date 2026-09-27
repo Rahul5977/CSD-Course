@@ -2084,6 +2084,66 @@
         }
       }
     },
+    "/api/v1/analyzeArea": {
+      "post": {
+        "tags": [
+          "analysis"
+        ],
+        "summary": "Analyse a land area selected on the map",
+        "description": "Pond location, catchment and terrain for a box drawn on the map (Phase 3).\n\nElevation comes from the Copernicus GLO-30 DEM for exactly that box; the\nrest is the ``/analyzeContour`` chain unchanged, and so is the result\n(poll the job, then ``GET /analysis/results/contour/{job_id}``). The box\nmust be between ``POND_AREA_MIN_KM2`` and ``POND_AREA_MAX_KM2``, else\n``422 area_out_of_range``.",
+        "operationId": "analyze_area_api_v1_analyzeArea_post",
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AreaAnalysisRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobAccepted"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/exports/{export_id}.{export_format}": {
       "get": {
         "tags": [
@@ -2143,6 +2203,34 @@
   },
   "components": {
     "schemas": {
+      "AreaAnalysisRequest": {
+        "properties": {
+          "bbox": {
+            "items": {
+              "type": "number"
+            },
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Bbox",
+            "description": "[min_lon, min_lat, max_lon, max_lat] in EPSG:4326",
+            "examples": [
+              [
+                81.2814,
+                21.2398,
+                81.3126,
+                21.2636
+              ]
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "bbox"
+        ],
+        "title": "AreaAnalysisRequest",
+        "description": "A land area selected on the map: a lon/lat box, analysed from Copernicus GLO-30.\n\nThe Phase 3 counterpart of the contour upload. The result has the same shape\n(:class:`ContourAnalysisResult`) because it is the same chain behind a\ndifferent :class:`~app.domain.dem.DEMProvider` adapter."
+      },
       "AvailableLandResponse": {
         "properties": {
           "village_id": {
@@ -2390,10 +2478,11 @@
             "enum": [
               "z_coordinate",
               "extended_data",
-              "placemark_name"
+              "placemark_name",
+              "dem_raster"
             ],
             "title": "Elevation Source",
-            "description": "Which parsing strategy succeeded, so the result is auditable"
+            "description": "Which parsing strategy succeeded, so the result is auditable; ``dem_raster`` for a map-selected area read from Copernicus GLO-30"
           },
           "elevation_range": {
             "additionalProperties": {
@@ -2403,7 +2492,15 @@
             "title": "Elevation Range"
           },
           "contour_interval": {
-            "$ref": "#/components/schemas/QuantityOut"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuantityOut"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Median gap between contour levels; null for a map-selected area"
           },
           "bounds": {
             "items": {
@@ -2469,7 +2566,6 @@
           "contour_count",
           "elevation_source",
           "elevation_range",
-          "contour_interval",
           "bounds",
           "utm_epsg",
           "grid_resolution",
@@ -4208,6 +4304,18 @@
             "description": "Drainage cells excluded as an existing river: channel cells at or beyond the plateau's upper bound, plus every cell inside the flood-belt buffer around channels beyond the ideal band",
             "default": 0
           },
+          "edge_fed_cells_excluded": {
+            "type": "integer",
+            "title": "Edge Fed Cells Excluded",
+            "description": "Drainage cells excluded because their upstream area reaches the map edge (catchment truncated, so area and runoff would be lower bounds)",
+            "default": 0
+          },
+          "catchments_complete": {
+            "type": "boolean",
+            "title": "Catchments Complete",
+            "description": "False when no site with a complete catchment existed and the constraint was relaxed",
+            "default": true
+          },
           "river_buffer": {
             "anyOf": [
               {
@@ -4481,7 +4589,14 @@
             "title": "Contour Count"
           },
           "contour_interval": {
-            "$ref": "#/components/schemas/QuantityOut"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuantityOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "grid_resolution": {
             "$ref": "#/components/schemas/QuantityOut"
@@ -4543,7 +4658,6 @@
           "provider",
           "elevation_source",
           "contour_count",
-          "contour_interval",
           "grid_resolution",
           "utm_epsg",
           "bounds",

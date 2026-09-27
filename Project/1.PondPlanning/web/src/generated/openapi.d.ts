@@ -855,6 +855,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/analyzeArea": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Analyse a land area selected on the map
+         * @description Pond location, catchment and terrain for a box drawn on the map (Phase 3).
+         *
+         *     Elevation comes from the Copernicus GLO-30 DEM for exactly that box; the
+         *     rest is the ``/analyzeContour`` chain unchanged, and so is the result
+         *     (poll the job, then ``GET /analysis/results/contour/{job_id}``). The box
+         *     must be between ``POND_AREA_MIN_KM2`` and ``POND_AREA_MAX_KM2``, else
+         *     ``422 area_out_of_range``.
+         */
+        post: operations["analyze_area_api_v1_analyzeArea_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/exports/{export_id}.{export_format}": {
         parameters: {
             query?: never;
@@ -879,6 +905,27 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AreaAnalysisRequest
+         * @description A land area selected on the map: a lon/lat box, analysed from Copernicus GLO-30.
+         *
+         *     The Phase 3 counterpart of the contour upload. The result has the same shape
+         *     (:class:`ContourAnalysisResult`) because it is the same chain behind a
+         *     different :class:`~app.domain.dem.DEMProvider` adapter.
+         */
+        AreaAnalysisRequest: {
+            /**
+             * Bbox
+             * @description [min_lon, min_lat, max_lon, max_lat] in EPSG:4326
+             * @example [
+             *       81.2814,
+             *       21.2398,
+             *       81.3126,
+             *       21.2636
+             *     ]
+             */
+            bbox: number[];
+        };
         /**
          * AvailableLandResponse
          * @description FR3: eligible excavation land, with the constraint set that produced it.
@@ -1004,15 +1051,16 @@ export interface components {
             contour_count: number;
             /**
              * Elevation Source
-             * @description Which parsing strategy succeeded, so the result is auditable
+             * @description Which parsing strategy succeeded, so the result is auditable; ``dem_raster`` for a map-selected area read from Copernicus GLO-30
              * @enum {string}
              */
-            elevation_source: "z_coordinate" | "extended_data" | "placemark_name";
+            elevation_source: "z_coordinate" | "extended_data" | "placemark_name" | "dem_raster";
             /** Elevation Range */
             elevation_range: {
                 [key: string]: components["schemas"]["QuantityOut"];
             };
-            contour_interval: components["schemas"]["QuantityOut"];
+            /** @description Median gap between contour levels; null for a map-selected area */
+            contour_interval?: components["schemas"]["QuantityOut"] | null;
             /**
              * Bounds
              * @description [min_lon, min_lat, max_lon, max_lat]
@@ -1968,6 +2016,18 @@ export interface components {
              * @default 0
              */
             river_cells_excluded: number;
+            /**
+             * Edge Fed Cells Excluded
+             * @description Drainage cells excluded because their upstream area reaches the map edge (catchment truncated, so area and runoff would be lower bounds)
+             * @default 0
+             */
+            edge_fed_cells_excluded: number;
+            /**
+             * Catchments Complete
+             * @description False when no site with a complete catchment existed and the constraint was relaxed
+             * @default true
+             */
+            catchments_complete: boolean;
             /** @description Flood-belt setback: no candidate within this distance of a channel whose upstream area exceeds the plateau's ideal band — a bund there would face the large channel's spates */
             river_buffer?: components["schemas"]["QuantityOut"] | null;
             /**
@@ -2121,7 +2181,7 @@ export interface components {
             elevation_source: string;
             /** Contour Count */
             contour_count: number;
-            contour_interval: components["schemas"]["QuantityOut"];
+            contour_interval?: components["schemas"]["QuantityOut"] | null;
             grid_resolution: components["schemas"]["QuantityOut"];
             /** Utm Epsg */
             utm_epsg: number;
@@ -3580,6 +3640,41 @@ export interface operations {
         requestBody: {
             content: {
                 "multipart/form-data": components["schemas"]["Body_analyze_contour_api_v1_analyzeContour_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JobAccepted"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    analyze_area_api_v1_analyzeArea_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "Idempotency-Key"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AreaAnalysisRequest"];
             };
         };
         responses: {

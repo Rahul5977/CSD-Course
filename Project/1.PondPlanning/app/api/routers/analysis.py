@@ -21,9 +21,11 @@ from app.api.backpressure import accept_or_429
 from app.api.deps import ReposDep, RunnerDep, SettingsDep, StoreDep
 from app.api.uploads import read_contour_upload
 from app.domain.errors import NotFoundError
+from app.engines.terrain.adapters import check_area
 from app.jobs.celery_app import HEAVY, INTERACTIVE
 from app.jobs.tasks import CATCHMENT, CONTOUR_ANALYSIS, POND_DESIGN, RUNOFF, SUITABILITY
 from app.schemas.analysis import (
+    AreaAnalysisRequest,
     CatchmentRequest,
     CatchmentResult,
     ContourAnalysisResult,
@@ -255,6 +257,43 @@ def analyze_contour(
     )
     runner.submit(CONTOUR_ANALYSIS, job.id)
     return _accepted(str(job.id), 35)
+
+
+@contour_router.post(
+    "/analyzeArea",
+    response_model=JobAccepted,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Analyse a land area selected on the map",
+)
+def analyze_area(
+    payload: AreaAnalysisRequest,
+    repos: ReposDep,
+    runner: RunnerDep,
+    settings: SettingsDep,
+    idempotency_key: IdempotencyKey = None,
+) -> JobAccepted:
+    """Pond location, catchment and terrain for a box drawn on the map (Phase 3).
+
+    Elevation comes from the Copernicus GLO-30 DEM for exactly that box; the
+    rest is the ``/analyzeContour`` chain unchanged, and so is the result
+    (poll the job, then ``GET /analysis/results/contour/{job_id}``). The box
+    must be between ``POND_AREA_MIN_KM2`` and ``POND_AREA_MAX_KM2``, else
+    ``422 area_out_of_range``.
+    """
+    bbox = (payload.bbox[0], payload.bbox[1], payload.bbox[2], payload.bbox[3])
+    check_area(bbox, settings.area_min_km2, settings.area_max_km2)
+    return _submit(
+        repos,
+        runner,
+        settings,
+        kind=CONTOUR_ANALYSIS_KIND,
+        task=CONTOUR_ANALYSIS,
+        queue=HEAVY,
+        params={"bbox": list(bbox), "filename": "map selection"},
+        village_id=None,
+        key=idempotency_key,
+        seconds=20,
+    )
 
 
 # Result-shape routes. These exist so the OpenAPI document — and therefore the
