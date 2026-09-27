@@ -18,15 +18,16 @@ a quiet room; do one 10-second test and listen back.
 1. Close every other app and notification (*Focus → Do Not Disturb*).
 2. Chrome, full-screen (`Ctrl+Cmd+F`), zoom **100 %**, no bookmarks bar (`Cmd+Shift+B`).
 3. Open these tabs, in this order:
-   - Tab 1 — `http://10.1.75.53:4272/` (landing page)
-   - Tab 2 — `http://10.1.75.53:4272/app` (planner)
+   - Tab 1 — `http://localhost:8765/` (landing page)
+   - Tab 2 — `http://localhost:8765/app` (planner)
    - Tab 3 — `docs/report/Final_Report.pdf`, opened at **Figure 3** (the flowchart, page 5)
    - Tab 4 — the same PDF at **Algorithm 1** (page 6)
-   - Tab 5 — `http://10.1.75.53:4272/docs` (Swagger)
+   - Tab 5 — `http://localhost:8765/docs` (Swagger)
 4. **Warm up the site** so nothing is slow on camera: in Tab 2 do one full run of Scene 2
    (search Ralegan Siddhi, draw, analyse), then **reload the page** so it starts clean.
-5. Check it is alive: `curl http://10.1.75.53:4272/lb/health` → `ok`. Off campus, run
-   `make serve-single` locally and use `http://localhost:8080` instead.
+5. **Run it on your Mac** (your Mac reaches every data source; the lab network often cannot):
+   in the project folder run `make serve-single`, leave that terminal open, and check
+   `http://localhost:8765/health` shows `ok`. Stop it afterwards with `Ctrl+C`.
 
 **Rehearse once with a timer.** If you are over 5:00, drop the last paragraph of Scene 3
 ("Last step: water") and the second paragraph of Scene 4 — the rest still covers every item.
@@ -154,7 +155,7 @@ about 3 to 4 km across. Point the mouse at the green km² badge.]
 3. **Upload** to YouTube:
    - Title: *AI-based Village Pond Planning System — Demo (CSD Assignment 1, Rahul Raj, 12341680)*
    - Visibility: **Public** (the brief asks for a public link, not unlisted).
-   - Description: the GitHub link and the site URL `http://10.1.75.53:4272`.
+   - Description: the GitHub link, and the deployed URL `http://10.1.75.53:4272` (campus network).
 4. Open the video in a private/incognito window to confirm anyone can watch it.
 5. Send me the link. I'll put it into the report (`\videourl` in
    `docs/report/latex/main.tex`), rebuild the PDF, and add it to the README.

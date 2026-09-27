@@ -42,3 +42,4 @@ ds-bundle/
 .design-sync/node_modules
 web/ds/dist/
 
+.local-store/

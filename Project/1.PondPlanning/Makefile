@@ -103,8 +103,8 @@ check: lint typecheck test  ## Everything CI runs
 e2e:  ## Smoke-test every real route against a running deployment (BASE=http://host:port, default :8000)
 	$(UV) python scripts/e2e_smoke.py $${BASE:-http://localhost:8000}
 
-serve-single:  ## API + built SPA from one uvicorn process (for hosts without Docker; run `make web-build` first)
-	POND_PERSISTENCE=memory POND_JOB_RUNNER=inline POND_OBJECT_STORE=local POND_RAINFALL_SOURCE=recorded $(UV) uvicorn scripts.single_server:app --host 0.0.0.0 --port $${PORT:-8080}
+serve-single:  ## API + built SPA from one process on http://localhost:8765 — any village, live data (run `make web-build` first)
+	POND_PERSISTENCE=memory POND_JOB_RUNNER=thread POND_OBJECT_STORE=local POND_LOCAL_STORE_DIR=$${POND_LOCAL_STORE_DIR:-.local-store} POND_RAINFALL_SOURCE=live POND_LANDCOVER_TIMEOUT_S=$${POND_LANDCOVER_TIMEOUT_S:-20} $(UV) uvicorn scripts.single_server:app --host 127.0.0.1 --port $${PORT:-8765}
 
 api-dev:  ## Run the API locally without Docker (in-memory persistence, inline jobs, local store)
 	POND_PERSISTENCE=memory POND_JOB_RUNNER=inline POND_OBJECT_STORE=local $(UV) uvicorn app.main:app --reload --port 8000

@@ -112,6 +112,11 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | Lab URL times out from a laptop but works from another lab VM | Packet loss on the laptop's route into the campus network (measured 4/10 connects from a laptop, 10/10 inside the lab) | Use the campus wired network; the e2e client retries connects |
 | Lab replica died / URL returns nothing | No supervisor on the VMs | `infra/lab/run_replica.sh` restarts uvicorn in a loop; start it with `ssh -f <vm> 'cd ~/pond/app && PORT=4000 exec setsid infra/lab/run_replica.sh >> ~/pond/server.log 2>&1 < /dev/null'` |
 
+### Run it on one machine without Docker
+
+`make web-build` once, then `make serve-single` → **http://localhost:8765** (planner at `/app`,
+API docs at `/docs`). Live data for any village; in-memory state, thread-pool jobs.
+
 ### Deployment on the four lab machines (no Docker)
 
 The lab VMs are unprivileged containers, so each replica is one process (`infra/lab/run_replica.sh`:
