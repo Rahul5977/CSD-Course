@@ -52,7 +52,12 @@ class Settings(BaseSettings):
     # minio), a laptop without Docker (memory, inline, local) and CI. Choosing
     # adapters here, not with conditionals in the code, is what keeps that true.
     persistence: Literal["postgres", "memory"] = "postgres"
-    job_runner: Literal["celery", "inline"] = "celery"
+    job_runner: Literal["celery", "inline", "thread"] = "celery"
+    # ThreadJobRunner pool sizes (one-process deployments). Heavy jobs are GIL-bound
+    # Python loops, so more heavy threads add waiting, not throughput: scale out
+    # with replicas instead.
+    thread_workers_interactive: int = Field(default=8, ge=1, le=64)
+    thread_workers_heavy: int = Field(default=2, ge=1, le=16)
     object_store: Literal["minio", "local"] = "minio"
     local_store_dir: str = "data/cache/store"
 

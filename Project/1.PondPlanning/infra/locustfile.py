@@ -1,11 +1,16 @@
-"""Locust load test: 50 users clicking catchments on the seeded village (P6, evidence row 27).
+"""Locust load test: planners clicking catchments, and administrators selecting new areas.
 
     uv run locust -f infra/locustfile.py --headless -u 50 -r 10 -t 60s --host http://localhost:8000
 
-Each user picks a random point inside the village extent, submits a
-catchment job with an Idempotency-Key, polls to completion and records the
-end-to-end time as a custom metric, so the p95 reported is the number an
-administrator waits — not just the 202.
+``Planner`` (P6, evidence row 27) picks a random point inside the seeded
+village, submits a catchment job with an Idempotency-Key, polls to completion
+and records the end-to-end time as a custom metric, so the p95 reported is the
+number an administrator waits — not just the 202.
+
+``AreaSelector`` (Phase 3) draws a *new* 2-6 km² box near the seeded village
+on every iteration and waits for the full analysis (GLO-30 read, hydrology,
+siting, catchment). Every box is different, so no cache helps: this is the
+stress case for one lab VM.
 """
 
 from __future__ import annotations
@@ -64,10 +69,56 @@ class Planner(HttpUser):
 
     @task(2)
     def rainfall(self) -> None:
-        """A cached read."""
-        self.client.get("/api/v1/rainfall/statistics?lon=81.297&lat=21.2517", name="GET rainfall")
+        """A cached read at the village centroid."""
+        w, s, e, n = self.bounds
+        self.client.get(
+            f"/api/v1/rainfall/statistics?lon={(w + e) / 2:.4f}&lat={(s + n) / 2:.4f}",
+            name="GET rainfall",
+        )
 
     @task(1)
     def layers(self) -> None:
         """Layer list."""
         self.client.get(f"/api/v1/terrain/{self.village_id}/layers", name="GET layers")
+
+
+class AreaSelector(HttpUser):
+    """An administrator drawing a new box on the map and waiting for the result."""
+
+    wait_time = between(2.0, 5.0)
+    weight = 1  # Planner has the default weight 1 too; set -u to scale both
+
+    def on_start(self) -> None:
+        """Anchor the boxes on the seeded village so they stay on land."""
+        ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+        ring = ring[0] if isinstance(ring[0][0], list) else ring
+        self.lon = sum(p[0] for p in ring) / len(ring)
+        self.lat = sum(p[1] for p in ring) / len(ring)
+
+    @task
+    def analyse_area(self) -> None:
+        """Submit a fresh box, poll to completion, record the end-to-end time."""
+        side = random.uniform(0.015, 0.022)  # ~1.6-2.4 km a side: 2.5-6 km²
+        west = self.lon + random.uniform(-0.05, 0.05)
+        south = self.lat + random.uniform(-0.05, 0.05)
+        started = time.perf_counter()
+        accepted = self.client.post(
+            "/api/v1/analyzeArea",
+            json={"bbox": [west, south, west + side, south + side]},
+            headers={"Idempotency-Key": str(uuid.uuid4())},
+            name="POST analyzeArea",
+        )
+        if accepted.status_code != 202:
+            return
+        job_id = accepted.json()["job_id"]
+        status = "queued"
+        for _ in range(120):
+            status = self.client.get(f"/api/v1/jobs/{job_id}", name="GET job").json()["status"]
+            if status in {"succeeded", "failed"}:
+                break
+            time.sleep(1.0)
+        events.request.fire(
+            request_type="E2E", name="area analysis end-to-end",
+            response_time=(time.perf_counter() - started) * 1000, response_length=0,
+            exception=None if status == "succeeded" else RuntimeError(status),
+        )  # fmt: skip

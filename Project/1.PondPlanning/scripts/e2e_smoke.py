@@ -27,7 +27,11 @@ BASE = sys.argv[1].rstrip("/") if len(sys.argv) > 1 else "http://localhost:8000"
 API = f"{BASE}/api/v1"
 SAMPLE = Path(__file__).resolve().parent.parent / "data" / "samples" / "contours_1m.kml"
 
-client = httpx.Client(timeout=120.0)
+# Connect retries only (a dropped SYN on a lossy campus route), never on a response:
+# a wrong answer still fails the check.
+client = httpx.Client(
+    timeout=httpx.Timeout(120.0, connect=8.0), transport=httpx.HTTPTransport(retries=5)
+)
 results: list[tuple[str, bool, str]] = []
 
 
@@ -101,6 +105,37 @@ def main() -> int:
     check(
         "POST /analyzeContour (garbage) -> 4xx problem",
         400 <= r.status_code < 500,
+        f"{r.status_code} {r.json().get('code', '')}",
+    )
+
+    # -- the Phase 3 route: a land area selected on the map ------------
+    # The sample's own extent, so this also runs where only one area is expected;
+    # nothing in the route knows it is the sample.
+    r = client.post(
+        f"{API}/analyzeArea",
+        json={"bbox": contour["bounds"]},
+        headers={"Idempotency-Key": str(uuid.uuid4())},
+    )
+    check(
+        "POST /analyzeArea -> 202", r.status_code == 202, f"job {r.json().get('job_id', '?')[:8]}"
+    )
+    area_job = poll_job(r.json()["job_id"])
+    check("area job succeeds", area_job["status"] == "succeeded", f"stage {area_job.get('stage')}")
+    r = client.get(f"{API}/analysis/results/contour/{r.json()['job_id']}")
+    area = r.json()
+    area_catchment = area.get("catchment") or {}
+    check(
+        "area result: site + complete catchment from GLO-30",
+        r.status_code == 200
+        and area["terrain"]["provider"] == "copernicus_glo30"
+        and bool(area_catchment)
+        and area["siting"]["catchments_complete"],
+        f"catchment {area_catchment.get('area', {}).get('display', '-')}",
+    )
+    r = client.post(f"{API}/analyzeArea", json={"bbox": [78.0, 10.0, 78.4, 10.4]})
+    check(
+        "POST /analyzeArea (too large) -> 422 area_out_of_range",
+        r.status_code == 422 and r.json().get("code") == "area_out_of_range",
         f"{r.status_code} {r.json().get('code', '')}",
     )
 

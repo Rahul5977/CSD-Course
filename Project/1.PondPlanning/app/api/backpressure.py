@@ -29,11 +29,16 @@ class BackpressureError(DomainError):
 
 def accept_or_429(settings: Settings, queue: str) -> None:
     """Raise :class:`BackpressureError` when the queue is over the limit."""
-    if settings.job_runner != "celery":
+    if settings.job_runner == "inline":
         return
-    from app.providers.queues import queue_depth
+    if settings.job_runner == "thread":
+        from app.jobs.runner import ThreadJobRunner
 
-    depth = queue_depth(settings.redis_url, queue)
+        depth = ThreadJobRunner.pending(queue)
+    else:
+        from app.providers.queues import queue_depth
+
+        depth = queue_depth(settings.redis_url, queue)
     if depth >= settings.max_queue_depth:
         RATE_LIMITED.labels(queue).inc()
         raise BackpressureError(queue, depth, retry_after_s=max(5, depth * 3))

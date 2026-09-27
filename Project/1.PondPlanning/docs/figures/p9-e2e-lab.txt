@@ -1,0 +1,48 @@
+PASS  GET /health  — AI-based Village Pond Planning System
+PASS  GET /ready
+PASS  GET /metrics
+PASS  GET /meta/implementation-status  — fixtures: []
+PASS  GET /meta/errors
+PASS  POST /analyzeContour -> 202  — job ca2bdbba
+PASS  job succeeds  — stage done
+PASS  GET /analysis/results/contour/{job}  — village Khapri, catchment 27.99 ha (±33.4405 %)
+PASS  existing watercourse edge case is reported  — warnings: ['interpolated_precision', 'existing_watercourse']
+PASS  POST /analyzeContour (garbage) -> 4xx problem  — 422 unsupported_input
+PASS  POST /analyzeArea -> 202  — job e64f3565
+PASS  area job succeeds  — stage done
+PASS  area result: site + complete catchment from GLO-30  — catchment 14.94 ha (±38.5542 %)
+PASS  POST /analyzeArea (too large) -> 422 area_out_of_range  — 422 area_out_of_range
+PASS  GET /villages
+PASS  GET /villages/{id}/summary
+PASS  GET /villages/{id}/imagery
+PASS  GET /villages/{id}/siting
+PASS  GET /terrain/{id}/layers
+PASS  GET /terrain/{id}/dem
+PASS  GET /terrain/{id}/contours
+PASS  GET /terrain/{id}/streams
+PASS  GET /terrain/{id}/derived/twi
+PASS  GET /terrain/{id}/derived/slope
+PASS  GET missing village -> 404 problem  — not_found
+PASS  POST /analysis/catchment -> 202
+PASS  GET /analysis/results/catchment/{job}  — 27.99 ha (±33.4405 %)
+PASS  GET /rainfall/statistics  — 1,167.90 mm/yr (±15 %)
+PASS  GET /rainfall/series
+PASS  POST /analysis/runoff -> 202
+PASS  GET /analysis/results/runoff/{job}  — recommended: {'method': 'scs_cn', 'annual_runoff_volume': {'value': 66430.93141014148, 'unit': 'm3', 'uncertainty_pct': 30.0, 'low': 46501.65198709903, 'high': 86360.21083318393, 'method': 'scs_cn: 75 % dependable annual runoff depth x catchment area', 'display': '66,430.93 m3 (±30 %)'}, 'runoff_coefficient': {'value': 0.2334360902265899, 'unit': 'ratio', 'uncertainty_pct': 30.0, 'low': 0.16340526315861292, 'high': 0.3034669172945669, 'method': 'mean annual runoff / rainfall', 'display': '0.23 ratio (±30 %)'}, 'parameters': {'curve_number': {'value': 88.08637236084454, 'unit': 'count', 'uncertainty_pct': None, 'low': 88.08637236084454, 'high': 88.08637236084454, 'method': 'AMC II, HSG C, area-weighted', 'display': '88.09 count'}, 'potential_retention_S': {'value': 34.353343647179315, 'unit': 'mm', 'uncertainty_pct': None, 'low': 34.353343647179315, 'high': 34.353343647179315, 'method': '25400/CN - 254', 'display': '34.35 mm'}, 'initial_abstraction_ratio': {'value': 0.2, 'unit': 'ratio', 'uncertainty_pct': None, 'low': 0.2, 'high': 0.2, 'method': 'Ia = 0.2 S, standard TR-55', 'display': '0.20 ratio'}, 'mean_annual_runoff_depth': {'value': 311.4107474449777, 'unit': 'mm', 'uncertainty_pct': 30.0, 'low': 217.98752321148436, 'high': 404.833971678471, 'method': 'mean of annual sums', 'display': '311.41 mm (±30 %)'}, 'dependable_75_runoff_depth': {'value': 237.33809006838683, 'unit': 'mm', 'uncertainty_pct': 30.0, 'low': 166.13666304787077, 'high': 308.53951708890287, 'method': 'Weibull 75 % on annual runoff', 'display': '237.34 mm (±30 %)'}, 'years': {'value': 20.0, 'unit': 'count', 'uncertainty_pct': None, 'low': 20.0, 'high': 20.0, 'method': 'complete years', 'display': '20.00 count'}}, 'reference': 'USDA-SCS (1972) National Engineering Handbook §4; TR-55 (1986)'}
+PASS  POST /analysis/pond-design -> 202
+PASS  GET /analysis/results/pond-design/{job}  — 44,993.12 m3 (±20 %)
+PASS  POST /analysis/suitability -> 202
+PASS  GET /analysis/results/suitability/{job}
+PASS  GET /villages/{id}/available-land
+PASS  POST /auth/token (3 roles)
+PASS  POST /recommendations (planner)  — rec 952faecf
+PASS  draft -> approved is 409 illegal_transition  — illegal_transition
+PASS  planner submits
+PASS  viewer approve -> 403  — forbidden
+PASS  officer approves
+PASS  GET /recommendations/{id}/audit
+PASS  POST exports pdf  — 201
+PASS  POST exports geojson  — 201
+PASS  POST exports csv  — 201
+
+46/46 checks passed against http://10.1.75.53:4270

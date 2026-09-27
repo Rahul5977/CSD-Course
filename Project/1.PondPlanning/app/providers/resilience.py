@@ -10,7 +10,9 @@ says: ``FallbackChain([Cached(CircuitBreaker(Retry(open_meteo))), ...])``.
   per request. Half-open after the window: one trial call.
 - **Cached** — the last good record for a point is kept in the object store;
   served if fresh, or as a stale fallback when every live provider fails —
-  the behaviour the chaos test exercises.
+  the behaviour the chaos test exercises. Misses are **single-flight**: ten
+  users asking for the same uncached point make one upstream call, not ten
+  (found by the Phase 3 load test: a 43 s rainfall p95 from a cold herd).
 - **FallbackChain** — tries providers in order and records which one answered.
 """
 
@@ -19,10 +21,12 @@ from __future__ import annotations
 import json
 import logging
 import random
+import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from datetime import date
+from typing import ClassVar
 
 import numpy as np
 
@@ -173,14 +177,42 @@ class Cached:
         }
         self._store.put(key, json.dumps(doc).encode(), "application/json")
 
-    def daily(self, lon: float, lat: float, start: date, end: date) -> DailyRainfall:
-        """Fresh cache → live call (and refresh) → stale cache → error."""
-        key = self.key(lon, lat, start, end)
+    _flights: ClassVar[dict[str, threading.Lock]] = {}
+    _flights_lock: ClassVar[threading.Lock] = threading.Lock()
+
+    def _fresh(self, key: str) -> tuple[DailyRainfall | None, tuple[DailyRainfall, float] | None]:
         cached = self._read(key)
         if cached is not None and time.time() - cached[1] < self._ttl:
             # A fresh cache entry *is* current data; only a stale one is a fallback.
+            return replace(cached[0], fetched_live=True), cached
+        return None, cached
+
+    def daily(self, lon: float, lat: float, start: date, end: date) -> DailyRainfall:
+        """Fresh cache → live call (and refresh) → stale cache → error. One flight per key."""
+        key = self.key(lon, lat, start, end)
+        fresh, cached = self._fresh(key)
+        if fresh is not None:
             CACHE_EVENTS.labels("rainfall", "hit").inc()
-            return replace(cached[0], fetched_live=True)
+            return fresh
+        with self._flights_lock:
+            flight = self._flights.setdefault(key, threading.Lock())
+        with flight:
+            # Whoever held the flight may have just filled the cache.
+            fresh, cached = self._fresh(key)
+            if fresh is not None:
+                CACHE_EVENTS.labels("rainfall", "hit").inc()
+                return fresh
+            return self._fetch(key, lon, lat, start, end, cached)
+
+    def _fetch(
+        self,
+        key: str,
+        lon: float,
+        lat: float,
+        start: date,
+        end: date,
+        cached: tuple[DailyRainfall, float] | None,
+    ) -> DailyRainfall:
         try:
             record = self._inner.daily(lon, lat, start, end)
         except UpstreamUnavailableError:

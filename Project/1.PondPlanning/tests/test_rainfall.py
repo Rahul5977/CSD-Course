@@ -197,3 +197,29 @@ def test_rainfall_routes_are_real_and_labelled_honestly(client: TestClient) -> N
     # a point the recorded fixture does not cover → 503 problem document
     far = client.get("/api/v1/rainfall/statistics?lon=77.2&lat=28.6")
     assert far.status_code == 503 and far.json()["code"] == "upstream_unavailable"
+
+
+def test_concurrent_misses_make_one_upstream_call(tmp_path: Path) -> None:
+    """Single-flight: a cold herd of eight requests for one point costs one live call."""
+    import threading
+    import time as _time
+
+    class Slow(Flaky):
+        def daily(self, lon: float, lat: float, start: date, end: date) -> DailyRainfall:
+            _time.sleep(0.2)
+            return super().daily(lon, lat, start, end)
+
+    slow = Slow(0)
+    cached = Cached(slow, LocalObjectStore(tmp_path), ttl_s=3600.0)
+    out: list[DailyRainfall] = []
+    threads = [
+        threading.Thread(
+            target=lambda: out.append(cached.daily(1, 1, date(2000, 1, 1), date(2001, 12, 31)))
+        )
+        for _ in range(8)
+    ]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(out) == 8 and slow.calls == 1
