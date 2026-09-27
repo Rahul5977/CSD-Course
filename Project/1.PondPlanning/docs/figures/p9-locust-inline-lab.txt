@@ -1,0 +1,605 @@
+# Locust, 20 users (10 planners + 10 area selectors), 90 s — lab replica lbsys2, INLINE runner (before)
+# measured from a laptop over a lossy route to the lab (4/10 connects fail from here, 10/10 inside the lab): the ConnectTimeouts are the route
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:02Z <Greenlet at 0x10bacd260: run_user(<locustfile.AreaSelector object at 0x10b93eff0>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:02Z <Greenlet at 0x10bacdee0: run_user(<locustfile.AreaSelector object at 0x10ba655e0>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 32, in on_start
+    villages = self.client.get("/api/v1/villages").json()["items"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 32, in on_start
+    villages = self.client.get("/api/v1/villages").json()["items"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:03Z <Greenlet at 0x10bb0a340: run_user(<locustfile.Planner object at 0x10baa44d0>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:03Z <Greenlet at 0x10bb099e0: run_user(<locustfile.AreaSelector object at 0x10ba7d880>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:03Z <Greenlet at 0x10bb0a0c0: run_user(<locustfile.AreaSelector object at 0x10ba7dee0>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:04Z <Greenlet at 0x10bb0b4c0: run_user(<locustfile.AreaSelector object at 0x10ba8ac90>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:04Z <Greenlet at 0x10bb0b060: run_user(<locustfile.AreaSelector object at 0x10ba7d6a0>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 32, in on_start
+    villages = self.client.get("/api/v1/villages").json()["items"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 32, in on_start
+    villages = self.client.get("/api/v1/villages").json()["items"]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:04Z <Greenlet at 0x10bb0b740: run_user(<locustfile.Planner object at 0x10ba8b680>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:05Z <Greenlet at 0x10bb444a0: run_user(<locustfile.AreaSelector object at 0x10ba7d9d0>)> failed with JSONDecodeError
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+Traceback (most recent call last):
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1116, in json
+    return complexjson.loads(self.text, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 346, in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 338, in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.13_2/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/decoder.py", line 356, in raw_decode
+    raise JSONDecodeError("Expecting value", s, err.value) from None
+json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "src/gevent/greenlet.py", line 912, in gevent._gevent_cgreenlet.Greenlet.run
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 199, in run_user
+    user.run()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/locust/user/users.py", line 161, in run
+    self.on_start()
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/infra/locustfile.py", line 93, in on_start
+    ring = self.client.get("/api/v1/villages").json()["items"][0]["boundary"]["coordinates"][0]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/rahulraj/Desktop/  ₹ /AI-BasedPondAnalysis/.venv/lib/python3.12/site-packages/requests/models.py", line 1120, in json
+    raise RequestsJSONDecodeError(e.msg, e.doc, e.pos)
+requests.exceptions.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+2026-09-27T07:05:05Z <Greenlet at 0x10bb44540: run_user(<locustfile.AreaSelector object at 0x10ba7f170>)> failed with JSONDecodeError
+
+Type     Name                                                                          # reqs      # fails |    Avg     Min     Max    Med |   req/s  failures/s
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+GET      /api/v1/villages                                                                  20   10(50.00%) |   9123      64   18166    130 |    0.22        0.11
+GET      GET job                                                                          185     0(0.00%) |     16       6     106     10 |    2.06        0.00
+GET      GET layers                                                                        28     0(0.00%) |     56      16     409     20 |    0.31        0.00
+GET      GET rainfall                                                                      60     0(0.00%) |   3231      35   68245     41 |    0.67        0.00
+POST     POST analyzeArea                                                                  11     0(0.00%) |  11447     763   21243  11000 |    0.12        0.00
+POST     POST catchment                                                                   174     0(0.00%) |     65      16     342     35 |    1.94        0.00
+E2E      area analysis end-to-end                                                          11     0(0.00%) |  11466     862   21257  11000 |    0.12        0.00
+E2E      catchment end-to-end                                                             174     9(5.17%) |     81      27     443     48 |    1.94        0.10
+--------|----------------------------------------------------------------------------|-------|-------------|-------|-------|-------|-------|--------|-----------
+         Aggregated                                                                       663    19(2.87%) |    993       6   68245     40 |    7.38        0.21
+
+Response time percentiles (approximated)
+Type     Name                                                                                  50%    66%    75%    80%    90%    95%    98%    99%  99.9% 99.99%   100% # reqs
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+GET      /api/v1/villages                                                                    18000  18000  18000  18000  18000  18000  18000  18000  18000  18000  18000     20
+GET      GET job                                                                                10     11     11     12     21     61    100    100    110    110    110    185
+GET      GET layers                                                                             20     35     70     83    130    170    410    410    410    410    410     28
+GET      GET rainfall                                                                           41     66    100    120   1100  43000  68000  68000  68000  68000  68000     60
+POST     POST analyzeArea                                                                    11000  16000  20000  20000  21000  21000  21000  21000  21000  21000  21000     11
+POST     POST catchment                                                                         35     54     85    110    120    190    280    330    340    340    340    174
+E2E      area analysis end-to-end                                                            11000  16000  20000  20000  21000  21000  21000  21000  21000  21000  21000     11
+E2E      catchment end-to-end                                                                   48     68    110    120    150    240    340    380    440    440    440    174
+--------|--------------------------------------------------------------------------------|--------|------|------|------|------|------|------|------|------|------|------|------
+         Aggregated                                                                             40     49     89    110    170   1400  18000  21000  68000  68000  68000    663
+
+Error report
+# occurrences      Error                                                                                               
+------------------|---------------------------------------------------------------------------------------------------------------------------------------------
+9                  E2E catchment end-to-end: RuntimeError('failed')                                                    
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10ba7ca10>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10ba7d070>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10ba7f5c0>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10baa5d00>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10baa62d0>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10ba880b0>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10ba89e80>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10baa7560>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10bb029c0>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+1                  GET /api/v1/villages: ConnectTimeoutError(<HTTPConnection(host='10.1.75.53', port=4270) at 0x10bb02450>, 'Connection to 10.1.75.53 timed out. (connect timeout=None)')
+------------------|---------------------------------------------------------------------------------------------------------------------------------------------
+

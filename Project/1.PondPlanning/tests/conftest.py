@@ -22,6 +22,7 @@ os.environ.update(
         "POND_LOCAL_STORE_DIR": str(_STORE_DIR),
         "POND_GEOCODE_ENABLED": "false",
         "POND_RAINFALL_SOURCE": "recorded",
+        "POND_WATER_MASK_ENABLED": "false",
     }
 )
 

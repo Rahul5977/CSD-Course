@@ -85,6 +85,7 @@ class WorkflowContext:
     siting_river_buffer_m: float = 200.0
     rainfall: Any = None  # FallbackChain; typed loosely to keep this module free of providers' HTTP
     dem_tile_base_url: str = DEFAULT_BASE_URL
+    water_mask_enabled: bool = True
 
 
 def _boundary_geojson(details: dict[str, Any]) -> dict[str, Any]:
@@ -172,6 +173,18 @@ def _run(
         filename = str(params.get("filename", "upload.kml"))
         adapter = ContourKMLAdapter(payload, filename, default_floor_m=ctx.default_floor_m)
     product = adapter.produce(progress)
+    water = product.water
+    if water is None and ctx.water_mask_enabled:
+        # A contour map carries no water layer, and a river entering from outside
+        # the map is invisible to accumulation (its flow is not in the map). The
+        # public GLO-30 water body mask for the same footprint restores it; if it
+        # cannot be read the analysis continues without it and says so.
+        progress(46, "reading the water body mask")
+        try:
+            water = read_glo30_water(product.raster.grid, ctx.dem_tile_base_url)
+        except Exception:  # network, DNS, TLS: never fail an analysis for an overlay
+            logger.warning("water body mask unavailable", exc_info=True)
+            water = None
     details = product.details
     dem = product.raster
     grid = dem.grid
@@ -204,7 +217,7 @@ def _run(
         top_n=ctx.siting_top_n,
         rise_m=ctx.siting_rise_m,
         river_buffer_m=ctx.siting_river_buffer_m,
-        water=product.water,
+        water=water,
     )
 
     # ---- persistence as a saga (P6) ------------------------------------
@@ -393,7 +406,7 @@ def _run(
                 severity="info",
             )
         )
-    water_cells = 0 if product.water is None else int(product.water.sum())
+    water_cells = 0 if water is None else int(water.sum())
     if (
         siting.max_upstream_area_ha >= siting.area_bounds_ha[2]
         or siting.river_cells_excluded

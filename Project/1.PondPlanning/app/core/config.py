@@ -94,6 +94,9 @@ class Settings(BaseSettings):
     # 25 km² at 30 m is ~28 000 cells — seconds on one core; the cap is the
     # stress guard that keeps one request from monopolising a lab VM.
     dem_tile_base_url: str = "https://copernicus-dem-30m.s3.amazonaws.com"
+    # Mapped water (GLO-30 water body mask) excluded from siting on *every* input
+    # path; off in tests/CI so the suite needs no network.
+    water_mask_enabled: bool = True
     area_min_km2: float = Field(default=0.25, gt=0)
     area_max_km2: float = Field(default=25.0, gt=0)
     pour_point_snap_radius_m: float = Field(default=150.0, gt=0)
