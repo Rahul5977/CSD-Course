@@ -75,7 +75,21 @@ def _from_disk(host: Any, port: Any) -> Any:
     return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, number)) for ip in ips]
 
 
+# Address that last accepted a connection, per host. From the lab only 2 of S3's 7
+# addresses answer; putting the one that worked first saves a timeout per connection.
+_good_ip: dict[str, str] = {}
+
+
+def _good_first(host: Any, infos: Any) -> Any:
+    good = _good_ip.get(host) if isinstance(host, str) else None
+    return sorted(infos, key=lambda info: info[4][0] != good) if good else infos
+
+
 def _ipv4_first(*args: Any, **kwargs: Any) -> Any:
+    return _good_first(args[0] if args else None, _lookup(*args, **kwargs))
+
+
+def _lookup(*args: Any, **kwargs: Any) -> Any:
     key = (*args, *sorted(kwargs.items()))
     with _dns_lock:
         hit = _dns_cache.get(key)
@@ -158,9 +172,19 @@ def _start_connect_proxy() -> None:
             infos = await loop.run_in_executor(
                 None, lambda: socket.getaddrinfo(host, int(port), type=socket.SOCK_STREAM)
             )
-            up_reader, up_writer = await asyncio.wait_for(
-                asyncio.open_connection(infos[0][4][0], int(port)), timeout=20
-            )
+            # Try each address with a short timeout, as curl itself would; remember the
+            # one that answered so the next connection goes there first.
+            for address in dict.fromkeys(info[4][0] for info in infos):
+                try:
+                    up_reader, up_writer = await asyncio.wait_for(
+                        asyncio.open_connection(address, int(port)), timeout=3
+                    )
+                except (OSError, TimeoutError):
+                    continue
+                _good_ip[host] = address
+                break
+            else:
+                raise OSError(f"no address of {host} accepted a connection")
         except Exception:
             with contextlib.suppress(Exception):
                 writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
