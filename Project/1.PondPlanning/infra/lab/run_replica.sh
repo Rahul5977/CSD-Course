@@ -14,7 +14,8 @@ export POND_ENV=production
 export POND_PERSISTENCE=memory POND_JOB_RUNNER=thread POND_OBJECT_STORE=local  # 202 at once; bulkhead pools
 export POND_LOCAL_STORE_DIR="${POND_LOCAL_STORE_DIR:-$HOME/pond/store}"
 export POND_RAINFALL_SOURCE=live            # arbitrary locations; recorded file is the last fallback
-export POND_LANDCOVER_TIMEOUT_S="${POND_LANDCOVER_TIMEOUT_S:-8}"  # WorldCover/SoilGrids unreachable here
+export POND_LANDCOVER_TIMEOUT_S="${POND_LANDCOVER_TIMEOUT_S:-12}"  # WorldCover/SoilGrids: flaky from here
+export POND_RAINFALL_TIMEOUT_S="${POND_RAINFALL_TIMEOUT_S:-12}"    # reach the fallback provider sooner
 export POND_GEOCODE_ENABLED=true
 mkdir -p "$POND_LOCAL_STORE_DIR"
 while true; do

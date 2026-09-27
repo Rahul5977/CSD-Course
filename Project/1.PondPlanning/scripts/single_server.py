@@ -17,6 +17,7 @@ serving ``web/dist`` with ``index.html`` fallback for the SPA routes.
 from __future__ import annotations
 
 import contextlib
+import os
 import socket
 import threading
 import time
@@ -93,6 +94,61 @@ def _warm_dns() -> None:
 
 
 threading.Thread(target=_warm_dns, name="dns-warm", daemon=True).start()
+
+
+# GDAL reads the elevation tiles through its own libcurl, which does its own DNS and so
+# bypasses the cache above; on the lab VMs that failed area analyses ("Could not resolve
+# host"). A proxy makes curl skip DNS entirely: it sends "CONNECT host:443" to us, we
+# resolve the host through the cached, retrying lookup and pass the bytes through. TLS
+# stays end to end between GDAL and the server — the proxy never sees plaintext.
+def _start_connect_proxy() -> None:
+    import asyncio
+
+    async def pipe(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        with contextlib.suppress(Exception):
+            while data := await reader.read(65536):
+                writer.write(data)
+                await writer.drain()
+        with contextlib.suppress(Exception):
+            writer.close()
+
+    async def handle(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
+        try:
+            request = (await reader.readline()).decode("latin-1").split()
+            while (await reader.readline()) not in (b"\r\n", b"\n", b""):
+                pass
+            if len(request) < 2 or request[0].upper() != "CONNECT":
+                writer.write(b"HTTP/1.1 405 Method Not Allowed\r\n\r\n")
+                await writer.drain()
+                writer.close()
+                return
+            host, _, port = request[1].rpartition(":")
+            loop = asyncio.get_running_loop()
+            infos = await loop.run_in_executor(
+                None, lambda: socket.getaddrinfo(host, int(port), type=socket.SOCK_STREAM)
+            )
+            up_reader, up_writer = await asyncio.wait_for(
+                asyncio.open_connection(infos[0][4][0], int(port)), timeout=20
+            )
+        except Exception:
+            with contextlib.suppress(Exception):
+                writer.write(b"HTTP/1.1 502 Bad Gateway\r\n\r\n")
+                await writer.drain()
+                writer.close()
+            return
+        writer.write(b"HTTP/1.1 200 Connection established\r\n\r\n")
+        await writer.drain()
+        await asyncio.gather(pipe(reader, up_writer), pipe(up_reader, writer))
+
+    loop = asyncio.new_event_loop()
+    server = loop.run_until_complete(asyncio.start_server(handle, "127.0.0.1", 0))
+    port = server.sockets[0].getsockname()[1]
+    os.environ["GDAL_HTTP_PROXY"] = f"127.0.0.1:{port}"
+    threading.Thread(target=loop.run_forever, name="gdal-connect-proxy", daemon=True).start()
+
+
+if not os.environ.get("GDAL_HTTP_PROXY"):
+    _start_connect_proxy()
 
 
 class SPAStaticFiles(StaticFiles):

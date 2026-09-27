@@ -126,6 +126,9 @@ class Settings(BaseSettings):
     # default on failure; a short timeout on a host that cannot reach them keeps a
     # pond design at seconds instead of minutes.
     landcover_timeout_s: float = Field(default=60.0, gt=0)
+    # Per-request timeout of each live rainfall provider. Three attempts each, then the
+    # next provider; a short value on a flaky network reaches the fallback sooner.
+    rainfall_timeout_s: float = Field(default=30.0, gt=0)
     rainfall_recorded_path: str = "tests/fixtures/open_meteo_khapri_1981_2025.json"
     rainfall_years: int = Field(default=30, ge=5, le=50)
     rainfall_cache_ttl_s: float = Field(default=86_400.0, gt=0)
