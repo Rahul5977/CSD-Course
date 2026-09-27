@@ -17,6 +17,7 @@ serving ``web/dist`` with ``index.html`` fallback for the SPA routes.
 from __future__ import annotations
 
 import contextlib
+import json
 import os
 import socket
 import threading
@@ -47,6 +48,31 @@ _getaddrinfo = socket.getaddrinfo
 _DNS_TTL_S = 3600.0
 _dns_cache: dict[tuple[Any, ...], tuple[float, Any]] = {}
 _dns_lock = threading.Lock()
+# Last good IPv4 address per host, kept on disk (POND_DNS_CACHE) so that a restarted
+# replica can still reach a provider while the resolver is failing.
+_DNS_FILE = os.environ.get("POND_DNS_CACHE")
+_known_ips: dict[str, list[str]] = {}
+if _DNS_FILE:
+    with contextlib.suppress(OSError, ValueError):
+        _known_ips = json.loads(Path(_DNS_FILE).read_text())
+
+
+def _remember(host: str, infos: Any) -> None:
+    ips = sorted({info[4][0] for info in infos if info[0] == socket.AF_INET})
+    if not _DNS_FILE or not ips or _known_ips.get(host) == ips:
+        return
+    with _dns_lock:
+        _known_ips[host] = ips
+        with contextlib.suppress(OSError):
+            Path(_DNS_FILE).write_text(json.dumps(_known_ips))
+
+
+def _from_disk(host: Any, port: Any) -> Any:
+    ips = _known_ips.get(host) if isinstance(host, str) else None
+    if not ips:
+        return None
+    number = int(port) if isinstance(port, int | str) and str(port).isdigit() else 443
+    return [(socket.AF_INET, socket.SOCK_STREAM, 6, "", (ip, number)) for ip in ips]
 
 
 def _ipv4_first(*args: Any, **kwargs: Any) -> Any:
@@ -67,9 +93,14 @@ def _ipv4_first(*args: Any, **kwargs: Any) -> Any:
             continue
         with _dns_lock:
             _dns_cache[key] = (time.monotonic(), infos)
+        if args:
+            _remember(args[0], infos)
         return infos
     if hit is not None:  # stale-if-error
         return hit[1]
+    disk = _from_disk(args[0], args[1] if len(args) > 1 else kwargs.get("port")) if args else None
+    if disk is not None:  # stale-if-error across restarts
+        return disk
     raise error  # type: ignore[misc]
 
 

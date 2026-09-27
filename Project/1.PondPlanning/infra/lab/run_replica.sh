@@ -17,6 +17,10 @@ export POND_RAINFALL_SOURCE=live            # arbitrary locations; recorded file
 export POND_LANDCOVER_TIMEOUT_S="${POND_LANDCOVER_TIMEOUT_S:-12}"  # WorldCover/SoilGrids: flaky from here
 export POND_RAINFALL_TIMEOUT_S="${POND_RAINFALL_TIMEOUT_S:-12}"    # reach the fallback provider sooner
 export POND_GEOCODE_ENABLED=true
+# The lab resolvers drop lookups; a failed lookup blocked 20 s by default. Give up after
+# ~1 s per server and alternate servers; the app retries and keeps last-good answers on disk.
+export RES_OPTIONS="timeout:1 attempts:2 rotate"
+export POND_DNS_CACHE="$HOME/pond/dns-cache.json"
 mkdir -p "$POND_LOCAL_STORE_DIR"
 while true; do
   echo "$(date -Is) starting replica on :$PORT"
