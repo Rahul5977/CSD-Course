@@ -1,24 +1,26 @@
-%% AI-based Village Pond Planning System — CSD Assignment 1, Final Technical Report.
-%% Built on the course's acmart (manuscript, review) template. To use in Overleaf:
-%% paste everything between \begin{document} and \end{document} into the template,
-%% upload figures/ and refs.bib. Compile locally: `make report-latex`.
-\documentclass[manuscript,review]{acmart}
+%%
+%% CSD Assignment 1 - Final Technical Report
+%% Built on the course template (dummy.tex): ACM "acmart" manuscript (single-column) style.
+%% Overleaf: upload main.tex, refs.bib and figures/. Local build: `make report-latex`.
+%%
+\documentclass[manuscript,screen,review]{acmart}
+
+\AtBeginDocument{%
+  \providecommand\BibTeX{{Bib\TeX}}}
 
 \usepackage{algorithm}
 \usepackage[noend]{algpseudocode}
 \usepackage{tikz}
-\usetikzlibrary{positioning,arrows.meta,fit,backgrounds}
+\usetikzlibrary{positioning,arrows.meta,fit,backgrounds,shapes.geometric,calc}
 \usepackage{tabularx}
 \newcolumntype{L}{>{\raggedright\arraybackslash}X}
 
 %% ---- one place for every link the report cites ---------------------------------
 \newcommand{\repourl}{https://github.com/Rahul5977/AI-BasedPondAnalysis}
-\newcommand{\appurl}{http://10.1.75.53:4270}
+\newcommand{\appurl}{http://10.1.75.53:4272}
 \newcommand{\videourl}{\textit{[YouTube link --- add after upload]}}
 
-\setcopyright{acmlicensed}
-\copyrightyear{2026}
-\acmYear{2026}
+%% Course report, not an ACM publication: the rights/DOI/ISBN block stays off (as in the template).
 
 \begin{document}
 
@@ -28,6 +30,7 @@
 \author{Rahul Raj}
 \affiliation{%
   \institution{[Your Institute / Department]}
+  \city{[Your City]}
   \country{India}}
 \email{rahul.raj9237@gmail.com}
 
@@ -46,8 +49,8 @@ multi-criteria site scoring with hard exclusions for rivers and mapped water, an
 delineation by reverse breadth-first search. Runoff is SCS-CN on 45 years of daily ERA5-Land
 rainfall; the pond is sized by cost and checked by a daily water balance. Every number
 carries a unit and an uncertainty band. The catchment engine matches the independent
-pysheds implementation within 2--3\,\% on the same DEM; 219 tests (41 golden) pass;
-46/46 end-to-end HTTP checks pass on the deployed lab VM. On one process a village-sized
+pysheds implementation within 2--3\,\% on the same DEM; 220 tests (41 golden) pass;
+the end-to-end HTTP suite passes on four lab replicas behind a load balancer. On one process a village-sized
 selection is analysed in 2\,s (median) under 20 concurrent users.
 \end{abstract}
 
@@ -58,13 +61,14 @@ Estimation, D8 Flow Routing, Web GIS, REST APIs}
 
 %% =================================================================================
 \section{Introduction}
+\label{sec:intro}
 Rural India stores monsoon water in small excavated ponds and tanks. A pond is only useful
 where the terrain delivers enough runoff to fill it and not so much that the embankment
 becomes a river dam. This report describes a system that finds such places from public
-geospatial data and explains its answer. Section~\ref{sec:req} maps the requirements to
-modules; Sections~\ref{sec:arch}--\ref{sec:method} give the high- and low-level design and the
-algorithms (the examined core); Sections~\ref{sec:impl}--\ref{sec:csd} cover implementation
-and the CSD themes; Section~\ref{sec:results} evaluates; Section~\ref{sec:limits} states the
+geospatial data and explains its answer. Section~\ref{sec:requirements} maps the requirements to
+modules; Sections~\ref{sec:architecture}--\ref{sec:methodology} give the high- and low-level design and the
+algorithms (the examined core); Sections~\ref{sec:implementation}--\ref{sec:csd-themes} cover implementation
+and the CSD themes; Section~\ref{sec:results} evaluates; Section~\ref{sec:discussion} states the
 limits.
 
 \subsection{Motivation}
@@ -87,7 +91,7 @@ legal land ownership (never assumed; shown as unknown), and survey-grade accurac
 results are planning grade from 30\,m public DEMs.
 
 %% =================================================================================
-\section{Problem Statement and Requirements}\label{sec:req}
+\section{Problem Statement and Requirements}\label{sec:requirements}
 The assignment asks for a web application that analyses terrain and rainfall to recommend
 pond sites and estimates catchment, runoff, depth and storage on an interactive map. The
 Phase~3 brief adds: select the land area on a map; return the suggested pond location,
@@ -129,7 +133,7 @@ viewer/planner/officer roles on the approval workflow; append-only audit log.
 accessibility 100.
 
 %% =================================================================================
-\section{System Architecture and High-Level Design}\label{sec:arch}
+\section{System Architecture and High-Level Design}\label{sec:architecture}
 The system is a layered monolith (ADR~0001) behind asynchronous job routes
 (Figure~\ref{fig:arch}). The browser talks to one origin. The API validates and enqueues; a
 worker runs the use-case workflow, which sequences pure engines and calls external data only
@@ -162,22 +166,61 @@ holds business logic or an engine imports a framework.
 \end{tikzpicture}
 \caption{High-level system architecture. Arrows show the request path of an analysis: the
 UI posts a box or a file, receives \texttt{202} with a job id, and follows progress over a
-WebSocket (polling fallback) until the result is overlaid on the map.}\label{fig:arch}
+WebSocket (polling fallback) until the result is overlaid on the map.}\Description{Layered architecture: browser, nginx load balancer, FastAPI routers, bulkhead job workers, workflows, pure engines, domain, stores and external data adapters, with arrows along the request path.}
+\label{fig:arch}
 \end{figure}
 
-The same code runs in two shapes. The reference deployment is an 11-service Docker Compose
-stack (PostGIS, Redis, MinIO, API, two Celery workers, beat, TiTiler, nginx + SPA,
-Prometheus, Grafana). The four lab machines are unprivileged containers (no Docker, no
-systemd, no root), so there each replica is one process with in-memory persistence, a
-thread-pool job runner and a local object store, and replicas sit behind a user-space nginx
-load balancer. The switch is configuration only: persistence, job runner and object store are
-ports with two or three adapters each (ADR~0013).
+\textbf{Work flow of one analysis} (Figure~\ref{fig:flow}): the request is admitted in
+milliseconds, the heavy work runs on a worker, and the browser follows progress until it can
+draw the result and request the pond design.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, >={Stealth[length=1.8mm]},
+  life/.style={draw, rounded corners=2pt, fill=white, minimum width=19mm, minimum height=6mm, align=center},
+  msg/.style={->, thick}, ret/.style={->, dashed}, lbl/.style={above, font=\scriptsize, inner sep=1pt},
+  note/.style={anchor=west, font=\scriptsize, fill=yellow!10, draw=gray!40, inner sep=1.5pt}]
+  \foreach \x/\n/\t in {0/a/Administrator, 2.4/b/Browser SPA, 4.8/c/nginx LB, 7.2/d/API replica, 9.6/e/Job worker, 12.0/f/External data, 14.4/g/Store}
+    { \node[life] (\n) at (\x,0) {\t}; \draw[gray!60] (\x,-0.35) -- (\x,-7.3); }
+  \def\m#1#2#3#4{\draw[msg] (#1,#3) -- node[lbl]{#4} (#2,#3);}
+  \def\r#1#2#3#4{\draw[ret] (#1,#3) -- node[lbl]{#4} (#2,#3);}
+  \m{0}{2.4}{-0.75}{draw box}
+  \m{2.4}{4.8}{-1.15}{POST /analyzeArea}
+  \m{4.8}{7.2}{-1.55}{ip\_hash}
+  \node[note] at (7.3,-1.95) {area? idempotency? queue $<$ 20?};
+  \m{7.2}{9.6}{-2.4}{heavy pool}
+  \r{7.2}{2.4}{-2.8}{202 \{job\_id\} in ms}
+  \m{9.6}{12.0}{-3.2}{GLO-30 DEM + water}
+  \node[note] at (9.7,-3.6) {fill $\rightarrow$ D8 sweep $\rightarrow$ siting $\rightarrow$ BFS};
+  \m{9.6}{14.4}{-4.05}{saga: persist}
+  \r{7.2}{2.4}{-4.45}{WebSocket: stage + \%}
+  \m{2.4}{7.2}{-4.85}{GET result; POST pond-design}
+  \m{7.2}{9.6}{-5.25}{interactive pool}
+  \m{9.6}{12.0}{-5.65}{rainfall, land cover, soil}
+  \node[note] at (9.7,-6.05) {SCS-CN daily $\rightarrow$ pond $\rightarrow$ water balance};
+  \r{7.2}{2.4}{-6.5}{design: volume, size, reliability}
+  \r{2.4}{0}{-6.95}{overlay on map}
+\end{tikzpicture}}
+\caption{Work flow of one map-selected analysis (sequence diagram). Solid arrows are
+requests, dashed are responses; the two jobs run on different bulkheads.}
+\Description{A sequence diagram with seven lifelines --- administrator, browser, load
+balancer, API replica, job worker, external data and store --- showing the box being posted,
+a 202 returned at once, the worker reading GLO-30 and running the hydrology, progress over a
+WebSocket, and the pond design job that follows.}
+\label{fig:flow}
+\end{figure}
+
+\textbf{Two deployment shapes, one code base:} an 11-service Docker Compose stack (PostGIS,
+Redis, MinIO, API, two Celery workers, beat, TiTiler, nginx, Prometheus, Grafana), and on the
+four lab machines --- unprivileged containers without Docker or root --- one process per VM
+(in-memory persistence, thread-pool jobs, local store) behind a user-space nginx load
+balancer. The switch is configuration only (ports and adapters, ADR~0013).
 
 \subsection{Technology Stack}
-Python 3.12, FastAPI, Pydantic v2; numpy/scipy for every algorithm (no numba: at village
-scale a legible sorted loop is fast enough); rasterio/GDAL for COG window reads and
-reprojection; pyproj for UTM; OpenCV for the NDWI water mask; PostgreSQL + PostGIS,
-Redis + Celery, MinIO; React + TypeScript + MapLibre GL; Docker Compose; GitHub Actions.
+Python 3.12, FastAPI, Pydantic v2; numpy/scipy for every algorithm; rasterio/GDAL and pyproj
+for rasters and UTM; OpenCV for the water mask; PostgreSQL + PostGIS, Redis + Celery, MinIO;
+React + TypeScript + MapLibre GL; Docker Compose; GitHub Actions.
 Elevation: the uploaded contour map, or Copernicus GLO-30 COGs~\cite{copdem} for a drawn box.
 Rainfall: Open-Meteo ERA5-Land~\cite{era5land} with NASA POWER as fallback.
 \textbf{Deviations from the suggested stack, justified:} FastAPI over Flask (typed OpenAPI
@@ -203,18 +246,67 @@ registration and manual download).
   frontend's TypeScript types are generated. Every numeric field is a \texttt{Quantity}
   \{value, unit, uncertainty\_pct, low, high, method\} --- a domain type, so a bare float
   cannot reach the API.
-\item \textbf{Persistence of an analysis} is a Saga of four idempotent steps (village
-  $\rightarrow$ rasters $\rightarrow$ streams $\rightarrow$ DEM asset) with compensations run in
-  reverse on failure.
-\item \textbf{Data model:} \texttt{villages} (PostGIS boundary), \texttt{dem\_assets}
+\item \textbf{Persistence} of an analysis is a Saga of four idempotent steps with
+  compensations run in reverse on failure. \textbf{Data model:} \texttt{villages} (PostGIS boundary), \texttt{dem\_assets}
   (provenance, statistics, object keys), \texttt{jobs} (status, stage, progress, result JSON,
   idempotency key), \texttt{recommendations} + outbox + append-only \texttt{audit\_log};
   rasters are Cloud-Optimised GeoTIFFs in the object store.
 \end{itemize}\par}
 
 %% =================================================================================
-\section{Methodology}\label{sec:method}
-Figure~\ref{fig:pipeline} (appendix) shows the pipeline; this section gives each stage.
+\section{Methodology}\label{sec:methodology}
+Figure~\ref{fig:decision} is the analysis as a flowchart: two ways in, one chain, and every
+place where the system refuses, relaxes or warns instead of guessing. The subsections give
+each stage.
+
+\begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\footnotesize, node distance=5mm and 6mm, >={Stealth[length=1.8mm]},
+  st/.style={draw, rounded corners=2pt, fill=white, align=center, minimum height=9mm, text width=25mm},
+  dec/.style={draw, diamond, aspect=2.3, fill=yellow!12, align=center, inner sep=0.5pt, text width=18mm},
+  bad/.style={draw, rounded corners=2pt, fill=red!8, align=center, text width=22mm, minimum height=7mm},
+  arr/.style={->, thick}]
+  % row 1: two ways in
+  \node[dec] (in) {box or file?};
+  \node[dec, right=8mm of in, yshift=9mm] (size) {0.25--25 km$^2$?};
+  \node[dec, right=8mm of in, yshift=-9mm] (elev) {elevation readable?};
+  \node[st, right=of size] (glo) {GLO-30 window + water mask};
+  \node[st, right=of elev] (tin) {TIN, cell = spacing/4; water mask};
+  \node[bad, right=of glo] (r422) {422 area out of range};
+  \node[bad, right=of tin] (e422) {422 elevation not found};
+  % row 2: one chain, left to right
+  \node[st, below=14mm of elev.south, anchor=north, xshift=-8mm] (fill) {Priority-Flood + $\varepsilon$};
+  \node[st, right=of fill] (d8) {D8 + one sweep: accumulation, edge-fed};
+  \node[st, right=of d8] (excl) {exclude rivers, water + 200\,m, edge-fed};
+  \node[dec, right=of excl] (any) {candidates left?};
+  \node[bad, above=5mm of any] (relax) {relax edge rule / terrain only + warning};
+  % row 3: back to the left
+  \node[st, below=of any] (score) {AHP score, NMS 200\,m $\rightarrow$ top 5};
+  \node[st, left=of score] (bfs) {top site: reverse-BFS catchment};
+  \node[st, left=of bfs] (des) {75\,\% rainfall $\rightarrow$ SCS-CN daily $\rightarrow$ pond};
+  \node[st, left=of des, fill=green!10] (out) {overlay: site, catchment, volume + bands};
+  \draw[arr] (in) |- node[above, pos=.7]{box} (size);
+  \draw[arr] (in) |- node[below, pos=.7]{file} (elev);
+  \draw[arr] (size) -- node[above]{yes} (glo);
+  \draw[arr] (elev) -- node[above]{yes} (tin);
+  \draw[arr] (size.north) -- ++(0,2mm) -| node[above, pos=.25]{no} (r422.north);
+  \draw[arr] (elev.south) -- ++(0,-2mm) -| node[below, pos=.25]{no} (e422.south);
+  \draw[arr] (glo.south) -- ++(0,-1.5mm) -| ($(tin.east)+(3mm,0)$) |- ($(fill.north)+(0,4mm)$) -- (fill.north);
+  \draw[arr] (tin.south) |- ($(fill.north)+(0,4mm)$);
+  \draw[arr] (fill) -- (d8); \draw[arr] (d8) -- (excl); \draw[arr] (excl) -- (any);
+  \draw[arr] (any) -- node[right]{no} (relax);
+  \draw[arr] (any) -- node[right]{yes} (score);
+  \draw[arr] (score) -- (bfs); \draw[arr] (bfs) -- (des); \draw[arr] (des) -- (out);
+\end{tikzpicture}}
+\caption{Analysis flowchart. Red boxes are the refusals and fallbacks that make the system
+say ``cannot'' rather than guess; every other step is a named algorithm in this section.}
+\Description{A flowchart: a box goes through an area check to a Copernicus GLO-30 read, a
+contour file through an elevation check to a TIN; both reach Priority-Flood, D8 with one
+sweep, hard exclusions, a candidates check with a fallback, AHP scoring with non-maximum
+suppression, reverse-BFS catchment, rainfall to runoff to pond design, and the overlay.}
+\label{fig:decision}
+\end{figure}
 
 \subsection{Terrain and Elevation Analysis}
 \textbf{Map-selected area.} The box's centroid fixes the UTM zone; the grid is the envelope of
@@ -317,10 +409,8 @@ bounds. Non-maximum suppression at 200\,m keeps the top five distinct.
 \end{algorithm}
 
 \subsection{Rainfall Data Integration}
-Daily precipitation 1981--2025 at the site from Open-Meteo's ERA5-Land archive, NASA POWER as
-fallback, both behind retry, circuit breaker, a single-flight object-store cache and a
-fallback chain that records which provider answered. Statistics use complete calendar years
-only: mean, CV, \textbf{75\,\% dependable rainfall by the Weibull plotting position}
+Daily precipitation 1981--2025 at the site from Open-Meteo ERA5-Land, NASA POWER as fallback
+(retry, circuit breaker, single-flight cache). Complete calendar years only: mean, CV, \textbf{75\,\% dependable rainfall by the Weibull plotting position}
 $P=m/(n+1)$ (the design year of Indian minor-irrigation practice), June--September share, IMD
 rainy days ($\ge$\,2.5\,mm), and the 25-year 1-day depth by Gumbel EV1~\cite{gumbel1958}.
 
@@ -337,7 +427,7 @@ by minimum cost; a daily water balance (inflow, evaporation, 2\,mm/day seepage) 
 share of years the pond fills; the spillway passes the 25-year storm.
 
 %% =================================================================================
-\section{Implementation}\label{sec:impl}
+\section{Implementation}\label{sec:implementation}
 \subsection{Backend and API Design}
 REST under \texttt{/api/v1}, OpenAPI 3.1 generated from the code (Swagger at \texttt{/docs}).
 Key routes:
@@ -383,23 +473,21 @@ cached results under an ``Offline'' badge.
   \caption{Application interface: a 14.5\,km$^2$ box drawn at Ralegan Siddhi (Maharashtra),
   analysed from Copernicus GLO-30 --- contours, streams, five ranked sites, the top site's
   74\,ha catchment and the results overlay (runoff 33\,490\,m$^3$, storage 20\,094\,m$^3$).}
-  \label{fig:ui}
+  \Description{Screenshot of the planner: a drawn box at Ralegan Siddhi with contours, streams, five ranked sites, a blue catchment polygon and the results panel.}
+\label{fig:ui}
 \end{figure}
 
 \subsection{Database and Storage}
-Villages with PostGIS boundaries (an identical boundary reuses the village), DEM assets with
-provenance and statistics, jobs with idempotency keys, recommendations with a state machine
-whose transitions write a transactional outbox drained into an \texttt{audit\_log} made
-append-only by database rules. Rasters (DEM, slope, TWI, flow accumulation, \dots) are COGs in
-MinIO served as tiles by TiTiler; streams and siting are JSON documents next to them; the
-rainfall series is cached per point in the object store. On the lab VMs the same ports are
-backed by memory and local disk.
+PostGIS holds villages (an identical boundary reuses the village), DEM assets, jobs and
+recommendations; state transitions write an outbox drained into an append-only
+\texttt{audit\_log}. Rasters are COGs in MinIO served as tiles by TiTiler; streams, siting and
+cached rainfall are JSON beside them. On the lab VMs the same ports use memory and local disk.
 
 %% =================================================================================
-\section{CSD Themes and Topics Applied in the Project}\label{sec:csd}
+\section{CSD Themes and Topics Applied in the Project}\label{sec:csd-themes}
 
-\begin{table}[h]
-\caption{Mapping of core CSD themes/topics to their use in this project}\label{tab:csd}
+\begin{table*}[t]
+\caption{Mapping of core CSD themes/topics to their use in this project}\label{tab:csd-themes}
 \scriptsize
 \begin{tabularx}{\linewidth}{@{}>{\raggedright\arraybackslash}p{0.16\linewidth}LL@{}}
 \toprule
@@ -411,16 +499,16 @@ Caching & single-flight rainfall cache; LRU GLO-30 windows; COG tiles; service w
 Indexing / query optimisation & PostGIS geometry, unique idempotency key, COG internal tiling & village reuse by boundary; byte-range reads of only the needed window \\
 Concurrency / async & bulkhead pools (interactive, heavy), WebSocket progress, 429 backpressure & a village analysis cannot delay a click; bounded queues under stress \\
 Microservices vs.\ monolith & layered monolith + workers & one team, one deployable; boundaries enforced by a test, not a network \\
-Design patterns & Ports \& Adapters, Strategy, Decorator, Chain of Responsibility, Builder, Specification, Saga, State, Outbox, Observer & each solves a named problem (Section~\ref{sec:arch}) \\
+Design patterns & Ports \& Adapters, Strategy, Decorator, Chain of Responsibility, Builder, Specification, Saga, State, Outbox, Observer & each solves a named problem (Section~\ref{sec:architecture}) \\
 AuthN / AuthZ & RS256 JWT, three roles, officer-only approval & approvals are accountable; audit log is append-only \\
 Containerisation / deployment & Docker Compose (11 services); one-process replicas on the lab VMs & same code, two shapes, chosen by configuration \\
 Error handling / resilience & retry, circuit breaker, fallback chain, stale cache, stated defaults & degrade with a warning rather than fail \\
 Algorithms and complexity & Priority-Flood $O(n\log n)$, topological sweep $O(n)$, reverse BFS, distance transform & exact, textbook, explainable; $\sim$2\,s per village \\
-Testing strategy & 219 tests: 41 golden (analytic terrain), API flows, pysheds cross-check, e2e over HTTP & hydrology correctness is checked against known answers \\
+Testing strategy & 220 tests: 41 golden (analytic terrain), API flows, pysheds cross-check, e2e over HTTP (Section~\ref{sec:testing}) & hydrology correctness is checked against known answers \\
 Version control / CI & conventional commits, GitHub Actions (ruff, mypy strict, pytest, image build) & every push proves the build \\
 \bottomrule
 \end{tabularx}
-\end{table}
+\end{table*}
 
 \textbf{Load balancing without shared state.} The lab VMs cannot run PostgreSQL or Redis for
 this app, so replicas keep villages and jobs in memory; a user must keep reaching the replica
@@ -457,10 +545,12 @@ unreachable and the soil group is assumed).
   \includegraphics[width=\linewidth]{figures/p9-sample-results.jpg}
   \caption{Example results overlay for the provided contour map: ranked sites (all
   $\ge$\,295\,m from mapped water), the top site's 103\,ha catchment, and the pond result.}
-  \label{fig:results}
+  \Description{Screenshot of the planner on the provided contour map: ranked sites away from the river, a 103 hectare catchment and the results panel.}
+\label{fig:results}
 \end{figure}
 
-\textbf{Validation.} (i) 41 golden tests with analytic answers: inclined plane and cone
+\subsection{Testing and Validation}\label{sec:testing}
+(i) 41 golden tests with analytic answers: inclined plane and cone
 interpolation (RMS $<$0.25\,m), pit filling to spill level, plane accumulation equal to the
 upslope cell count, V-valley catchment equal to the rectangle upstream, Y-valley Strahler
 order 2, edge-fed flags on a hill and a tilted plane, river and water exclusion with the flood
@@ -476,37 +566,32 @@ the bands. (iv) Snapping cuts the pour-point coefficient of variation from 212\,
 capacity --- recorded honestly as a mismatch of purpose, not of method.
 
 \subsection{Performance}
-Measured with Locust, 20 concurrent users (10 clicking catchments, 10 drawing a \emph{new} box
-each time, so no cache helps), 90\,s, against one process (8-core laptop, thread-pool runner,
-live GLO-30 and Open-Meteo): \texttt{POST
-/analyzeArea} p95 17\,ms; full area analysis (GLO-30 read, hydrology, siting, catchment)
-p50 2\,s, p95 4\,s, 154 analyses; catchment end to end p95 530\,ms; rainfall p95 63\,ms. Before
-the bulkhead runner and single-flight cache the same test gave 11--21\,s and 43\,s. The
-46-check end-to-end HTTP suite passes against the deployed lab replica. On the Docker stack,
-50 users clicking catchments gave POST p95 33\,ms and end-to-end p95 560\,ms with no failures;
-a catchment returned in 0.6\,s while a heavy suitability job ran (bulkheads).
+Locust, 20 concurrent users (10 clicking catchments, 10 drawing a \emph{new} box each time, so
+no cache helps), 90\,s, one process (8-core laptop, live GLO-30 and Open-Meteo): \texttt{POST
+/analyzeArea} p95 17\,ms; full area analysis p50 2\,s, p95 4\,s (154 in 90\,s); catchment end
+to end p95 530\,ms; rainfall p95 63\,ms. Docker stack, 50 users: POST p95 33\,ms, end-to-end
+p95 560\,ms, no failures. The 46-check HTTP suite runs against the load-balanced lab URL.
 \textbf{Limits within the four systems:} one process sustained 1.7 area analyses per second;
 the 25\,km$^2$ cap bounds one request to seconds; \texttt{429} backpressure caps each queue at
 20 jobs; replicas share nothing, so throughput should grow roughly linearly with the four
 lab replicas behind the balancer (expected, not yet measured on the lab network).
 
 %% =================================================================================
-\section{Discussion and Limitations}\label{sec:limits}
-\textbf{What worked:} one hydrology chain behind a DEM port served both the Phase~2 upload and
-the Phase~3 map selection unchanged; every edge case found by looking at the map (a pond on
-the river, a truncated catchment, a flattened river surface) became a hard rule with a golden
-test and a named warning. \textbf{Limits:} both DEMs are 30\,m (SRTM $\pm$6\,m and GLO-30
+\section{Discussion and Limitations}\label{sec:discussion}
+\textbf{What worked:} one chain behind a DEM port served the upload and the map selection
+unchanged; every edge case found on the map (a pond on the river, a truncated catchment, a
+flattened river) became a hard rule with a golden test and a named warning. \textbf{Limits:} both DEMs are 30\,m (SRTM $\pm$6\,m and GLO-30
 $\pm$2\,m relative); relief below a few metres is not real, and on flat land the catchment of
 a small site is dominated by DEM error --- the reason for the $\pm$15--50\,\% bands and the
-advice to verify the outlet in the field. GLO-30 is a surface model (trees and buildings
-included). Reanalysis rainfall is about $\pm$15\,\% against gauges. The three runoff methods
-disagree by up to 2$\times$; SCS-CN is the design figure and the range is shown. Land
-ownership is unknown without cadastral data and is never assumed. The ML scorer is deferred:
-two mapped tanks are not a training set. Lab replicas keep state in memory, so a restart
-forgets villages (re-analysis takes seconds).
+advice to verify the outlet in the field. GLO-30 includes trees and buildings; reanalysis rainfall is about $\pm$15\,\%; the runoff
+methods disagree by up to 2$\times$ (SCS-CN is the design figure, the range is shown);
+ownership is never assumed; the ML scorer waits for labels; lab replicas forget villages on
+restart. The lab VMs' DNS fails $\sim$40\,\% of lookups, handled by a retrying,
+stale-if-error resolver cache and retried tile reads.
 
 %% =================================================================================
 \section{AI Tool Usage Declaration}
+\label{sec:ai-usage}
 An AI coding assistant (Claude Code, Anthropic) was used under the author's direction and
 review, as the assignment's LLM policy permits, for: refactoring and structuring code into
 the layered design; brainstorming and understanding the algorithms (D8 as a functional graph,
@@ -539,41 +624,73 @@ figures, progress log), \texttt{scripts/} (figures, cross-checks, e2e suite).
 \clearpage
 \section{Additional Figures}
 \begin{figure}[h]
+\centering
+\resizebox{\linewidth}{!}{%
+\begin{tikzpicture}[font=\scriptsize, node distance=3mm and 4mm, >={Stealth[length=1.6mm]},
+  ph/.style={draw, rounded corners=2pt, fill=blue!5, align=center, text width=24mm, minimum height=15mm},
+  arr/.style={->, thick}]
+  \node[ph] (p0) {\textbf{P0} contract\\35 routes as fixtures, CI, 12 ADRs};
+  \node[ph, right=of p0] (p1) {\textbf{P1} walking skeleton\\KML $\rightarrow$ TIN $\rightarrow$ hillshade in browser};
+  \node[ph, right=of p1, fill=orange!12] (p2) {\textbf{P2} terrain \& catchment\\fill, D8, BFS, siting, pysheds check};
+  \node[ph, right=of p2, fill=orange!12] (p3) {\textbf{P3} water numbers\\rainfall, SCS-CN, pond design};
+  \node[ph, right=of p3] (p4) {\textbf{P4} suitability\\constraints, NDWI + OpenCV, AHP};
+  \node[ph, below=6mm of p4] (p5) {\textbf{P5} frontend\\overlay, states, offline};
+  \node[ph, left=of p5] (p6) {\textbf{P6} hardening\\bulkheads, saga, RBAC, load test};
+  \node[ph, left=of p6] (p7) {\textbf{P7} tests \& docs\\coverage, cookbook, report};
+  \node[ph, left=of p7] (p8) {\textbf{P8} UX\\landing, design system};
+  \node[ph, left=of p8, fill=green!10] (p9) {\textbf{P9} Phase 3\\map selection, lab replicas, final report};
+  \foreach \a/\b in {p0/p1,p1/p2,p2/p3,p3/p4,p5/p6,p6/p7,p7/p8,p8/p9} \draw[arr] (\a) -- (\b);
+  \draw[arr] (p4) -- (p5);
+\end{tikzpicture}}
+\caption{Work flow of the project: phases P0--P9, each closed by a gate with evidence
+(test output, figure or recording) before the next began. Orange: the examined core.}
+\Description{Ten phase boxes in a snake layout, P0 contract to P9 Phase 3, with arrows
+between consecutive phases; P2 and P3 are highlighted as the examined core.}
+\label{fig:project}
+\end{figure}
+\begin{figure}[h]
   \centering
   \includegraphics[width=0.9\linewidth]{figures/alg-pipeline.png}
-  \caption{The analysis pipeline; the highlighted stages form the graph algorithm.}\label{fig:pipeline}
+  \caption{The analysis pipeline; the highlighted stages form the graph algorithm.}\Description{Pipeline boxes from KML upload through DEM, D8 flow graph, accumulation, site ranking and catchment to the JSON result.}
+\label{fig:pipeline}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{figures/alg-d8-graph.png}
   \caption{DEM $\rightarrow$ D8 flow graph $\rightarrow$ accumulation and streams (generated from the engine code).}
+\Description{DEM $\rightarrow$ D8 flow graph $\rightarrow$ accumulation and streams (generated from the engine code).}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.75\linewidth]{figures/alg-catchment-bfs.png}
   \caption{Catchment as a reverse BFS from the outlet; colour is the wavefront order.}
+\Description{Catchment as a reverse BFS from the outlet; colour is the wavefront order.}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.85\linewidth]{figures/p9-watermask-before.jpg}
   \caption{Before the water body mask: the top site on the Shivnath's bank, its catchment
-  40\,\% permanent water. Compare Figure~\ref{fig:results}.}\label{fig:water}
+  40\,\% permanent water. Compare Figure~\ref{fig:results}.}\Description{Earlier screenshot in which the top site sits on the river bank and its catchment covers the channel.}
+\label{fig:water}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics[width=\linewidth]{figures/p9-dem-crosscheck.png}
   \caption{Terrain-source cross-check on the sample: contour DEM vs.\ GLO-30 on the same grid,
-  streams and sites from the identical chain, and the elevation difference.}\label{fig:xcheck}
+  streams and sites from the identical chain, and the elevation difference.}\Description{Three panels: the contour-derived DEM with streams, the GLO-30 DEM with streams, and their difference map.}
+\label{fig:xcheck}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.85\linewidth]{figures/p2-pour-point-sensitivity.png}
   \caption{Pour-point sensitivity: catchment area around a channel cell, raw vs.\ snapped.}
+\Description{Pour-point sensitivity: catchment area around a channel cell, raw vs.\ snapped.}
 \end{figure}
 \begin{figure}[h]
   \centering
   \includegraphics[width=0.85\linewidth]{figures/p4-ndwi-opencv.png}
   \caption{NDWI water mask with OpenCV: Otsu threshold, morphology, connected components.}
+\Description{NDWI water mask with OpenCV: Otsu threshold, morphology, connected components.}
 \end{figure}
 
 
