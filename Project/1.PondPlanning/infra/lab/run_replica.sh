@@ -10,7 +10,7 @@
 set -u
 cd "$(dirname "$0")/../.."
 PORT="${PORT:-4000}"
-export POND_ENV=lab
+export POND_ENV=production
 export POND_PERSISTENCE=memory POND_JOB_RUNNER=inline POND_OBJECT_STORE=local
 export POND_LOCAL_STORE_DIR="${POND_LOCAL_STORE_DIR:-$HOME/pond/store}"
 export POND_RAINFALL_SOURCE=live            # arbitrary locations; recorded file is the last fallback
