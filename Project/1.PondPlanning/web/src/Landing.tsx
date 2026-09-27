@@ -5,11 +5,11 @@ const REPO = "https://github.com/Rahul5977/AI-BasedPondAnalysis";
 const links = {
   app: "/app",
   api: "/docs",
-  report: `${REPO}/blob/main/docs/report/REPORT.md`,
+  report: `${REPO}/blob/main/docs/report/Final_Report.pdf`,
   install: `${REPO}#installation`,
   adr: `${REPO}/tree/main/docs/adr`,
   licences: `${REPO}/blob/main/docs/LICENSES.md`,
-  validation: `${REPO}/blob/main/docs/report/REPORT.md#7-validation-and-results`,
+  validation: `${REPO}/blob/main/docs/figures/p9-dem-crosscheck.md`,
 };
 
 /** Public landing page at `/`. Every claim here is something the app actually does. */
@@ -31,14 +31,14 @@ export default function Landing() {
         <section className="hero">
           <div>
             <div className="eyebrow">Village pond planning · terrain-first</div>
-            <h1>From a contour map to a <em>costed pond</em> — with the reasoning shown.</h1>
-            <p className="lede">Upload a KML/KMZ of a village. Get the terrain, the streams, ranked pond sites, the catchment of any point you click, 45 years of rainfall, runoff by three methods and a pond design with fill reliability. Every number carries its unit and an honest uncertainty band.</p>
+            <h1>From a box on the map to a <em>costed pond</em> — with the reasoning shown.</h1>
+            <p className="lede">Draw a box around a village's land on the satellite map — or upload a KML/KMZ contour map. Get the terrain, the streams, ranked pond sites, the catchment of any point you click, 45 years of rainfall, runoff by three methods and a pond design with fill reliability. Every number carries its unit and an honest uncertainty band.</p>
             <div className="cta"><a className="btn btn-primary" href={links.app}>Open the planner</a>{sample && <a className="btn btn-secondary" href={`/app?village=${sample.id}`}>See {sample.name}, the sample village</a>}</div>
             <div className="trust"><span>Validated against an independent model</span><span>Nothing hard-coded to one map</span><span>Works offline after first load</span></div>
           </div>
           <div className="screen">
             <div className="frame"><img src="/landing/streams.jpg" alt="Modelled streams over satellite imagery of the sample village" width="1456" height="900" /></div>
-            <div className="float qty"><span className="label">Catchment at the suggested site</span><span className="value">38.3<small>ha</small></span><span className="band"><b>±26 %</b> · D8 · snapped to the channel</span></div>
+            <div className="float qty"><span className="label">Catchment at the suggested site</span><span className="value">103<small>ha</small></span><span className="band"><b>±17 %</b> · D8 · complete, clear of the river</span></div>
           </div>
         </section>
       </main>
@@ -47,16 +47,16 @@ export default function Landing() {
         <div className="qty"><span className="label">Rainfall record</span><span className="value">45<small>years</small></span><span className="band">ERA5-Land, daily</span></div>
         <div className="qty"><span className="label">Catchment vs pysheds</span><span className="value">2–3<small>%</small></span><span className="band">on the main outlets</span></div>
         <div className="qty"><span className="label">Runoff methods</span><span className="value">3</span><span className="band">SCS-CN · rational · Strange</span></div>
-        <div className="qty"><span className="label">Map layers</span><span className="value">13</span><span className="band">all on one map</span></div>
-        <div className="qty"><span className="label">Areas analysed here</span><span className="value">{villages ? villages.length : "…"}</span><span className="band">{villages?.length ? villages.map((v) => v.name).join(", ") : "upload the first one"}</span></div>
+        <div className="qty"><span className="label">Map layers</span><span className="value">19</span><span className="band">all on one map</span></div>
+        <div className="qty"><span className="label">Areas analysed here</span><span className="value">{villages ? villages.length : "…"}</span><span className="band">{villages?.length ? villages.map((v) => v.name).join(", ") : "select the first one"}</span></div>
       </div></div>
 
       <div className="wrap">
         <section className="block" id="how">
           <h2>How it works</h2>
-          <p className="sub">Four steps, each one visible on the map. The pipeline is the same for any contour map — the grid, the UTM zone and the source accuracy are derived from the file you upload.</p>
+          <p className="sub">Four steps, each one visible on the map. The pipeline is the same for any area — the grid, the UTM zone and the source accuracy are derived from what you select or upload.</p>
           <div className="steps">
-            <div className="step"><span className="n">1</span><h3>Upload the contours</h3><p className="small">KML or KMZ. Elevation is read from the geometry, the attributes or the label — and decoy fields are rejected.</p></div>
+            <div className="step"><span className="n">1</span><h3>Select the land</h3><p className="small">Search the village and draw a box: elevation comes from the Copernicus GLO-30 DEM. Or upload a KML/KMZ contour map — decoy fields are rejected.</p></div>
             <div className="step"><span className="n">2</span><h3>Terrain and streams</h3><p className="small">A DEM is interpolated, depressions filled, flow routed cell by cell. The streams appear over satellite imagery so you can check them.</p></div>
             <div className="step"><span className="n">3</span><h3>Pick the site</h3><p className="small">Sites are ranked on four terrain criteria with published weights — or click anywhere for the catchment of that point.</p></div>
             <div className="step"><span className="n">4</span><h3>Design and decide</h3><p className="small">Rainfall, runoff, a cost-optimised depth, fill reliability, eligible land, then a recommendation with an audit trail and a PDF.</p></div>
@@ -67,7 +67,7 @@ export default function Landing() {
           <h2>What you get</h2>
           <p className="sub">The eight things the assignment asks for, on one map, each with its uncertainty stated.</p>
           <div className="cards">
-            <div className="card"><span className="fr">Satellite · contours</span><h3>The village, seen</h3><p className="small">Imagery, contours at 1–10 m, hillshade, slope, wetness, curvature — thirteen layers you can toggle.</p></div>
+            <div className="card"><span className="fr">Satellite · contours</span><h3>The village, seen</h3><p className="small">Imagery, contours at 1–10 m, hillshade, slope, wetness, curvature — nineteen layers you can toggle.</p></div>
             <div className="card"><span className="fr">Catchment</span><h3>Click a point, get its catchment</h3><p className="small">Snapped to the nearest channel with the distance shown; area, longest flow path, relief, and a flag if the map edge cuts it.</p></div>
             <div className="card"><span className="fr">Rainfall</span><h3>45 years, in plain words</h3><p className="small">“In 3 of every 4 years, expect at least this much” — the 75 % dependable year, monsoon share, rainy days, the 25-year storm.</p></div>
             <div className="card"><span className="fr">Runoff</span><h3>A range, not a number</h3><p className="small">SCS-CN on the daily series, the rational method and Strange's table — with the spread between them reported.</p></div>

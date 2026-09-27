@@ -10,7 +10,7 @@
 4. `docs/ROADMAP.md` (this file) — condensed phase gates and checkpoints.
 5. `docs/PROGRESS.md` — where we actually are right now.
 
-**Target: 100/100.** Final submission and live demonstration: **5 September** — the one fixed date.
+**Target: 100/100.** Final submission: 5 September; the updated Phase 3 brief moved the **viva and demo to 29–30 September** (§9).
 
 Work is tracked by **phase and gate, not by calendar**. `docs/PLAN.md` carries a day-by-day allocation; treat it as the intended *ordering and relative effort*, not a schedule to feel behind on. What matters is that gates close in order and none closes without evidence.
 
@@ -237,6 +237,11 @@ Added for the **Phase 2 submission**, which is graded separately (§4):
 | 40 | Landing-page prototype and coded page, screenshot pair | Frontend 2 | P8 | ☑ `p8-proto-landing.jpg` / `p8-landing.jpg` |
 | 41 | Workspace redesign — six panel states, screenshot sheet | UX 1 | P8 | ☑ `p8-proto-states.jpg`, `p8-app-workspace.jpg`, `p8-app-design.jpg` |
 | 42 | Lighthouse accessibility report ≥ 90 on `/` and `/app` | Frontend 1 | P8 | ☑ 100 / 100 — `docs/figures/p8-lighthouse-*.html` |
+| 43 | Map-selected area → site, catchment, volume on the map | Phase 3 requirement | P9 | ☑ `p9-area-select.jpg`, `p9-area-progress.jpg`, `p9-area-limit.jpg` |
+| 44 | Terrain-source cross-check (KML vs GLO-30) | Terrain validation | P9 | ☑ `p9-dem-crosscheck.md/.png` |
+| 45 | Deployed e2e 46/46 + Locust before/after | Stress/scaling (Phase 3) | P9 | ☑ `p9-e2e-lab.txt`, `p9-locust-*.txt` |
+| 46 | Final report in the course template | Phase 3 report | P9 | ☑ `docs/report/Final_Report.pdf` |
+| 47 | 5-minute YouTube demo | Phase 3 | P9 | ◐ script `docs/DEMO_VIDEO.md`; recording is the user's |
 | 38 | Data-source licence register (SRTM · GMTED2010 · HydroSHEDS · Mapzen) | Docs report 3 | P7 | ☑ `docs/LICENSES.md` |
 
 ## 9. P9 — Phase 3 final submission (added 2026-09-27)
@@ -258,9 +263,13 @@ now fixes the submission set and adds one functional requirement the v1.0 build 
 | Fast, functional; stress, scaling and limits within the four systems | Locust on Docker only | area-size limits + DEM cache; replicas on the lab VMs; Locust against the deployed URL; a scaling section in the report |
 
 ### G9 — exit criteria
-- [ ] Draw a box in the browser → pond location, catchment and expected water volume on the map, with no other input (`p9-area-select.jpg`)
-- [ ] `POST /analyzeArea` has unit and API tests; a golden check that the GLO-30 path and the KML path agree on the sample AOI (`p9-dem-crosscheck`)
-- [ ] Area limits enforced (too small / too large → 422 with a stable code); the DEM window is cached
-- [ ] Working front-end URL on the lab VMs; `make e2e` green against it; Locust numbers from the deployed system
-- [ ] LaTeX report ≤ 10 pages + appendix; `docs/DEMO_VIDEO.md`; README and landing links verified by a link check
-- [ ] `make check` green · commit · push · `docs/progress/DAY_09.md`
+- [x] Draw a box in the browser → pond location, catchment and expected water volume on the map, with no other input (`p9-area-select.jpg`, `p9-area-progress.jpg`)
+- [x] `POST /analyzeArea` has unit and API tests (`tests/test_area_analysis.py`, synthetic GLO-30 tile, offline); the GLO-30 vs KML cross-check on the sample AOI (`p9-dem-crosscheck.md`)
+- [x] Area limits enforced (`422 area_out_of_range`, UI check live — `p9-area-limit.jpg`); the DEM window is cached (LRU)
+- [x] Algorithm fixes found on the way, each with a golden test: complete-catchment constraint (`edge_fed`), water body mask on both paths, grid-footprint tile window
+- [x] Working front-end URL on the lab VMs — **http://10.1.75.53:4270** (lbsys2), `make e2e` 46/46 (`p9-e2e-lab.txt`)
+- [ ] Replicas on lbsys1/3/4 + nginx `ip_hash` load balancer on lbsys4 (`infra/lab/`) — **blocked: needs the user's go-ahead to deploy**
+- [x] Locust: before/after on one process (`p9-locust-inline-lab.txt`, `p9-locust-thread-runner.txt`); ☐ rerun inside the lab after the replicas are up
+- [x] LaTeX report in the course template (`docs/report/Final_Report.pdf`, body ≤ 10 pages + appendix); `docs/DEMO_VIDEO.md`; README and landing links verified (60 links)
+- [ ] YouTube video recorded and uploaded — **the user's**; link goes into `\videourl` and the README
+- [x] `make check` green (219 tests) · commits · `docs/progress/DAY_11.md`

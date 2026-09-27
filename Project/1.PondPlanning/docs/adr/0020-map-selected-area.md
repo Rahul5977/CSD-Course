@@ -55,6 +55,11 @@ contour adapter and a documented `ProviderTileAdapter` stub.
    dependable) on the top site, so the location, catchment and expected water
    volume appear on the map together.
 
+**Addendum (same day).** The water body mask is now read for the grid footprint on the
+contour-upload path too (`POND_WATER_MASK_ENABLED`, off in tests). A river entering the
+uploaded map from outside carries no in-map accumulation; on the sample the v1.0 top site sat
+on the Shivnath's bank. With the mask every sample site is ≥ 295 m from mapped water.
+
 ## Alternatives rejected
 
 - **Point-elevation APIs (OpenTopoData, Open-Elevation).** One HTTP call per

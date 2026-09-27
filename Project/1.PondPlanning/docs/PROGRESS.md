@@ -11,8 +11,10 @@ the assistant reads this at the start of every session and updates it at the end
 - **Last updated:** 2026-09-27
 - **Current phase:** **P9 — Phase 3 final submission** (plan: `docs/ROADMAP.md` §9). The updated `docs/assignment/Phase3.txt` adds *select the land area on a map*, a 10-page Overleaf report, a ≤5-min YouTube demo, and scaling across the four lab systems. Viva 29–30 Sept.
 - **Active gate:** **G9** (open). G0–G8 closed.
-- **Blocker:** lbsys1 (10.1.75.53:2269 / :4269) unreachable since at least 2026-09-27 — the live URL is down. lbsys2–4 reachable → redeploy there.
-- **Next action:** build `POST /analyzeArea` + map box-select + auto pond design → deploy on lbsys2–4 → load test → LaTeX report → demo-video script.
+- **Live URL:** **http://10.1.75.53:4270** (replica on lbsys2, 46/46 e2e) — running the build *before* the thread runner / water-mask fix; redeploy pending.
+- **Blockers:** (1) deploying lbsys1/3/4 replicas + the nginx load balancer (`infra/lab/`) was blocked by the session's permission check — needs the user's go-ahead; (2) the YouTube video is the user's to record (`docs/DEMO_VIDEO.md`); (3) the report byline needs the institute name.
+- **Found:** lbsys1/lbsys3 are *not* down — the laptop's route into campus loses ~60 % of connections (10/10 from inside the lab); lbsys1's pond process had died again.
+- **Next action:** user decision on the deploy → replicas + LB → e2e + Locust from inside the lab → final URL into the report (`\appurl`) → record video.
 - **Calendar:** 10 days to submission as of 26 Aug. Autonomous loop protocol in the working agreement's autonomous loop; check-in with the user at every gate.
 - **Tracking by phase, not calendar.** Only fixed date is the 5 September submission. Gates close in order; `docs/PLAN.md`'s day allocation is relative effort, not a schedule.
 
@@ -266,6 +268,19 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-09-27 (session 19)
+
+**P9 — Phase 3 submission.** Read the updated `Phase3.txt`: map selection of the land area, a
+10-page report in the course's ACM template, a 5-minute video, stress/scaling within the four
+systems. Built map selection end to end (`POST /analyzeArea`, GLO-30 behind the DEM port, box
+drawing + place search, automatic pond design) — ADR 0020. Three algorithm defects found and
+fixed with golden tests: truncated catchments ranked as answers (complete-catchment
+constraint), rivers invisible to accumulation (GLO-30 water body mask, both paths — the sample's
+top site had sat on the Shivnath's bank), gap-filled grid corners. The load test on the lab VM
+exposed the inline runner and a cold-cache herd → thread-pool bulkheads + single-flight (ADR
+0021). Cross-check KML vs GLO-30 reported honestly. Report compiled with tectonic (body ≤ 10
+pages). 219 tests; 46/46 e2e on http://10.1.75.53:4270. **Next:** the deploy decision; video.
 
 ### 2026-09-01 (session 18)
 

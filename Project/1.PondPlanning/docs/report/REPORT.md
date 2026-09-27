@@ -1,4 +1,11 @@
-# AI-based Village Pond Planning System — Technical Report
+# AI-based Village Pond Planning System — Technical Report (extended, v1.0)
+
+> **The submitted report is [`Final_Report.pdf`](Final_Report.pdf)** (ACM template, 10 pages +
+> appendix; source in `latex/`). This extended Markdown version documents v1.0 in more depth.
+> Since v1.0 the Phase 3 work added map selection (Copernicus GLO-30, ADR 0020), a
+> complete-catchment constraint and the water body mask; on the sample the suggested site
+> moved from the 38 ha river-bank site quoted below (its catchment reached the map edge, and it
+> sat beside the Shivnath) to a 103 ha tributary. Current numbers: `Final_Report.pdf` §7.
 
 **Author:** Rahul Raj · **Course:** 7th semester, Assignment 1 · **Submission:** 5 September 2026
 **Repository:** https://github.com/Rahul5977/AI-BasedPondAnalysis

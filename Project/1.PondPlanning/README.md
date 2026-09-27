@@ -2,17 +2,26 @@
 
 [![CI](https://github.com/Rahul5977/AI-BasedPondAnalysis/actions/workflows/ci.yml/badge.svg)](https://github.com/Rahul5977/AI-BasedPondAnalysis/actions/workflows/ci.yml)
 
-Upload a contour map (KML/KMZ) of a village and get, from the browser: the terrain
+**Draw a box around a village's land on the satellite map** — or upload a contour map
+(KML/KMZ) — and get, from the browser: the suggested pond location, the catchment draining to
+it and the expected water volume, all overlaid on the map; and behind them the terrain
 (DEM, hillshade, slope, curvature, wetness), the modelled streams, ranked pond
 sites with the reasoning, the catchment of any point you click, 45 years of rainfall
 statistics, runoff by three methods, a costed pond design with fill reliability,
 eligible land under named constraints, and a recommendation you can approve and
 export. Every number carries its unit and an uncertainty band. Nothing about any one
 map is hard-coded — the UTM zone, grid resolution, source accuracy and pour point are
-all derived from the upload.
+all derived from the selection or the upload.
+
+| Submission item | Where |
+|---|---|
+| Final report (ACM template, ≤ 10 pages + appendix) | [`docs/report/Final_Report.pdf`](docs/report/Final_Report.pdf) · source `docs/report/latex/` (`make report-latex`) |
+| Working front-end | **http://10.1.75.53:4270** (lab VM, campus network) · planner at `/app`, API docs at `/docs` |
+| Repository | https://github.com/Rahul5977/AI-BasedPondAnalysis |
+| Demo video (≤ 5 min) | script in [`docs/DEMO_VIDEO.md`](docs/DEMO_VIDEO.md) · YouTube link: *added after upload* |
 
 7th-semester assignment · full specification in `docs/assignment/`, execution plan in
-`docs/PLAN.md`, technical report in `docs/report/REPORT.md`, API cookbook in
+`docs/PLAN.md`, final report in `docs/report/Final_Report.pdf`, API cookbook in
 `docs/api/cookbook.md`.
 
 ## Installation
@@ -96,6 +105,19 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | `uv run mypy` (or pytest) fails with *Failed to spawn* / *bad interpreter* after moving the project folder | The venv's script shebangs still point at the old path | `rm -rf .venv && make install` |
 | `make e2e` fails only at `/ready` on a no-Docker deployment | Old images probed postgres/redis unconditionally | Fixed: `/ready` now probes only the configured adapters; pull and restart |
 | `make check` fails on a fresh clone with a network error | Nothing should — tests use recorded fixtures | Check `POND_RAINFALL_SOURCE` is unset in your shell (tests force `recorded`) |
+| *Analyse area* stays disabled, *Select between 0.25 and 25 km²* | The drawn box is too small or too large (the API answers `422 area_out_of_range`) | Zoom to the village and redraw; 25 km² is the per-request stress limit |
+| `503 upstream_unavailable` from `/analyzeArea` | The Copernicus GLO-30 bucket on AWS was unreachable | Check outbound HTTPS; the contour-upload route works offline |
+| Result warning `no_complete_catchment` | Every candidate's catchment runs out of the selected box | Redraw a larger box that includes the land upslope of the site |
+| Lab URL times out from a laptop but works from another lab VM | Packet loss on the laptop's route into the campus network (measured 4/10 connects from a laptop, 10/10 inside the lab) | Use the campus wired network; the e2e client retries connects |
+| Lab replica died / URL returns nothing | No supervisor on the VMs | `infra/lab/run_replica.sh` restarts uvicorn in a loop; start it with `ssh -f <vm> 'cd ~/pond/app && PORT=4000 exec setsid infra/lab/run_replica.sh >> ~/pond/server.log 2>&1 < /dev/null'` |
+
+### Deployment on the four lab machines (no Docker)
+
+The lab VMs are unprivileged containers, so each replica is one process (`infra/lab/run_replica.sh`:
+API + built SPA, in-memory persistence, thread-pool job runner with bulkheads, local store, live
+rainfall) and a user-space nginx (`infra/lab/nginx-lb.conf`, `ip_hash` + passive health checks)
+balances the replicas. Copy the tree, `uv sync --no-dev --frozen`, run the script; `make e2e
+BASE=http://10.1.75.53:4270` verifies it (46/46).
 
 ### Public URL for the Phase 2 route
 
@@ -104,12 +126,12 @@ then accepts the KML/KMZ upload from anywhere. The tunnel lives as long as the c
 
 ## Documentation map
 
-- `docs/report/REPORT.md` — the technical report (methodology, algorithms, validation, results)
+- `docs/report/Final_Report.pdf` — the submitted report (source `docs/report/latex/`); `docs/report/REPORT.md` — extended v1.0 report
 - `docs/api/cookbook.md`, `docs/api/errors.md`, `docs/api/openapi.json` — the API
-- `docs/adr/` — 19 architecture decision records
+- `docs/adr/` — 21 architecture decision records (0020: map-selected area; 0021: lab replicas and bulkheads)
 - `docs/PROGRESS.md` — decision log and session history; `docs/progress/DAY_NN.md` — daily logs
 - `docs/LICENSES.md` — data-source licence register
-- `docs/DEMO.md` — the 7-minute demonstration script
+- `docs/DEMO_VIDEO.md` — the 5-minute video script (Phase 3); `docs/DEMO.md` — the 7-minute live demo
 - `docs/design/BRIEF.md`, `web/design/` — the design brief, tokens, components and prototypes (push to the AI design tool with the design-sync tooling)
 
 ## Development
