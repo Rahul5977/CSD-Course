@@ -1,9 +1,10 @@
 # Demo video — how to record it, and the script to narrate
 
 **Target:** one public YouTube video, **4:30–4:50 long** (hard limit 5:00), showing the working
-system, the algorithm, and a live demo of the website. The narration below is **about 600
-words**, which is 4 min 40 s at a relaxed ~130 words per minute. Read it as written; the
-bracketed lines tell you what to do on screen while you say it.
+system, the algorithm, and a live demo of the website. The narration below is **about 770
+words in simple English**, written for a quick speaking pace (~160 words per minute ≈ 4 min
+45 s). Read it as written; the bracketed lines tell you what to do on screen while you say it.
+Short sentences on purpose: say each one, then move on.
 
 ---
 
@@ -27,7 +28,8 @@ a quiet room; do one 10-second test and listen back.
 5. Check it is alive: `curl http://10.1.75.53:4272/lb/health` → `ok`. Off campus, run
    `make serve-single` locally and use `http://localhost:8080` instead.
 
-**Rehearse once with a timer.** If you are over 5:00, drop the sentences marked *(optional)*.
+**Rehearse once with a timer.** If you are over 5:00, drop the last paragraph of Scene 3
+("Last step: water") and the second paragraph of Scene 4 — the rest still covers every item.
 
 ---
 
@@ -35,95 +37,111 @@ a quiet room; do one 10-second test and listen back.
 
 ### Scene 1 · 0:00–0:25 · Who and what — *Tab 1, landing page*
 
-[Start on the landing page hero. Scroll slowly down to "How it works".]
+[Start on the landing page. Scroll slowly down to "How it works".]
 
-> Hello, I am Rahul Raj, student ID 12341680, IIT Bhilai. This is my AI-based Village Pond
-> Planning System. A village pond only works where the land actually sends rainwater to it.
-> This web app finds that place: you select the land on a map, and it returns the best pond
-> location, the catchment that drains into it, and how much water it can collect.
+> Hello. I am Rahul Raj, student ID 12341680, from IIT Bhilai. This is my AI-based Village
+> Pond Planning System. A village pond is useful only if rain water actually flows into it.
+> Finding that spot by hand needs maps, rainfall data and many calculations. My web app does
+> it in a few seconds.
 
-### Scene 2 · 0:25–1:35 · Live demo: selecting the land — *Tab 2, planner*
+### Scene 2 · 0:25–1:30 · Live demo: selecting the land — *Tab 2, planner*
 
 [Click the search box, type **Ralegan Siddhi**, click **Go**. Wait for the map to fly there.]
 
-> I start by finding the village.
+> Let me show you. First, I search for a village. Here is Ralegan Siddhi in Maharashtra.
 
 [Click **Draw area on map**. Click the top-left corner of the farmland, then the bottom-right —
 about 3 to 4 km across. Point the mouse at the green km² badge.]
 
-> I draw a box around the land with two clicks. The area is checked immediately — it has to
-> be between a quarter and twenty-five square kilometres.
+> Now I select the land. I click one corner, then the opposite corner. That makes a box. The
+> app checks the size right away. It must be between a quarter and twenty-five square
+> kilometres — about the size of a village.
 
-[Click **Analyse area**. Let the progress bar run; do not talk over the first two seconds.]
+[Click **Analyse area**. Let the progress bar run.]
 
-> When I press Analyse, the server downloads the thirty-metre Copernicus elevation model for
-> exactly this box, and runs the analysis. You can see each stage as it happens.
+> I click Analyse. The server downloads the height of the ground for this box, from the free
+> Copernicus satellite data. The progress bar shows each step.
 
-[Results appear. Move the mouse slowly: green dots → blue polygon → results panel.]
+[Results appear. Move the mouse slowly: green dots → blue shape → results panel.]
 
-> These green dots are five ranked pond sites. Number one is the suggestion. The blue shape is
-> its catchment — every piece of land whose rain flows to that point. The panel shows the
-> catchment area, the rainfall I can expect three years out of four, the expected runoff
-> volume, and a pond sized for it — its dimensions, storage, and how often it fills.
-> Every number has its uncertainty next to it.
+> Here is the result. The green dots are the five best places for a pond. Number one is the
+> best. The blue shape is its catchment — all the land where rain flows to this pond. The
+> panel shows the catchment area, the rain we can expect in three out of four years, how much
+> water will flow in, the pond size, and how often it fills. Every number has a plus-minus
+> to show how sure we are.
 
-### Scene 3 · 1:35–3:15 · The algorithm — *Tab 3 (flowchart), Tab 4 (Algorithm 1), then Tab 2*
+### Scene 3 · 1:30–3:15 · The algorithm, step by step — *Tab 3 (flowchart), Tab 4 (Algorithm 1), then Tab 2*
 
-[Switch to Tab 3, Figure 3. Trace the path with the mouse as you speak.]
+[Switch to Tab 3, Figure 3 — the flowchart. Move the mouse along the boxes as you speak.]
 
-> Here is how it works. Whether I draw a box or upload a contour map, I get an elevation grid.
-> First, the Priority-Flood algorithm fills small pits, so that every cell can drain.
+> Now, how does it work? This chart shows the whole process. Read it from top to bottom.
+> There are two ways to start. I can draw a box, or I can upload a contour map file. The red
+> boxes are safety checks. If the box is too big, or the file has no height data, the app
+> stops and says why. It never guesses.
 
-[Switch to Tab 4, Algorithm 1.]
+> Both ways give the same thing: a grid of the land, where each small square knows its
+> height. Each square is thirty metres wide.
 
-> Then each cell points to its steepest downhill neighbour — this is called D8 flow routing.
-> That turns the whole map into a graph: a forest of trees flowing towards the edges. If I
-> sort the cells from highest to lowest, that order is a topological order of the graph, so
-> a single pass adds up how many cells drain through each one. That is flow accumulation. The
-> same pass also marks cells whose catchment runs out of the selected box.
+[Point at "Priority-Flood".]
 
-[Switch to Tab 2. Click anywhere on a stream on the map; the catchment redraws.]
+> Step one: fill the small holes. Real ground has small pits. Water would get stuck there,
+> so I fill them first. This is the Priority-Flood algorithm. After this, water can always
+> flow downhill from every square.
 
-> The catchment of any point is a reverse breadth-first search: start at the point and walk
-> uphill along every arrow that flows into it. When I click anywhere, the point is snapped to
-> the nearest stream, and the search returns the catchment in about a second.
+[Switch to Tab 4 — Algorithm 1.]
 
-[Point back at the ranked sites.]
+> Step two: find where water goes. Each square sends its water to the lowest of its eight
+> neighbours. This is called D8. Now the map becomes a graph, like many small trees. All the
+> water flows down the branches to the trunk.
 
-> To choose the site, every stream cell gets a score from four things: enough upstream area to
-> fill a pond but not a river, flat ground, a wet valley position, and how much water a small
-> embankment would hold. Before scoring, some places are ruled out completely: rivers, mapped
-> water, a two-hundred-metre belt around them, and any site whose catchment is cut by the edge
-> of the box.
+> Step three: count the water. I sort all squares from highest to lowest. Then I go through
+> them once. Each square gives its count to the square below it. So a square in a valley
+> collects the count of every square above it. This is flow accumulation. Where the count is
+> big, there is a stream.
 
-> Rainfall comes from forty-five years of daily data. Runoff uses the SCS curve-number method
-> on every single day, then adds them up.
+[Switch to Tab 2. Click on a stream on the map; the blue shape redraws.]
 
-### Scene 4 · 3:15–4:05 · The provided contour map and validation — *Tab 2*
+> Step four: the catchment. When I click any point, the app walks uphill from it, like a
+> breadth-first search, and collects every square that drains to that point. That is the blue
+> shape. It takes about one second.
+
+[Point back at the green dots.]
+
+> Step five: choose the pond site. Every stream square gets a score. It needs enough land
+> above it to fill a pond, but not so much that it is a river. It should be flat, wet, and in
+> a valley that can hold water. Some places are never allowed: rivers, lakes, two hundred
+> metres around them, and places whose catchment goes outside the box. The top score wins.
+
+> Last step: water. The app takes forty-five years of daily rainfall. It uses the SCS curve
+> number method, which says how much rain runs off the ground and how much soaks in. It does
+> this for every day, then adds them up. That gives the water volume and the pond size.
+
+### Scene 4 · 3:15–4:05 · The provided contour map and testing — *Tab 2*
 
 [Open the village dropdown at the top and choose **Khapri · Durg**. Click site **1** in
 *Suggested sites*, then **Design a pond here**. Wait for the panel.]
 
-> The same engine takes the provided contour map. An early version put this pond on the bank
-> of the river, because the river flows in from outside the map. Now the Copernicus water
-> mask is read for the same area, and the site moved to this tributary — a hundred and three
-> hectares, well clear of the river.
+> This is the contour map our professor gave us, Khapri in Durg. At first, my app put the pond
+> next to the big river here. That was wrong. The river comes from outside the map, so my
+> program did not see how much water it carries. I fixed it: the app now also reads a water
+> map from the same satellite data. Now the pond is on a small side stream. It is safe from
+> the river, and its catchment is one hundred and three hectares.
 
-> To check the engine, I compared it with an independent library, pysheds: the catchments
-> agree within two to three percent. Forty-one tests check it on terrain with known answers.
+> Are the answers right? My catchments match a well-known library, pysheds, within two to
+> three percent, and forty-one tests check shapes with known answers, like a V-shaped valley.
 
 ### Scene 5 · 4:05–4:40 · Built for the four lab machines — *Tab 5, Swagger*
 
 [Show Swagger; scroll past `/analyzeArea` and `/jobs/{id}`.]
 
-> Everything is a REST API, documented here. Long work runs as background jobs on separate
-> worker pools, so a click is never stuck behind a big analysis, and a full queue says "try
-> later" instead of crashing. The app runs on all four lab machines behind an nginx load
-> balancer. With twenty users at once, an area analysis took about two seconds.
+> The system is a REST API; all routes are listed here. Big jobs run in the background, so
+> the app never freezes, and if too many come it says "try later" instead of crashing. It runs
+> on all four lab machines behind a load balancer. With twenty users at once, an area took
+> about two seconds.
 
 ### Scene 6 · 4:40–4:50 · Close — *Tab 1, scroll to the footer*
 
-> The code, the report and every design decision are in the GitHub repository. Thank you.
+> All the code, the report and every design decision are on GitHub. Thank you for watching.
 
 [Stop recording.]
 
