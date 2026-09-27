@@ -30,6 +30,26 @@ function noteStale(response: Response) {
   }
 }
 
+/**
+ * fetch that survives a dropped connection. Retries only a *network* failure (fetch throws
+ * TypeError: DNS, reset, timeout) — never an HTTP answer, which is the server's decision.
+ * Safe for POSTs because every analysis POST carries an Idempotency-Key, and the retry
+ * resends the same headers: a request that did arrive returns the original job.
+ * Found on the lab deployment, where a laptop's route loses ~60 % of new connections.
+ */
+async function net(input: string, init?: RequestInit, attempts = 4): Promise<Response> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return await fetch(input, init);
+    } catch (e) {
+      if (!(e instanceof TypeError) || attempt >= attempts) {
+        throw new Error("Network unreachable — check the connection and try again");
+      }
+      await new Promise((r) => setTimeout(r, 400 * 2 ** (attempt - 1)));
+    }
+  }
+}
+
 async function json<T>(response: Response): Promise<T> {
   noteStale(response);
   if (!response.ok) {
@@ -98,93 +118,93 @@ export const api = {
   uploadContour(file: File): Promise<JobAccepted> {
     const body = new FormData();
     body.append("contour_map", file);
-    return fetch(`${BASE}/analyzeContour`, { method: "POST", body }).then(json<JobAccepted>);
+    return net(`${BASE}/analyzeContour`, { method: "POST", body }).then(json<JobAccepted>);
   },
   /** Phase 3: analyse a box drawn on the map (elevation from Copernicus GLO-30). */
   analyzeArea(bbox: [number, number, number, number]): Promise<JobAccepted> {
-    return fetch(`${BASE}/analyzeArea`, {
+    return net(`${BASE}/analyzeArea`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ bbox }),
     }).then(json<JobAccepted>);
   },
   job(id: string): Promise<JobStatus> {
-    return fetch(`${BASE}/jobs/${id}`).then(json<JobStatus>);
+    return net(`${BASE}/jobs/${id}`).then(json<JobStatus>);
   },
   contourResult(jobId: string): Promise<ContourAnalysisResult> {
-    return fetch(`${BASE}/analysis/results/contour/${jobId}`).then(json<ContourAnalysisResult>);
+    return net(`${BASE}/analysis/results/contour/${jobId}`).then(json<ContourAnalysisResult>);
   },
   villages(): Promise<Page<VillageOut>> {
-    return fetch(`${BASE}/villages?limit=50`).then(json<Page<VillageOut>>);
+    return net(`${BASE}/villages?limit=50`).then(json<Page<VillageOut>>);
   },
   summary(id: string): Promise<VillageSummary> {
-    return fetch(`${BASE}/villages/${id}/summary`).then(json<VillageSummary>);
+    return net(`${BASE}/villages/${id}/summary`).then(json<VillageSummary>);
   },
   layers(id: string): Promise<{ layers: LayerDescriptor[] }> {
-    return fetch(`${BASE}/terrain/${id}/layers`).then(json<{ layers: LayerDescriptor[] }>);
+    return net(`${BASE}/terrain/${id}/layers`).then(json<{ layers: LayerDescriptor[] }>);
   },
   contours(id: string, interval: number): Promise<ContourResponse> {
-    return fetch(`${BASE}/terrain/${id}/contours?interval=${interval}`).then(json<ContourResponse>);
+    return net(`${BASE}/terrain/${id}/contours?interval=${interval}`).then(json<ContourResponse>);
   },
   streams(id: string): Promise<StreamNetwork> {
-    return fetch(`${BASE}/terrain/${id}/streams`).then(json<StreamNetwork>);
+    return net(`${BASE}/terrain/${id}/streams`).then(json<StreamNetwork>);
   },
   async catchment(villageId: string, point: PourPoint, onProgress?: Progress): Promise<CatchmentResult> {
-    const accepted = await fetch(`${BASE}/analysis/catchment`, {
+    const accepted = await net(`${BASE}/analysis/catchment`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ village_id: villageId, pour_point: point }),
     }).then(json<JobAccepted>);
     const status = await waitForJob(accepted.job_id, 800, 120_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
-    return fetch(`${BASE}/analysis/results/catchment/${accepted.job_id}`).then(json<CatchmentResult>);
+    return net(`${BASE}/analysis/results/catchment/${accepted.job_id}`).then(json<CatchmentResult>);
   },
   async pondDesign(villageId: string, point: PourPoint, targetReliability = 0.75, onProgress?: Progress): Promise<PondDesignResult> {
-    const accepted = await fetch(`${BASE}/analysis/pond-design`, {
+    const accepted = await net(`${BASE}/analysis/pond-design`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ village_id: villageId, pour_point: point, target_reliability: targetReliability }),
     }).then(json<JobAccepted>);
     const status = await waitForJob(accepted.job_id, 1000, 300_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
-    const design = await fetch(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
+    const design = await net(`${BASE}/analysis/results/pond-design/${accepted.job_id}`).then(json<PondDesignResult>);
     design.job_id = accepted.job_id;
     return design;
   },
   async login(username: string, password: string): Promise<Session> {
-    const t = await fetch(`${BASE}/auth/token`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) }).then(json<{ access_token: string; role: string }>);
+    const t = await net(`${BASE}/auth/token`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ username, password }) }).then(json<{ access_token: string; role: string }>);
     return { username, role: t.role, token: t.access_token };
   },
   saveRecommendation(designJobId: string, token: string): Promise<RecommendationOut> {
-    return fetch(`${BASE}/recommendations`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ design_job_id: designJobId }) }).then(json<RecommendationOut>);
+    return net(`${BASE}/recommendations`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ design_job_id: designJobId }) }).then(json<RecommendationOut>);
   },
   changeStatus(id: string, status: string, reason: string, token: string): Promise<RecommendationOut> {
-    return fetch(`${BASE}/recommendations/${id}/status`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status, reason }) }).then(json<RecommendationOut>);
+    return net(`${BASE}/recommendations/${id}/status`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ status, reason }) }).then(json<RecommendationOut>);
   },
   audit(id: string): Promise<{ audit: { actor: string; action: string; detail: Record<string, unknown> }[] }> {
-    return fetch(`${BASE}/recommendations/${id}/audit`).then(json<{ audit: { actor: string; action: string; detail: Record<string, unknown> }[] }>);
+    return net(`${BASE}/recommendations/${id}/audit`).then(json<{ audit: { actor: string; action: string; detail: Record<string, unknown> }[] }>);
   },
   createExport(id: string, fmt: string): Promise<{ url: string }> {
-    return fetch(`${BASE}/recommendations/${id}/exports?export_format=${fmt}`, { method: "POST" }).then(json<{ url: string }>);
+    return net(`${BASE}/recommendations/${id}/exports?export_format=${fmt}`, { method: "POST" }).then(json<{ url: string }>);
   },
   async suitability(villageId: string, topN = 8, onProgress?: Progress): Promise<SuitabilityResult> {
-    const accepted = await fetch(`${BASE}/analysis/suitability`, {
+    const accepted = await net(`${BASE}/analysis/suitability`, {
       method: "POST",
       headers: { "Content-Type": "application/json", ...idem() },
       body: JSON.stringify({ village_id: villageId, top_n: topN }),
     }).then(json<JobAccepted>);
     const status = await waitForJob(accepted.job_id, 1500, 600_000, onProgress);
     if (status.status !== "succeeded") throw new Error(status.error?.title ?? `job ${status.status}`);
-    return fetch(`${BASE}/analysis/results/suitability/${accepted.job_id}`).then(json<SuitabilityResult>);
+    return net(`${BASE}/analysis/results/suitability/${accepted.job_id}`).then(json<SuitabilityResult>);
   },
   availableLand(villageId: string): Promise<AvailableLand | null> {
-    return fetch(`${BASE}/villages/${villageId}/available-land`).then((r) => (r.ok ? r.json() : null));
+    return net(`${BASE}/villages/${villageId}/available-land`).then((r) => (r.ok ? r.json() : null));
   },
   rainfallStatistics(lon: number, lat: number, years = 45): Promise<RainfallStatistics> {
-    return fetch(`${BASE}/rainfall/statistics?lon=${lon}&lat=${lat}&years=${years}`).then(json<RainfallStatistics>);
+    return net(`${BASE}/rainfall/statistics?lon=${lon}&lat=${lat}&years=${years}`).then(json<RainfallStatistics>);
   },
   /** The latest contour-analysis result for a village, if the session knows one. */
   siting(id: string): Promise<{ candidate_sites: ContourAnalysisResult["candidate_sites"]; siting: ContourAnalysisResult["siting"] } | null> {
-    return fetch(`${BASE}/villages/${id}/siting`).then((r) => (r.ok ? r.json() : null));
+    return net(`${BASE}/villages/${id}/siting`).then((r) => (r.ok ? r.json() : null));
   },
 };

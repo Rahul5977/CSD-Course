@@ -108,6 +108,7 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | *Analyse area* stays disabled, *Select between 0.25 and 25 km²* | The drawn box is too small or too large (the API answers `422 area_out_of_range`) | Zoom to the village and redraw; 25 km² is the per-request stress limit |
 | `503 upstream_unavailable` from `/analyzeArea` | The Copernicus GLO-30 bucket on AWS was unreachable | Check outbound HTTPS; the contour-upload route works offline |
 | Result warning `no_complete_catchment` | Every candidate's catchment runs out of the selected box | Redraw a larger box that includes the land upslope of the site |
+| Planner shows *Failed to fetch* / *Network unreachable* | The request never reached the server (lossy Wi-Fi/VPN route to the lab); the app already retried 4 times with backoff | Hard-reload (`Cmd+Shift+R`) and press the button again — the idempotency key makes a repeat safe; use a wired campus connection for the demo |
 | Lab URL times out from a laptop but works from another lab VM | Packet loss on the laptop's route into the campus network (measured 4/10 connects from a laptop, 10/10 inside the lab) | Use the campus wired network; the e2e client retries connects |
 | Lab replica died / URL returns nothing | No supervisor on the VMs | `infra/lab/run_replica.sh` restarts uvicorn in a loop; start it with `ssh -f <vm> 'cd ~/pond/app && PORT=4000 exec setsid infra/lab/run_replica.sh >> ~/pond/server.log 2>&1 < /dev/null'` |
 
