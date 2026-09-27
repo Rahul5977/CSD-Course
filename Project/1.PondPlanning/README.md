@@ -16,7 +16,7 @@ all derived from the selection or the upload.
 | Submission item | Where |
 |---|---|
 | Final report (ACM template, ≤ 10 pages + appendix) | [`docs/report/Final_Report.pdf`](docs/report/Final_Report.pdf) · source `docs/report/latex/` (`make report-latex`) |
-| Working front-end | **http://10.1.75.53:4270** (lab VM, campus network) · planner at `/app`, API docs at `/docs` |
+| Working front-end | **http://10.1.75.53:4272** (nginx load balancer over four lab replicas, campus network) · planner at `/app`, API docs at `/docs` · replicas :4269, :4270, :4271 |
 | Repository | https://github.com/Rahul5977/AI-BasedPondAnalysis |
 | Demo video (≤ 5 min) | script in [`docs/DEMO_VIDEO.md`](docs/DEMO_VIDEO.md) · YouTube link: *added after upload* |
 
@@ -117,7 +117,7 @@ The lab VMs are unprivileged containers, so each replica is one process (`infra/
 API + built SPA, in-memory persistence, thread-pool job runner with bulkheads, local store, live
 rainfall) and a user-space nginx (`infra/lab/nginx-lb.conf`, `ip_hash` + passive health checks)
 balances the replicas. Copy the tree, `uv sync --no-dev --frozen`, run the script; `make e2e
-BASE=http://10.1.75.53:4270` verifies it (46/46).
+BASE=http://10.1.75.53:4272` verifies it through the load balancer (46/46).
 
 ### Public URL for the Phase 2 route
 

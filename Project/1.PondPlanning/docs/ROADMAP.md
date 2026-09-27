@@ -268,7 +268,7 @@ now fixes the submission set and adds one functional requirement the v1.0 build 
 - [x] Area limits enforced (`422 area_out_of_range`, UI check live — `p9-area-limit.jpg`); the DEM window is cached (LRU)
 - [x] Algorithm fixes found on the way, each with a golden test: complete-catchment constraint (`edge_fed`), water body mask on both paths, grid-footprint tile window
 - [x] Working front-end URL on the lab VMs — **http://10.1.75.53:4270** (lbsys2), `make e2e` 46/46 (`p9-e2e-lab.txt`)
-- [ ] Replicas on lbsys1/3/4 + nginx `ip_hash` load balancer on lbsys4 (`infra/lab/`) — **blocked: needs the user's go-ahead to deploy**
+- [x] Replicas on all four VMs + nginx `ip_hash` load balancer on lbsys4 → **http://10.1.75.53:4272**, e2e 46/46 through it (`p9-e2e-lab.txt`)
 - [x] Locust: before/after on one process (`p9-locust-inline-lab.txt`, `p9-locust-thread-runner.txt`); ☐ rerun inside the lab after the replicas are up
 - [x] LaTeX report in the course template (`docs/report/Final_Report.pdf`, body ≤ 10 pages + appendix); `docs/DEMO_VIDEO.md`; README and landing links verified (60 links)
 - [ ] YouTube video recorded and uploaded — **the user's**; link goes into `\videourl` and the README

@@ -3,12 +3,12 @@ PASS  GET /ready
 PASS  GET /metrics
 PASS  GET /meta/implementation-status  — fixtures: []
 PASS  GET /meta/errors
-PASS  POST /analyzeContour -> 202  — job ca2bdbba
+PASS  POST /analyzeContour -> 202  — job 570bf460
 PASS  job succeeds  — stage done
-PASS  GET /analysis/results/contour/{job}  — village Khapri, catchment 27.99 ha (±33.4405 %)
-PASS  existing watercourse edge case is reported  — warnings: ['interpolated_precision', 'existing_watercourse']
+PASS  GET /analysis/results/contour/{job}  — village AOI 21.2517N 81.2970E, catchment 27.99 ha (±33.4405 %)
+PASS  existing watercourse edge case is reported  — warnings: ['interpolated_precision', 'geocode_unavailable', 'existing_watercourse']
 PASS  POST /analyzeContour (garbage) -> 4xx problem  — 422 unsupported_input
-PASS  POST /analyzeArea -> 202  — job e64f3565
+PASS  POST /analyzeArea -> 202  — job fe6edfa0
 PASS  area job succeeds  — stage done
 PASS  area result: site + complete catchment from GLO-30  — catchment 14.94 ha (±38.5542 %)
 PASS  POST /analyzeArea (too large) -> 422 area_out_of_range  — 422 area_out_of_range
@@ -35,7 +35,7 @@ PASS  POST /analysis/suitability -> 202
 PASS  GET /analysis/results/suitability/{job}
 PASS  GET /villages/{id}/available-land
 PASS  POST /auth/token (3 roles)
-PASS  POST /recommendations (planner)  — rec 952faecf
+PASS  POST /recommendations (planner)  — rec c9beb2f3
 PASS  draft -> approved is 409 illegal_transition  — illegal_transition
 PASS  planner submits
 PASS  viewer approve -> 403  — forbidden
@@ -45,4 +45,4 @@ PASS  POST exports pdf  — 201
 PASS  POST exports geojson  — 201
 PASS  POST exports csv  — 201
 
-46/46 checks passed against http://10.1.75.53:4270
+46/46 checks passed against http://10.1.75.53:4272
