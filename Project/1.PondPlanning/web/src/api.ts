@@ -79,7 +79,15 @@ const uuid = (): string =>
       );
 const idem = () => ({ "Idempotency-Key": uuid() });
 
-/** Try the WebSocket first (one frame per change); fall back to polling. */
+/** The server sends the current status the moment it accepts, so silence means a lost
+ * handshake or a dead connection — not a slow job. */
+const SOCKET_FIRST_FRAME_MS = 4_000;
+const SOCKET_IDLE_MS = 15_000;
+
+/** Try the WebSocket first (one frame per change); fall back to polling.
+ * Watchdog: on a lossy route a dropped handshake fires neither onerror nor onclose for a
+ * minute or more, which left the UI frozen at "submitting". No first frame within 4 s, or
+ * 15 s of silence after it, closes the socket and hands over to polling. */
 function watchSocket(jobId: string, onProgress?: Progress): Promise<JobStatus | null> {
   return new Promise((resolve) => {
     let settled = false;
@@ -91,13 +99,31 @@ function watchSocket(jobId: string, onProgress?: Progress): Promise<JobStatus | 
       resolve(null);
       return;
     }
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const giveUp = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(null);
+      socket.close();
+    };
+    const arm = (ms: number) => { clearTimeout(timer); timer = setTimeout(giveUp, ms); };
+    arm(SOCKET_FIRST_FRAME_MS);
     socket.onmessage = (event) => {
+      if (settled) return;
       const status = JSON.parse(event.data) as JobStatus;
       onProgress?.(status);
-      if (status.status !== "queued" && status.status !== "running") { settled = true; resolve(status); socket.close(); }
+      if (status.status !== "queued" && status.status !== "running") {
+        settled = true;
+        clearTimeout(timer);
+        resolve(status);
+        socket.close();
+      } else {
+        arm(SOCKET_IDLE_MS);
+      }
     };
-    socket.onerror = () => { if (!settled) { settled = true; resolve(null); } };
-    socket.onclose = () => { if (!settled) { settled = true; resolve(null); } };
+    socket.onerror = giveUp;
+    socket.onclose = giveUp;
   });
 }
 
