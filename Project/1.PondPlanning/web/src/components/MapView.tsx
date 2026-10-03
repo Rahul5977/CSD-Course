@@ -150,7 +150,9 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
         m.setLayoutProperty(id, "visibility", visible[layer.layer_id] ? "visible" : "none");
       }
     };
-    if (m.isStyleLoaded()) apply();
+    // Not isStyleLoaded(): it is false whenever tiles are streaming, and "load" fires only
+    // once — an update arriving mid-stream (a second catchment) was silently dropped.
+    if (styleReady.current) apply();
     else m.once("load", apply);
   }, [layers, visible]);
 
@@ -226,7 +228,9 @@ export function MapView({ layers, visible, boundary, bounds, contours, streams, 
       show("vec-land-line", visible.available_land === true);
       show("vec-site-labels", visible.sites !== false);
     };
-    if (m.isStyleLoaded()) apply();
+    // Not isStyleLoaded(): it is false whenever tiles are streaming, and "load" fires only
+    // once — an update arriving mid-stream (a second catchment) was silently dropped.
+    if (styleReady.current) apply();
     else m.once("load", apply);
   }, [boundary, contours, streams, catchment, sites, land, pond, visible]);
 
