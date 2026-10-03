@@ -8,10 +8,10 @@ the assistant reads this at the start of every session and updates it at the end
 
 ## Snapshot
 
-- **Last updated:** 2026-09-27
+- **Last updated:** 2026-10-03
 - **Current phase:** **P9 — Phase 3 final submission** (plan: `docs/ROADMAP.md` §9). The updated `docs/assignment/Phase3.txt` adds *select the land area on a map*, a 10-page Overleaf report, a ≤5-min YouTube demo, and scaling across the four lab systems. Viva 29–30 Sept.
 - **Active gate:** **G9** (open). G0–G8 closed.
-- **Live URL:** **http://10.1.75.53:4270** (replica on lbsys2, 46/46 e2e) — running the build *before* the thread runner / water-mask fix; redeploy pending.
+- **Live URL:** **http://10.1.75.53:4272** (nginx LB on lbsys4 → 4 replicas: lbsys1–3 :4000, lbsys4 :5000), 46/46 e2e on 2026-10-03; all four replicas run under the `run_replica.sh` supervisor loop.
 - **Blockers:** (1) deploying lbsys1/3/4 replicas + the nginx load balancer (`infra/lab/`) was blocked by the session's permission check — needs the user's go-ahead; (2) the YouTube video is the user's to record (`docs/DEMO_VIDEO.md`); (3) the report byline needs the institute name.
 - **Found:** lbsys1/lbsys3 are *not* down — the laptop's route into campus loses ~60 % of connections (10/10 from inside the lab); lbsys1's pond process had died again.
 - **Next action:** user decision on the deploy → replicas + LB → e2e + Locust from inside the lab → final URL into the report (`\appurl`) → record video.
@@ -163,6 +163,9 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-10-03 | **Job WebSocket gets a watchdog: no first frame in 4 s, or 15 s of silence, → close and poll** (`web/src/api.ts`) | The server sends the current status on accept, so silence means a lost handshake, not a slow job. On the lossy campus route a dropped WS handshake fired neither `onerror` nor `onclose`, and the UI sat at "submitting 3 %" forever although the job had finished | No WebSocket (loses the push updates the P6 Observer earns); a single long timeout (still a frozen UI for its whole length) |
+| 2026-10-03 | **MapView applies updates when the style has loaded (`styleReady` ref), not when `isStyleLoaded()` is true** | MapLibre's `isStyleLoaded()` is false while *any* tile is streaming, and `"load"` fires once per map, so a catchment arriving mid-stream (the second site clicked) was silently never drawn | Re-subscribing to `"idle"` (fires late, after all tiles; visible lag) |
+| 2026-10-03 | **`Cache-Control: no-cache` on HTML, `immutable` on hashed `/assets/`** (single-server + compose nginx via `expires`) | With no header, browsers cached `index.html` heuristically and kept loading the previous bundle after a redeploy; ETag keeps the revalidation a 304. nginx uses `expires`, because a location-level `add_header` would drop the server-level security headers | `no-store` (forfeits the 304) |
 | 2026-09-27 | **Lab network hardening, deployment-scoped (`scripts/single_server.py`, `run_replica.sh`)**: in-process CONNECT proxy for GDAL (`GDAL_HTTP_PROXY`) so curl never does DNS; each address tried with 3 s, last-good first; 2-minute memory of dead hosts; glibc `RES_OPTIONS=timeout:1 attempts:2 rotate`; last-good addresses on disk | Measured on the lab VMs: a failed DNS lookup blocked 20 s; only 2 of 7 S3 addresses and none of SoilGrids' accept connections; Python gave each dead address the full 12-30 s. Area analysis went from 35-85 s with failures to 4-20 s cold / ~1 s warm, 10/10 succeeding; pond design 9-54 s with real soil data | Changing app/provider code for one network's faults; asking for root to fix resolv.conf |
 | 2026-09-27 | **SoilGrids queried by its published layers (0-5/5-15/15-30 cm), thickness-weighted; an assumed soil is never cached** | Found by asking why every design was "low": the adapter requested a `0-30cm` depth that does not exist, got no values, and assumed soil group C on *every* call since P3 — and wrote that assumption into the 30-day cache. Now: Ralegan Siddhi 42.7 % clay → HSG D (black cotton soil), CN 89 | Keeping the default-C fallback as the norm (silent, systematically wrong CN) |
 | 2026-09-27 | **Water body mask applied on the contour-upload path too** (GLO-30 WBM for the grid's footprint; `POND_WATER_MASK_ENABLED`, off in tests) | Found from the browser: the sample's top site sat on the bank of the Shivnath, its catchment 40 % permanent water (WorldCover). A river entering from outside the map carries no in-map accumulation, and the contour DEM's riverbed does not read as a channel, so the river rules never fired there. With the mask: 92.7 ha of water excluded with its 200 m belt, every site ≥ 295 m from water, top site a 103 ha tributary | Raising the river threshold (the river's in-map accumulation is small — no threshold separates it); WorldCover class 80 (another 10 m read; the WBM is on the DEM's own grid) |
@@ -270,6 +273,22 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-10-03 (session 20)
+
+**"Frontend not reachable" — fixed, then the whole flow re-verified from the browser and the API.**
+All four lab replicas *and* the lbsys4 load balancer had been reaped (nothing listening on
+4269–4272; code on disk unchanged). Restarted the four replicas under `run_replica.sh` and the
+user-space nginx (`~/.local/optpkg/usr/sbin/nginx -c nginx.conf -p ~/pond/lb/`). Walking every
+step in the browser found three real defects, all fixed and redeployed: (1) the job WebSocket
+could hang forever on a lost handshake → watchdog + poll fallback; (2) a second catchment was
+never drawn (`isStyleLoaded()` gate) → `styleReady`; (3) browsers kept the previous bundle after a
+redeploy → cache headers. Verified in the browser on :4272: landing → KML upload (103 ha, 5
+sites) → catchments of sites 2 and 4 drawn (14.3 / 64.2 ha) → pond design → suitability (27 ha in
+16 patches, CR 0.004) → place search + box → `analyzeArea` (Patan, 299 ha, GLO-30, 18.4 ha,
+16 445 m³) → layer toggles → EN/HI. Not clicked in the UI: recommendation sign-in (needs a
+password typed by the user) — covered by e2e. API: 46/46 through the LB, before and after.
+`make check` green (221 passed). **Next:** user to click the recommendation flow once; video.
 
 ### 2026-09-27 (session 19)
 

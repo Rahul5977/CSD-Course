@@ -111,6 +111,9 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | Planner shows *Failed to fetch* / *Network unreachable* | The request never reached the server (lossy Wi-Fi/VPN route to the lab); the app already retried 4 times with backoff | Hard-reload (`Cmd+Shift+R`) and press the button again — the idempotency key makes a repeat safe; use a wired campus connection for the demo |
 | Lab URL times out from a laptop but works from another lab VM | Packet loss on the laptop's route into the campus network (measured 4/10 connects from a laptop, 10/10 inside the lab) | Use the campus wired network; the e2e client retries connects |
 | Lab replica died / URL returns nothing | No supervisor on the VMs | `infra/lab/run_replica.sh` restarts uvicorn in a loop; start it with `ssh -f <vm> 'cd ~/pond/app && PORT=4000 exec setsid infra/lab/run_replica.sh >> ~/pond/server.log 2>&1 < /dev/null'` |
+| Planner still shows the old version after a redeploy | The browser cached `index.html` from a build that sent no `Cache-Control` header | Reload once (Cmd/Ctrl-Shift-R); builds since 2026-10-03 send `no-cache` on HTML, so this does not recur |
+| Progress stuck at "submitting" although the server finished the job | A lost WebSocket handshake on a lossy route (fixed 2026-10-03: the UI falls back to polling after 4 s) | Reload to pick up the current bundle |
+| Load-balanced URL :4272 dead but replicas answer | The user-space nginx on lbsys4 was reaped | `ssh lbsys4 'cd ~/pond/lb && ~/.local/optpkg/usr/sbin/nginx -c nginx.conf -p ~/pond/lb/'` |
 
 ### Run it on one machine without Docker
 
