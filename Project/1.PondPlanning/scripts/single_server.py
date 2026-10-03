@@ -258,11 +258,25 @@ class SPAStaticFiles(StaticFiles):
             response = await super().get_response(path, scope)
         except HTTPException as exc:
             if exc.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
-                return await super().get_response("index.html", scope)
+                return _cache_policy(path, await super().get_response("index.html", scope))
             raise
         if response.status_code == 404 and "." not in path.rsplit("/", 1)[-1]:
             response = await super().get_response("index.html", scope)
-        return response
+        return _cache_policy(path, response)
+
+
+def _cache_policy(path: str, response: Response) -> Response:
+    """HTML revalidates on every load; content-hashed bundles are immutable.
+
+    Without a Cache-Control header browsers cache index.html heuristically (a fraction
+    of its age), so after a redeploy they kept loading the previous bundle. ``no-cache``
+    still allows a 304 via the ETag, so the cost is one small round trip.
+    """
+    if path.startswith("assets/"):
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    elif path in ("", ".") or path.endswith(".html") or "." not in path.rsplit("/", 1)[-1]:
+        response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 if DIST.is_dir():
