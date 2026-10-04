@@ -1113,3 +1113,21 @@ still work through the same URL and are still covered by the 69-assertion backen
 39-assertion balancer suite, both of which pass. The previous assignment's URLs and direct ports keep
 working, its files on the lab systems are untouched, and the whole system can be redeployed,
 re-measured and demonstrated from the scripts in the repository.
+
+## 19. AI Usage Disclosure
+
+An AI assistant (Claude) was used in a limited, supporting capacity during this assignment:
+
+1. **Brainstorming.** Sounding board when weighing load-balancing strategies (round robin vs.
+   least-response-time vs. the threshold rule, and the power-of-two-choices fix in §6.1) for their
+   effect on latency and throughput.
+2. **Debugging.** Helped narrow down a few of the harder failures in §17, such as the CPU-quota
+   throttling on sys1 (Challenge 1) and the feed-transfer bottleneck (Challenge 10), mainly by
+   suggesting what to instrument next.
+3. **Charts.** Assisted with plotting-script boilerplate for the figures in §10–§12; the underlying
+   data is the load generator's raw output.
+4. **Refactoring.** Helped clean up duplicated code in the balancer and backend after milestones,
+   re-verified each time against the existing test suites.
+
+All design decisions, the experiment design, the measurements, and the conclusions in this report are
+my own; AI output was reviewed and tested before being kept.
