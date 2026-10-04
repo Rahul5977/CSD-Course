@@ -1,0 +1,39 @@
+$ ssh lbsys3 'curl -s localhost:5270/stats'
+{
+    "service": "db",
+    "engine": "sqlite (node:sqlite, WAL)",
+    "file": "/home/student/assignment6/data/chat.sqlite",
+    "db_bytes": 213962752,
+    "users": 721,
+    "rooms": 8,
+    "messages": 735183,
+    "duplicates_rejected_total": 16,
+    "duplicates_rejected_since_boot": 1,
+    "appended_since_boot": 3,
+    "requests": 31,
+    "subscribers": 3,
+    "uptime": 130,
+    "node": "v22.23.2"
+}
+
+$ ssh lbsys3 'sqlite3-style schema + duplicate check on the live database file'
+CREATE TABLE messages (
+      id        TEXT PRIMARY KEY,            -- globally unique message id (UUID v4): THE duplicate guard
+      room      TEXT NOT NULL,
+      seq       INTEGER NOT NULL,            -- per-room sequence number, gap-free
+      sender    TEXT NOT NULL,
+      ts        INTEGER NOT NULL,            -- client/backend timestamp (ms)
+      kind      TEXT NOT NULL,               -- plain | enc | system
+      text      TEXT,                        -- plaintext rooms only
+      env       TEXT,                        -- E2E envelope JSON (ciphertext) for locked rooms
+      via       TEXT,                        -- backend that accepted it
+      stored_at INTEGER NOT NULL,            -- server receive time (ms)
+      extra     TEXT,                        -- optional JSON (e.g. roomMeta on system messages)
+      UNIQUE(room, seq)
+  );
+
+CREATE TABLE dedup_log (                -- audit trail of rejected duplicates
+      n INTEGER PRIMARY KEY AUTOINCREMENT, id TEXT NOT NULL, room TEXT, via TEXT, at INTEGER NOT NULL);
+
+rows with a duplicated message id: 0
+messages total: 735183 | in the public room: 461414 | duplicate rejections logged: 16

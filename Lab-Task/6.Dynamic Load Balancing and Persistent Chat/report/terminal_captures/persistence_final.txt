@@ -1,0 +1,22 @@
+=== PERSISTENCE AND SHARED STORAGE (live) ===
+A message written through the load balancer, then read back after every
+backend is restarted — proving the data lives in the shared database, not
+in any one backend's memory.
+
+--- write one message through the LB ---
+  { "ok": true, "duplicate": false, "id": "sys3-3e24fa25-cuz", "seq": 57811 }
+
+--- restart every backend (rolling), then read the same message back ---
+   sys2 healthy, routable again
+   sys3 healthy, routable again
+   sys4 healthy, routable again
+
+--- the SAME id, read directly from each backend and through the LB ---
+   id = sys3-3e24fa25-cuz   (written BEFORE the restart)
+   lbsys2 : found | total 57811 | via sys2
+   lbsys3 : found | total 57811 | via sys3
+   lbsys4 : found | total 57811 | via sys4
+   LB     : found | total 57811 | via sys3
+
+Every backend returns the same message and the same room total, so all three
+share one persistent store and nothing was lost across the restart.

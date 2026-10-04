@@ -1,0 +1,55 @@
+{
+  "listen_host": "0.0.0.0",
+  "listen_port": 3000,
+  "algorithm": "threshold",
+  "backends": [
+    {
+      "id": "sys2",
+      "host": "172.17.0.71",
+      "port": 3000,
+      "weight": 1
+    }
+  ],
+  "health_interval_s": 3,
+  "health_timeout_s": 6,
+  "fail_threshold": 2,
+  "rise_threshold": 2,
+  "degrade_ms": 5000,
+  "degrade_cpu_pct": 95,
+  "ewma_alpha": 0.2,
+  "explore_pct": 5,
+  "switch_threshold": 0.15,
+  "inflight_cap": 80,
+  "rt_cap_ms": 250,
+  "min_dwell_ms": 0,
+  "load_weight": 1.0,
+  "connect_timeout_s": 5,
+  "upstream_timeout_s": 8,
+  "register_token": "__SET_BY_DEPLOY__",
+  "discovery": {
+    "candidates": [
+      {
+        "host": "172.17.0.72",
+        "port": 3000
+      },
+      {
+        "host": "172.17.0.73",
+        "port": 3001
+      }
+    ],
+    "interval_s": 5,
+    "require_version": "v3-assignment6"
+  },
+  "prune_after_s": 900,
+  "access_log": "logs/lb_access.csv",
+  "passive_fail_threshold": 4,
+  "feed_cache_path": "/feed",
+  "feed_cache_ms": 2000,
+  "feed_cache_max_bytes": 16777216,
+  "backend_slots": 80,
+  "feed_slots": 8,
+  "admission_enabled": true,
+  "feed_quiet_ms": 400,
+  "feed_stale_max_ms": 5000,
+  "feed_cache_generation_budget": 33554432
+}
