@@ -1,0 +1,143 @@
+"""Machine-readable metadata about the API itself.
+
+Two routes that cost almost nothing and answer questions an evaluator, a client
+and the report all ask: what does this system actually implement right now, and
+what can go wrong when I call it?
+"""
+
+from __future__ import annotations
+
+from fastapi import APIRouter
+
+from app.api.errors import STATUS_BY_ERROR
+from app.providers.fixtures import available
+
+router = APIRouter(prefix="/meta", tags=["meta"])
+
+#: Updated in the phase that lands each engine. Asserted by the contract test.
+ENGINES_IMPLEMENTED = [
+    "terrain.contour_kml (parser with ordered elevation strategy)",
+    "terrain.interpolate (Delaunay TIN contour → DEM, derived resolution)",
+    "terrain.surfaces (Horn slope/aspect, hillshade)",
+    "terrain.derived (Zevenbergen-Thorne curvature, TWI)",
+    "terrain.contours (marching squares + Douglas-Peucker)",
+    "hydrology.conditioning (Priority-Flood + epsilon)",
+    "hydrology.flow (D8, accumulation, streams)",
+    "hydrology.streams (link tracing, Strahler order)",
+    "hydrology.catchment (snap-to-drainage, upstream BFS)",
+    "hydrology.siting (terrain MCDA site ranking, non-maximum suppression)",
+    "workflows.contour_analysis (upload → DEM → hydrology → sites → catchment)",
+    "workflows.catchment (FR4 click-to-catchment)",
+    "rainfall.statistics (Weibull 75 % dependable, JJAS share, IMD rainy days, Gumbel 25-yr)",
+    "providers.resilience (Retry ∘ CircuitBreaker ∘ Cached, FallbackChain)",
+    "runoff.curve_number (TR-55 CN x WorldCover x SoilGrids HSG, AMC)",
+    "runoff.methods (daily SCS-CN, rational C, Strange's table)",
+    "workflows.runoff (FR6 three-method range)",
+    "design.eav (natural elevation-area-volume by upstream flood fill)",
+    "design.geometry + optimiser (prismoidal frustum, cost-optimised depth)",
+    "design.water_balance (daily balance, fill reliability) + spillway (Kirpich, IMD, weir)",
+    "workflows.pond_design (FR7 Builder)",
+    "suitability.constraints (Specification pattern: slope, water, habitation, contiguity)",
+    "suitability.ahp (Saaty eigenvector weights, consistency ratio)",
+    "suitability.water_mask (Sentinel-2 NDWI, Otsu, OpenCV morphology + connected components)",
+    "workflows.suitability (FR3 available land + ranked sites + heat-map)",
+]
+#: Fixture files whose routes are now real.
+FIXTURES_RETIRED = {
+    "villages",
+    "village_summary",
+    "imagery",
+    "dem_asset",
+    "terrain_layers",
+    "contours",
+    "streams",
+    "derived_surfaces",
+    "catchment",
+    "contour_analysis",
+    "rainfall_statistics",
+    "rainfall_series",
+    "runoff",
+    "pond_design",
+    "suitability",
+    "available_land",
+    "recommendations",
+}
+REAL_ROUTES = [
+    "/health",
+    "/ready",
+    "/api/v1/meta/errors",
+    "/api/v1/meta/implementation-status",
+    "/api/v1/analyzeContour",
+    "/api/v1/jobs/{job_id}",
+    "/api/v1/jobs/{job_id}/result",
+    "/api/v1/villages",
+    "/api/v1/villages/{village_id}",
+    "/api/v1/villages/{village_id}/summary",
+    "/api/v1/villages/{village_id}/imagery",
+    "/api/v1/villages/{village_id}/siting",
+    "/api/v1/terrain/{village_id}/dem",
+    "/api/v1/terrain/{village_id}/layers",
+    "/api/v1/terrain/{village_id}/contours",
+    "/api/v1/terrain/{village_id}/streams",
+    "/api/v1/terrain/{village_id}/derived/{surface}",
+    "/api/v1/analysis/catchment",
+    "/api/v1/analysis/results/catchment/{job_id}",
+    "/api/v1/analysis/results/contour/{job_id}",
+    "/api/v1/rainfall/statistics",
+    "/api/v1/rainfall/series",
+    "/api/v1/analysis/runoff",
+    "/api/v1/analysis/results/runoff/{job_id}",
+    "/api/v1/analysis/pond-design",
+    "/api/v1/analysis/results/pond-design/{job_id}",
+    "/api/v1/analysis/suitability",
+    "/api/v1/analysis/results/suitability/{job_id}",
+    "/api/v1/villages/{village_id}/available-land",
+    "/api/v1/recommendations",
+    "/api/v1/recommendations/{recommendation_id}/status",
+    "/api/v1/recommendations/{recommendation_id}/exports",
+    "/api/v1/auth/token",
+    "/api/v1/jobs/{job_id}/ws",
+]
+
+
+@router.get("/errors", summary="Error catalogue")
+def error_catalogue() -> dict[str, list[dict[str, object]]]:
+    """Every domain error this API can return, with its stable code and status.
+
+    Generated from the handler table rather than written by hand, so the
+    documentation cannot drift from the behaviour.
+    """
+    return {
+        "errors": sorted(
+            (
+                {
+                    "code": error.code,
+                    "status": status,
+                    "exception": error.__name__,
+                    "description": (error.__doc__ or "").strip().split("\n")[0],
+                }
+                for error, status in STATUS_BY_ERROR.items()
+            ),
+            key=lambda row: str(row["code"]),
+        )
+    }
+
+
+@router.get("/implementation-status", summary="What is real and what is a fixture")
+def implementation_status() -> dict[str, object]:
+    """Report which parts of the contract are backed by engines.
+
+    Exists so "not built yet" is a documented state rather than something a
+    caller has to infer. Every fixture-backed response also carries the
+    ``X-Fixture-Data: true`` header and a ``fixture_data`` warning.
+    """
+    return {
+        "phase": "P6 — System Hardening",
+        "engines_implemented": ENGINES_IMPLEMENTED,
+        "fixture_backed": sorted(set(available()) - FIXTURES_RETIRED),
+        "real": REAL_ROUTES,
+        "note": (
+            "Fixture routes exist so the frontend can be built against the final contract "
+            "while the engines are written. Every fixture response sets X-Fixture-Data: true."
+        ),
+    }

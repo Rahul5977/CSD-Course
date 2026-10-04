@@ -1,0 +1,14 @@
+{
+  "type": "https://github.com/Rahul5977/AI-BasedPondAnalysis/blob/main/docs/api/errors.md#illegal_transition",
+  "title": "cannot move a recommendation from draft to approved",
+  "status": 409,
+  "code": "illegal_transition",
+  "detail": {
+    "from": "draft",
+    "to": "approved",
+    "allowed": [
+      "submitted"
+    ]
+  },
+  "instance": "/api/v1/recommendations/e8292484-159e-440f-b985-e78d9c026c27/status"
+}

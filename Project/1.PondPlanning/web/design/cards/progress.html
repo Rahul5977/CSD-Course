@@ -1,0 +1,7 @@
+<!-- @dsCard group="Components" -->
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Job progress</title><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../components.css"><style>body{padding:20px;display:grid;gap:16px;align-content:start} .sw{display:grid;grid-template-columns:repeat(6,1fr);gap:8px} .sw div{border-radius:6px;padding:10px 8px;font-size:12px;min-height:64px;display:grid;align-content:end} .lbl{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}</style></head><body>
+<div class="job"><div class="meta"><span>Interpolating the DEM</span><span>28 %</span></div><div class="bar"><div class="fill" style="width:28%"></div></div></div>
+<div class="job job-succeeded"><div class="meta"><span>Done</span><span>100 %</span></div><div class="bar"><div class="fill" style="width:100%"></div></div></div>
+<div class="job job-failed"><div class="meta"><span>elevation_not_found</span><span>failed</span></div><div class="bar"><div class="fill" style="width:100%"></div></div></div>
+<p class="muted">Stage label from the job row; percentage is real, not animated.</p>
+</body></html>

@@ -1,0 +1,135 @@
+{
+  "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+  "requested_point": {
+    "lon": 81.28414897486398,
+    "lat": 21.26222084697471
+  },
+  "snapped_point": {
+    "lon": 81.28414897486398,
+    "lat": 21.26222084697471
+  },
+  "snap_distance": {
+    "value": 0.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 0.0,
+    "high": 0.0,
+    "method": "nearest channel",
+    "display": "0.00 m"
+  },
+  "area": {
+    "value": 38.25,
+    "unit": "ha",
+    "uncertainty_pct": 26.352941176470587,
+    "low": 28.170000000000005,
+    "high": 48.33,
+    "method": "D8 upstream cell count",
+    "display": "38.25 ha (±26.3529 %)"
+  },
+  "perimeter": {
+    "value": 3360.0,
+    "unit": "m",
+    "uncertainty_pct": 10.0,
+    "low": 3024.0,
+    "high": 3696.0000000000005,
+    "method": "dissolved cell polygon",
+    "display": "3,360.00 m (±10 %)"
+  },
+  "longest_flow_path": {
+    "value": 902.1320343559643,
+    "unit": "m",
+    "uncertainty_pct": 10.0,
+    "low": 811.9188309203679,
+    "high": 992.3452377915607,
+    "method": "longest D8 path to outlet",
+    "display": "902.13 m (±10 %)"
+  },
+  "mean_slope": {
+    "value": 2.283210960600306,
+    "unit": "deg",
+    "uncertainty_pct": 15.0,
+    "low": 1.94072931651026,
+    "high": 2.6256926046903515,
+    "method": "Horn (1981), mean over catchment",
+    "display": "2.28 deg (±15 %)"
+  },
+  "relief": {
+    "value": 12.99896240234375,
+    "unit": "m",
+    "uncertainty_pct": 65.0821176194389,
+    "low": 4.538962402343749,
+    "high": 21.45896240234375,
+    "method": "max - min conditioned elevation",
+    "display": "13.00 m (±65.0821 %)"
+  },
+  "outlet_elevation": {
+    "value": 272.9451599121094,
+    "unit": "m",
+    "uncertainty_pct": 2.1982437797878704,
+    "low": 266.9451599121094,
+    "high": 278.9451599121094,
+    "method": "conditioned DEM",
+    "display": "272.95 m (±2.19824 %)"
+  },
+  "flow_routing": "D8 (O'Callaghan & Mark 1984) on a Priority-Flood+epsilon conditioned DEM",
+  "cell_size": {
+    "value": 30.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 30.0,
+    "high": 30.0,
+    "method": "working grid",
+    "display": "30.00 m"
+  },
+  "geojson": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.28342632518306,
+                21.26235759300517
+              ],
+              [
+                81.28342580645906,
+                21.26208653526384
+              ],
+              "… 45 more"
+            ]
+          ]
+        },
+        "properties": {
+          "kind": "catchment",
+          "area_ha": 38.25,
+          "cells": 425
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [
+            81.28414897486398,
+            21.26222084697471
+          ]
+        },
+        "properties": {
+          "kind": "outlet",
+          "snap_distance_m": 0.0
+        }
+      }
+    ],
+    "crs": "EPSG:4326"
+  },
+  "warnings": [
+    {
+      "code": "catchment_truncated",
+      "message": "The catchment reaches the edge of the uploaded map; the true contributing area may be larger than shown.",
+      "severity": "caution"
+    }
+  ]
+}

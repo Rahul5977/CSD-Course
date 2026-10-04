@@ -1,0 +1,87 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "accumulation_threshold": {
+    "value": 500,
+    "unit": "count",
+    "uncertainty_pct": null,
+    "low": 500,
+    "high": 500,
+    "method": "Calibrated against visible channels in satellite imagery",
+    "display": "500.00 count"
+  },
+  "total_length": {
+    "value": 3960.0,
+    "unit": "m",
+    "uncertainty_pct": 12,
+    "low": 3484.8,
+    "high": 4435.2,
+    "method": "Sum of modelled channel segments",
+    "display": "3,960.00 m (\u00b112 %)"
+  },
+  "strahler_max_order": 3,
+  "geojson": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              81.7302,
+              21.2018
+            ],
+            [
+              81.7362,
+              21.1958
+            ],
+            [
+              81.7402,
+              21.1928
+            ],
+            [
+              81.7472,
+              21.1878
+            ]
+          ]
+        },
+        "properties": {
+          "strahler_order": 3,
+          "length_m": 2840.0
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "LineString",
+          "coordinates": [
+            [
+              81.7322,
+              21.1888
+            ],
+            [
+              81.7372,
+              21.1918
+            ],
+            [
+              81.7402,
+              21.1928
+            ]
+          ]
+        },
+        "properties": {
+          "strahler_order": 2,
+          "length_m": 1120.0
+        }
+      }
+    ],
+    "crs": "EPSG:4326"
+  },
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    }
+  ]
+}

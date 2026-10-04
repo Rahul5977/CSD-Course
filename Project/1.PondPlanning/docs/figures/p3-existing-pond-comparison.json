@@ -1,0 +1,24 @@
+[
+ {
+  "name": "OSM water 3.36 ha (way/135692840)",
+  "lon": 81.30037,
+  "lat": 21.25981,
+  "osm_area_ha": 3.36,
+  "catchment_ha": 10.89,
+  "snap_m": 30.0,
+  "scs_75_m3": 15978.88506640947,
+  "natural": "Without excavation, a bund at this point would impound 3,604 m\u00b3 at +1 m, 39,851 m\u00b3 at +2 m, 88,299 m\u00b3 at +3 m, 3,263,548 m\u00b3 at +4 m (from the DEM).",
+  "capacity_est_m3": 84000.0
+ },
+ {
+  "name": "OSM water 2.22 ha (way/135692870)",
+  "lon": 81.30134,
+  "lat": 21.25812,
+  "osm_area_ha": 2.22,
+  "catchment_ha": 1.98,
+  "snap_m": 30.0,
+  "scs_75_m3": 6349.234522302961,
+  "natural": "Without excavation, a bund at this point would impound 3,720 m\u00b3 at +1 m, 10,653 m\u00b3 at +2 m, 1,307,256 m\u00b3 at +3 m, 2,916,691 m\u00b3 at +4 m (from the DEM).",
+  "capacity_est_m3": 55500.00000000001
+ }
+]

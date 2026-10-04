@@ -1,0 +1,50 @@
+{
+  "id": "e8292484-159e-440f-b985-e78d9c026c27",
+  "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+  "village_name": "Khapri",
+  "location": [
+    81.28414897486398,
+    21.26222084697471
+  ],
+  "catchment_area": {
+    "value": 38.25,
+    "unit": "ha",
+    "uncertainty_pct": 15.0,
+    "low": 32.512499999999996,
+    "high": 43.9875,
+    "method": "D8 upstream",
+    "display": "38.25 ha (±15 %)"
+  },
+  "gross_storage": {
+    "value": 50000.0,
+    "unit": "m3",
+    "uncertainty_pct": 20.0,
+    "low": 40000.0,
+    "high": 60000.0,
+    "method": "prismoidal frustum",
+    "display": "50,000.00 m3 (±20 %)"
+  },
+  "depth": {
+    "value": 3.5,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 3.5,
+    "high": 3.5,
+    "method": "cost-optimised",
+    "display": "3.50 m"
+  },
+  "indicative_cost": {
+    "value": 9744718.810808653,
+    "unit": "INR",
+    "uncertainty_pct": 30.0,
+    "low": 6821303.167566056,
+    "high": 12668134.454051249,
+    "method": "indicative rates",
+    "display": "9,744,718.81 INR (±30 %)"
+  },
+  "confidence": "low",
+  "status": "draft",
+  "created_by": "planner",
+  "created_at": "2026-08-26T09:13:04.010447Z",
+  "updated_at": "2026-08-26T09:13:04.010447Z"
+}

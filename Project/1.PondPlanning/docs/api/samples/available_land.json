@@ -1,0 +1,148 @@
+{
+  "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+  "constraints_applied": [
+    "slope < 15 %",
+    "NOT within 150 m of water",
+    "… 5 more"
+  ],
+  "total_eligible_area": {
+    "value": 27.0,
+    "unit": "ha",
+    "uncertainty_pct": 15.0,
+    "low": 22.95,
+    "high": 31.049999999999997,
+    "method": "sum of eligible patches",
+    "display": "27.00 ha (±15 %)"
+  },
+  "parcels": [
+    {
+      "parcel_id": "e176c3b5-001",
+      "ownership_class": "unknown",
+      "area": {
+        "value": 6.75,
+        "unit": "ha",
+        "uncertainty_pct": 15.0,
+        "low": 5.7375,
+        "high": 7.762499999999999,
+        "method": "eligible cells x cell area",
+        "display": "6.75 ha (±15 %)"
+      },
+      "mean_slope": {
+        "value": 1.4298628125909698,
+        "unit": "%",
+        "uncertainty_pct": 15.0,
+        "low": 1.2153833907023244,
+        "high": 1.6443422344796153,
+        "method": "Horn (1981)",
+        "display": "1.43 % (±15 %)"
+      },
+      "lulc_class": "cropland",
+      "excluded_by": [],
+      "eligible": true
+    },
+    {
+      "parcel_id": "e176c3b5-007",
+      "ownership_class": "unknown",
+      "area": {
+        "value": 6.48,
+        "unit": "ha",
+        "uncertainty_pct": 15.0,
+        "low": 5.508,
+        "high": 7.452,
+        "method": "eligible cells x cell area",
+        "display": "6.48 ha (±15 %)"
+      },
+      "mean_slope": {
+        "value": 2.022015661641524,
+        "unit": "%",
+        "uncertainty_pct": 15.0,
+        "low": 1.7187133123952953,
+        "high": 2.3253180108877523,
+        "method": "Horn (1981)",
+        "display": "2.02 % (±15 %)"
+      },
+      "lulc_class": "cropland",
+      "excluded_by": [],
+      "eligible": true
+    },
+    "… 14 more"
+  ],
+  "geojson": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "MultiPolygon",
+          "coordinates": [
+            [
+              [
+                [
+                  81.29555930238747,
+                  21.256373467145
+                ],
+                [
+                  81.29555876162505,
+                  21.25610240950288
+                ],
+                "… 3 more"
+              ]
+            ],
+            [
+              [
+                [
+                  81.29498099857062,
+                  21.256374480007434
+                ],
+                [
+                  81.29498261773502,
+                  21.257187652923882
+                ],
+                "… 3 more"
+              ]
+            ],
+            "… 31 more"
+          ]
+        },
+        "properties": {
+          "parcel_id": "e176c3b5-001",
+          "area_ha": 6.75,
+          "lulc": "cropland"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.28834211016213,
+                21.262349255111996
+              ],
+              [
+                81.2883415824416,
+                21.26207819748702
+              ],
+              "… 3 more"
+            ]
+          ]
+        },
+        "properties": {
+          "parcel_id": "e176c3b5-002",
+          "area_ha": 0.36,
+          "lulc": "cropland"
+        }
+      },
+      "… 14 more"
+    ],
+    "crs": "EPSG:4326"
+  },
+  "warnings": [
+    {
+      "code": "ownership_unknown",
+      "message": "No cadastral layer was supplied, so ownership is 'unknown' for every parcel (never assumed government). Import parcels to apply the ownership rule (ADR 0012).",
+      "severity": "caution"
+    }
+  ]
+}

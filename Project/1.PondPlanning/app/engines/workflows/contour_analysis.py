@@ -1,0 +1,700 @@
+"""The ``POST /analyzeContour`` pipeline, end to end (Phase 2 route).
+
+Use-case orchestrator (the "application service" in a layered architecture):
+it sequences engines and providers, reports progress to the job record, and
+persists what the routers will later read. It contains no algorithm of its
+own — every step is a call into an engine — and it does not know whether it
+is running inside a Celery worker or inline in a test.
+
+Stages, with the weight each contributes to the progress percentage:
+
+    parse + provenance (5-20) → TIN → DEM (45) → conditioning (50) →
+    D8 + accumulation (55) → derived surfaces (60) → streams (65) →
+    site selection (75) → catchment of the top site (80) → rasters to the
+    store (90) → persist + assemble the result (100)
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import traceback
+from collections.abc import Callable
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Any
+from uuid import UUID
+
+import numpy as np
+from pyproj import Transformer
+
+from app.domain.errors import DomainError, NotFoundError, ValidationError
+from app.domain.raster import Raster
+from app.domain.units import Quantity, Unit
+from app.engines.hydrology.catchment import delineate
+from app.engines.hydrology.conditioning import fill_depressions
+from app.engines.hydrology.flow import build_flow_model, stream_mask, threshold_cells
+from app.engines.hydrology.siting import SitingResult, rank_sites
+from app.engines.hydrology.streams import extract_links
+from app.engines.terrain.adapters import ContourKMLAdapter, ProviderTileAdapter
+from app.engines.terrain.derived import curvatures, topographic_wetness_index
+from app.engines.terrain.layers import dem_asset_out, layer_descriptors
+from app.engines.terrain.surfaces import (
+    aspect_degrees,
+    elevation_statistics,
+    hillshade,
+    slope_degrees,
+)
+from app.engines.workflows.catchment import catchment_result
+from app.engines.workflows.saga import Saga, SagaError, Step
+from app.engines.workflows.terrain_products import PRODUCTS, SITING_KEY, STREAMS_KEY
+from app.providers.copernicus_dem import DEFAULT_BASE_URL, read_glo30, read_glo30_water
+from app.providers.geocoding import PlaceName, fallback_name
+from app.providers.raster_io import write_cog
+from app.providers.storage import ObjectStore
+from app.repositories import Repositories
+from app.repositories.records import DEMAssetRecord
+from app.schemas.analysis import (
+    ContourAnalysisResult,
+    PourPoint,
+    SiteCandidateOut,
+    SitingMethod,
+)
+from app.schemas.common import QuantityOut, ResultWarning
+from app.schemas.terrain import TerrainPreparationResult
+
+logger = logging.getLogger(__name__)
+
+Geocoder = Callable[[float, float], PlaceName | None]
+
+
+@dataclass(frozen=True, slots=True)
+class WorkflowContext:
+    """Everything the workflow needs, injected — no globals, no settings lookups."""
+
+    repos: Repositories
+    store: ObjectStore
+    default_floor_m: float
+    tiles_public_base: str
+    geocode: Geocoder | None = None
+    stream_threshold_area_m2: float = 50_000.0
+    snap_radius_m: float = 150.0
+    snap_min_upstream_area_m2: float = 20_000.0
+    siting_rise_m: float = 2.0
+    siting_top_n: int = 5
+    siting_river_buffer_m: float = 200.0
+    rainfall: Any = None  # FallbackChain; typed loosely to keep this module free of providers' HTTP
+    dem_tile_base_url: str = DEFAULT_BASE_URL
+    water_mask_enabled: bool = True
+
+
+def _boundary_geojson(details: dict[str, Any]) -> dict[str, Any]:
+    """The upload's AOI ring if it drew one, else the contour extent rectangle."""
+    aoi = details.get("aoi_lonlat")
+    if isinstance(aoi, list) and len(aoi) >= 4:
+        ring = [list(map(float, p)) for p in aoi]
+        if ring[0] != ring[-1]:
+            ring.append(ring[0])
+        return {"type": "Polygon", "coordinates": [ring]}
+    w, s, e, n = details["bounds_lonlat"]
+    return {"type": "Polygon", "coordinates": [[[w, s], [e, s], [e, n], [w, n], [w, s]]]}
+
+
+def run_contour_analysis(job_id: UUID, ctx: WorkflowContext) -> dict[str, Any]:
+    """Execute the pipeline for a queued job and return the stored result.
+
+    Raises:
+        NotFoundError: If the job does not exist.
+        DomainError: Re-raised after the job is marked failed, so the runner sees it.
+    """
+    jobs = ctx.repos.jobs
+    job = jobs.get(job_id)
+    if job is None:
+        msg = "job not found"
+        raise NotFoundError(msg, {"job_id": str(job_id)})
+
+    def progress(percent: int, stage: str) -> None:
+        jobs.update(job_id, status="running", progress=percent, stage=stage)
+
+    try:
+        return _run(job_id, job.params, ctx, progress)
+    except DomainError as exc:
+        jobs.update(
+            job_id,
+            status="failed",
+            stage="failed",
+            error=f"{exc.code}: {exc.message}",
+            result={"code": exc.code, "message": exc.message, "detail": exc.detail},
+            finished_at=datetime.now(UTC),
+        )
+        raise
+    except Exception as exc:
+        logger.exception("contour analysis crashed", extra={"job_id": str(job_id)})
+        jobs.update(
+            job_id,
+            status="failed",
+            stage="failed",
+            error=f"internal_error: {exc}",
+            result={"code": "internal_error", "message": str(exc), "trace": traceback.format_exc()},
+            finished_at=datetime.now(UTC),
+        )
+        raise
+
+
+def _percentiles(data: np.ndarray) -> tuple[float, float]:
+    valid = data[~np.isnan(data)]
+    if valid.size == 0:
+        return 0.0, 1.0
+    p2, p98 = np.percentile(valid, [2, 98])
+    return float(p2), float(p98 if p98 > p2 else p2 + 1)
+
+
+def _run(
+    job_id: UUID,
+    params: dict[str, Any],
+    ctx: WorkflowContext,
+    progress: Callable[[int, str], None],
+) -> dict[str, Any]:
+    # ---- terrain ------------------------------------------------------
+    # The one branch on input kind: which DEMProvider adapter. Everything after
+    # this line is the same validated chain for an upload and a map selection.
+    adapter: ContourKMLAdapter | ProviderTileAdapter
+    if params.get("bbox"):
+        west, south, east, north = (float(v) for v in params["bbox"])
+        filename = "map selection"
+        adapter = ProviderTileAdapter(
+            (west, south, east, north),
+            read=lambda bounds, grid: read_glo30(bounds, grid, ctx.dem_tile_base_url),
+            read_water=lambda grid: read_glo30_water(grid, ctx.dem_tile_base_url),
+        )
+    else:
+        progress(2, "loading upload")
+        payload = ctx.store.get(str(params["upload_key"]))
+        filename = str(params.get("filename", "upload.kml"))
+        adapter = ContourKMLAdapter(payload, filename, default_floor_m=ctx.default_floor_m)
+    product = adapter.produce(progress)
+    water = product.water
+    if water is None and ctx.water_mask_enabled:
+        # A contour map carries no water layer, and a river entering from outside
+        # the map is invisible to accumulation (its flow is not in the map). The
+        # public GLO-30 water body mask for the same footprint restores it; if it
+        # cannot be read the analysis continues without it and says so.
+        progress(46, "reading the water body mask")
+        try:
+            water = read_glo30_water(product.raster.grid, ctx.dem_tile_base_url)
+        except Exception:  # network, DNS, TLS: never fail an analysis for an overlay
+            logger.warning("water body mask unavailable", exc_info=True)
+            water = None
+    details = product.details
+    dem = product.raster
+    grid = dem.grid
+
+    progress(48, "deriving hillshade and slope")
+    shade = hillshade(dem)
+    slope = slope_degrees(dem)
+    aspect = aspect_degrees(dem)
+    stats = elevation_statistics(dem)
+    stats["mean_slope_deg"] = float(np.nanmean(slope.data))
+
+    # ---- hydrology ----------------------------------------------------
+    progress(50, "filling sinks (Priority-Flood)")
+    conditioned = fill_depressions(dem)
+    progress(55, "routing flow (D8) and accumulating")
+    model = build_flow_model(conditioned.filled)
+    progress(60, "curvature and wetness index")
+    profile_curv, plan_curv = curvatures(dem)
+    twi = topographic_wetness_index(dem, model.accumulation)
+    progress(65, "extracting streams")
+    streams = stream_mask(model, ctx.stream_threshold_area_m2)
+    links = extract_links(model, streams)
+
+    progress(70, "ranking pond sites")
+    siting = rank_sites(
+        model,
+        slope.data,
+        twi.data,
+        streams,
+        top_n=ctx.siting_top_n,
+        rise_m=ctx.siting_rise_m,
+        river_buffer_m=ctx.siting_river_buffer_m,
+        water=water,
+    )
+
+    # ---- persistence as a saga (P6) ------------------------------------
+    # Each step is idempotent (skip-if-exists) and has a compensation, so a
+    # crash between "village created" and "rasters written" cannot leave a
+    # half-registered village behind. The compute above needs no undo.
+    progress(76, "naming the area")
+    boundary = _boundary_geojson(details)
+    west, south, east, north = details["bounds_lonlat"]
+    lon, lat = (west + east) / 2, (south + north) / 2
+    surfaces: dict[str, Raster] = {
+        "dem": dem,
+        "filled": conditioned.filled,
+        "fill_depth": conditioned.fill_depth,
+        "hillshade": shade,
+        "slope": slope,
+        "aspect": aspect,
+        "curvature": profile_curv,
+        "plan_curvature": plan_curv,
+        "twi": twi,
+        "flow_accumulation": dem.with_data(np.log10(np.maximum(model.accumulation, 1))),
+    }
+    to_lonlat = Transformer.from_crs(f"EPSG:{grid.epsg}", "EPSG:4326", always_xy=True)
+    saga_ctx: dict[str, Any] = {"place": None, "created_village": False}
+
+    def find_or_create_village(c: dict[str, Any]) -> None:
+        existing = ctx.repos.villages.find_by_boundary(boundary)
+        if existing is not None:
+            c["village"] = existing
+            return
+        place = ctx.geocode(lon, lat) if ctx.geocode else None
+        c["place"] = place
+        name = place.name if place else fallback_name(lon, lat)
+        c["village"] = ctx.repos.villages.create(
+            name, boundary, place.state_code if place else None, place.district if place else None
+        )
+        c["created_village"] = True
+
+    def undo_village(c: dict[str, Any]) -> None:
+        if c.get("created_village") and c.get("village") is not None:
+            ctx.repos.villages.delete(c["village"].id)
+
+    def write_rasters(c: dict[str, Any]) -> None:
+        prefix = f"villages/{c['village'].id}"
+        c["prefix"] = prefix
+        c["raster_keys"] = []
+        try:
+            for product_id, raster in surfaces.items():
+                spec = PRODUCTS[product_id]
+                key = f"{prefix}/{spec.key}"
+                ctx.store.put(
+                    key, write_cog(raster, dtype=spec.dtype, nodata=spec.nodata), "image/tiff"
+                )
+                c["raster_keys"].append(key)
+                if spec.fixed_range is None:
+                    stats[f"{product_id}_p2"], stats[f"{product_id}_p98"] = _percentiles(
+                        raster.data
+                    )
+        except Exception:
+            undo_rasters(c)  # a step that fails half-way cleans its own partial work
+            raise
+
+    def undo_rasters(c: dict[str, Any]) -> None:
+        for key in c.get("raster_keys", []):
+            ctx.store.delete(key)
+
+    def write_streams(c: dict[str, Any]) -> None:
+        stream_features = []
+        for link in links:
+            xy = np.array([grid.cell_center(r, col) for r, col in link.cells])
+            lons, lats = to_lonlat.transform(xy[:, 0], xy[:, 1])
+            stream_features.append(
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": np.column_stack([lons, lats]).round(6).tolist(),
+                    },
+                    "properties": {
+                        "strahler_order": link.order,
+                        "length_m": round(link.length_m(grid.cell_size), 1),
+                        "upstream_area_ha_at_mouth": round(
+                            link.upstream_cells_at_mouth * grid.cell_area / 1e4, 2
+                        ),
+                    },
+                }
+            )
+        c["streams_doc"] = {
+            "type": "FeatureCollection",
+            "features": stream_features,
+            "crs": "EPSG:4326",
+            "threshold_area_m2": ctx.stream_threshold_area_m2,
+            "threshold_cells": threshold_cells(ctx.stream_threshold_area_m2, grid.cell_area),
+            "total_length_m": round(sum(link.length_m(grid.cell_size) for link in links), 1),
+            "strahler_max_order": max((link.order for link in links), default=0),
+        }
+        ctx.store.put(
+            f"{c['prefix']}/{STREAMS_KEY}",
+            json.dumps(c["streams_doc"]).encode(),
+            "application/json",
+        )
+
+    def undo_streams(c: dict[str, Any]) -> None:
+        ctx.store.delete(f"{c['prefix']}/{STREAMS_KEY}")
+
+    def persist_asset(c: dict[str, Any]) -> None:
+        stats["fill_cells"] = conditioned.cells_filled
+        stats["fill_max_m"] = conditioned.max_fill_m
+        stats["stream_cells"] = int(streams.sum())
+        village = c["village"]
+        c["asset"] = ctx.repos.dem_assets.upsert(
+            DEMAssetRecord(
+                id=job_id,
+                village_id=village.id,
+                provider=adapter.name,
+                source=product.provenance.source,
+                native_resolution_m=product.provenance.native_resolution_m,
+                working_resolution_m=product.working_resolution_m,
+                vertical_accuracy_relative_m=product.provenance.vertical_accuracy_relative_m,
+                vertical_accuracy_absolute_m=product.provenance.vertical_accuracy_absolute_m,
+                epsg=grid.epsg,
+                bounds_lonlat=[float(v) for v in details["bounds_lonlat"]],
+                dem_key=f"{c['prefix']}/{PRODUCTS['dem'].key}",
+                hillshade_key=f"{c['prefix']}/{PRODUCTS['hillshade'].key}",
+                statistics=stats,
+                attribution=list(product.provenance.attribution),
+                acquired=product.provenance.acquired,
+                method=product.method,
+                details={
+                    **{k: v for k, v in details.items() if k not in {"aoi_xy"}},
+                    "products": list(surfaces),
+                    "streams": {
+                        "threshold_area_m2": ctx.stream_threshold_area_m2,
+                        "links": len(links),
+                        "strahler_max_order": c["streams_doc"]["strahler_max_order"],
+                    },
+                    "conditioning": {
+                        "algorithm": "Priority-Flood + epsilon (Barnes et al. 2014)",
+                        "cells_filled": conditioned.cells_filled,
+                        "max_fill_m": conditioned.max_fill_m,
+                    },
+                },
+            )
+        )
+
+    def undo_asset(c: dict[str, Any]) -> None:
+        ctx.repos.dem_assets.delete_for_village(c["village"].id)
+
+    saga = Saga(
+        [
+            Step("village", find_or_create_village, undo_village),
+            Step("rasters", write_rasters, undo_rasters),
+            Step("streams", write_streams, undo_streams),
+            Step("dem_asset", persist_asset, undo_asset),
+        ],
+        on_progress=lambda name: progress(82, f"persisting: {name}"),
+    )
+    try:
+        saga_run = saga.execute(saga_ctx)
+    except SagaError as exc:
+        ctx.repos.jobs.update(
+            job_id,
+            stage="compensated",
+            result={
+                "code": "persistence_failed",
+                "message": str(exc.cause),
+                "detail": {"failed_step": exc.run.failed_step, "compensated": exc.run.compensated},
+            },
+        )
+        raise exc.cause from exc
+    village = saga_ctx["village"]
+    place = saga_ctx["place"]
+    asset = saga_ctx["asset"]
+    prefix = saga_ctx["prefix"]
+
+    logger.info("persisted", extra={"saga": saga_run.completed, "skipped": saga_run.skipped})
+
+    # ---- assemble the result -----------------------------------------
+    progress(94, "delineating the catchment of the top site")
+    warnings = [ResultWarning(code=c, message=m, severity=s) for c, m, s in product.warnings]  # type: ignore[arg-type]
+    if place is None and village.name == fallback_name(lon, lat):
+        warnings.append(
+            ResultWarning(
+                code="geocode_unavailable",
+                message="The area could not be named from OpenStreetMap; named by coordinates.",
+                severity="info",
+            )
+        )
+    water_cells = 0 if water is None else int(water.sum())
+    if (
+        siting.max_upstream_area_ha >= siting.area_bounds_ha[2]
+        or siting.river_cells_excluded
+        or water_cells
+    ):
+        excluded = (
+            f" {siting.river_cells_excluded} drainage cells on the channel or inside its "
+            f"{siting.river_buffer_m:g} m flood belt were excluded from siting outright."
+            if siting.river_cells_excluded
+            else ""
+        )
+        warnings.append(
+            ResultWarning(
+                code="existing_watercourse",
+                message=(
+                    f"An existing watercourse crosses this area (largest channel drains "
+                    f"{siting.max_upstream_area_ha:,.0f} ha"
+                    + (
+                        f"; {water_cells * grid.cell_area / 1e4:,.1f} ha mapped as water by the "
+                        "DEM's water body mask"
+                        if water_cells
+                        else ""
+                    )
+                    + f", beyond the "
+                    f"{siting.area_bounds_ha[1]:g}-{siting.area_bounds_ha[2]:g} ha ideal for a "
+                    f"village pond). Candidate sites avoid the river and keep "
+                    f"{siting.river_buffer_m:g} m clear of its flood belt — impounding it "
+                    f"would need a dam with a flood-rated spillway — and sit on its "
+                    f"tributaries instead.{excluded}"
+                ),
+                severity="info",
+            )
+        )
+    if not siting.catchments_complete and siting.candidates:
+        warnings.append(
+            ResultWarning(
+                code="no_complete_catchment",
+                message="Every candidate's catchment extends beyond the selected area, so the "
+                "ranked sites' catchments and volumes are lower bounds. Select a larger area "
+                "that includes the land upslope of the site.",
+                severity="caution",
+            )
+        )
+    rel = product.provenance.vertical_accuracy_relative_m
+
+    def elev(value: float) -> QuantityOut:
+        pct = 100.0 * rel / value if value else None
+        return QuantityOut.from_domain(Quantity(value, Unit.METRE, pct, product.provenance.source))
+
+    elevation = {
+        "minimum": elev(stats["min"]),
+        "maximum": elev(stats["max"]),
+        "mean": elev(stats["mean"]),
+        "relief": QuantityOut.from_domain(
+            Quantity(stats["relief"], Unit.METRE, None, "maximum - minimum")
+        ),
+    }
+    terrain = TerrainPreparationResult(
+        village_id=village.id,
+        village_name=village.name,
+        provider=adapter.name,
+        elevation_source=str(details["elevation_source"]),
+        contour_count=int(details["contour_count"]),
+        contour_interval=(
+            None
+            if details.get("contour_interval_m") is None
+            else QuantityOut.from_domain(
+                Quantity(float(details["contour_interval_m"]), Unit.METRE, None, "median level gap")
+            )
+        ),
+        grid_resolution=QuantityOut.from_domain(
+            Quantity(
+                product.working_resolution_m,
+                Unit.METRE,
+                None,
+                str(details["resolution_note"])
+                if "resolution_note" in details
+                else f"mean contour spacing {float(details['contour_spacing_m']):.0f} m / 4, "
+                f"floored at {product.provenance.native_resolution_m:g} m",
+            )
+        ),
+        utm_epsg=grid.epsg,
+        bounds=asset.bounds_lonlat,
+        elevation=elevation,
+        mean_slope=QuantityOut.from_domain(
+            Quantity(stats["mean_slope_deg"], Unit.DEGREE, 15.0, "Horn (1981) 3x3, mean")
+        ),
+        dem=dem_asset_out(asset, warnings),
+        layers=layer_descriptors(asset, ctx.store, ctx.tiles_public_base),
+        boundary_geojson=boundary,
+        warnings=warnings,
+    )
+
+    candidates = _candidates_out(siting, grid, to_lonlat)
+    if not candidates:
+        warnings.append(
+            ResultWarning(
+                code="no_site_found",
+                message="No drainage cell met the siting constraints; the map may be too small "
+                "or too flat for the stream threshold.",
+                severity="critical",
+            )
+        )
+        top = PourPoint(lon=lon, lat=lat)
+        rationale = "no eligible site — falling back to the map centre"
+        top_row, top_col = grid.index_of(
+            *Transformer.from_crs("EPSG:4326", f"EPSG:{grid.epsg}", always_xy=True).transform(
+                lon, lat
+            )
+        )
+    else:
+        top = candidates[0].location
+        best = siting.candidates[0]
+        top_row, top_col = best.row, best.col
+        rationale = (
+            f"Highest composite score ({best.score:.2f}) of {siting.considered} drainage cells: "
+            f"upstream area {best.upstream_area_m2 / 1e4:.1f} ha, "
+            f"local slope {best.slope_pct:.1f} %, "
+            f"TWI {best.twi:.1f}, impounds {best.impoundment_volume_m3:,.0f} m³ behind a "
+            f"{siting.rise_m:g} m rise (mean depth {best.impoundment_efficiency_m:.2f} m)."
+        )
+    # A ranked site is on the drainage network by construction, so its snap
+    # always succeeds. The map-centre fallback has no such guarantee: widen
+    # the search once to the whole grid (the map's principal drainage line),
+    # and if even that drains too little, return the terrain honestly with no
+    # catchment rather than failing the whole analysis.
+    catchment_out = None
+    try:
+        catchment = delineate(
+            model,
+            top_row,
+            top_col,
+            radius_m=ctx.snap_radius_m,
+            min_area_m2=ctx.snap_min_upstream_area_m2,
+        )
+    except ValidationError:
+        try:
+            whole_map = float(np.hypot(grid.rows, grid.cols)) * grid.cell_size
+            catchment = delineate(
+                model,
+                top_row,
+                top_col,
+                radius_m=whole_map,
+                min_area_m2=ctx.snap_min_upstream_area_m2,
+            )
+            warnings.append(
+                ResultWarning(
+                    code="catchment_from_map_outlet",
+                    message="No drainage near the fallback point; the catchment shown is the "
+                    "map's principal drainage line, found by widening the snap to the whole "
+                    "grid. Check the snap distance before trusting it.",
+                    severity="caution",
+                )
+            )
+        except ValidationError:
+            catchment = None
+            warnings.append(
+                ResultWarning(
+                    code="catchment_unavailable",
+                    message="No cell in this map drains the minimum area for a catchment "
+                    "(2 ha default). The upload is too small or too flat to analyse "
+                    "hydrologically; terrain products are still returned.",
+                    severity="critical",
+                )
+            )
+    if catchment is not None:
+        catchment_out = catchment_result(village.id, model, slope.data, catchment, top, rel)
+
+    siting_method = SitingMethod(
+        weights=siting.weights,
+        nominal_rise=QuantityOut.from_domain(
+            Quantity(siting.rise_m, Unit.METRE, None, "configured")
+        ),
+        max_slope=QuantityOut.from_domain(
+            Quantity(siting.max_slope_pct, Unit.PERCENT, None, "constraint")
+        ),
+        suppression_radius=QuantityOut.from_domain(
+            Quantity(siting.suppression_radius_m, Unit.METRE, None, "non-maximum suppression")
+        ),
+        stream_threshold=QuantityOut.from_domain(
+            Quantity(
+                ctx.stream_threshold_area_m2 / 1e4,
+                Unit.HECTARE,
+                None,
+                "upstream area defining a channel",
+            )
+        ),
+        upstream_area_bounds_ha=list(siting.area_bounds_ha),
+        candidates_considered=siting.considered,
+        river_cells_excluded=siting.river_cells_excluded,
+        edge_fed_cells_excluded=siting.edge_fed_excluded,
+        catchments_complete=siting.catchments_complete,
+        max_upstream_area_ha=siting.max_upstream_area_ha,
+        river_buffer=QuantityOut.from_domain(
+            Quantity(
+                siting.river_buffer_m,
+                Unit.METRE,
+                None,
+                "flood-belt setback from channels beyond the ideal band",
+            )
+        ),
+        description=(
+            "Weighted sum over drainage-network cells of an upstream-area plateau (1 between "
+            f"{siting.area_bounds_ha[1]:g} and {siting.area_bounds_ha[2]:g} ha, 0 at "
+            f"{siting.area_bounds_ha[0]:g} and {siting.area_bounds_ha[3]:g} ha), a slope plateau "
+            "(1 on 0-3 %, 0 at 15 %), normalised TWI, and impoundment efficiency (volume behind a "
+            "nominal rise / footprint); constraints applied first; non-maximum suppression last."
+        ),
+    )
+    result = ContourAnalysisResult(
+        source_file=filename,
+        village_id=village.id,
+        village_name=village.name,
+        contour_count=int(details["contour_count"]),
+        elevation_source=details["elevation_source"],
+        elevation_range=elevation,
+        contour_interval=terrain.contour_interval,
+        bounds=asset.bounds_lonlat,
+        utm_epsg=grid.epsg,
+        grid_resolution=terrain.grid_resolution,
+        suggested_pond_location=top,
+        location_rationale=rationale,
+        catchment=catchment_out,
+        candidate_sites=candidates,
+        siting=siting_method,
+        terrain=terrain,
+        warnings=warnings
+        + [
+            w
+            for w in (catchment_out.warnings if catchment_out else [])
+            if w.code == "catchment_truncated"
+        ],
+    ).model_dump(mode="json")
+    ctx.store.put(
+        f"{prefix}/{SITING_KEY}",
+        json.dumps(
+            {
+                "candidate_sites": result["candidate_sites"],
+                "siting": result["siting"],
+                "suggested_pond_location": result["suggested_pond_location"],
+                "location_rationale": result["location_rationale"],
+            }
+        ).encode(),
+        "application/json",
+    )
+
+    ctx.repos.jobs.update(
+        job_id,
+        status="succeeded",
+        progress=100,
+        stage="done",
+        result=result,
+        village_id=village.id,
+        finished_at=datetime.now(UTC),
+    )
+    return result
+
+
+def _candidates_out(
+    siting: SitingResult, grid: Any, to_lonlat: Transformer
+) -> list[SiteCandidateOut]:
+    q = QuantityOut.from_domain
+    out: list[SiteCandidateOut] = []
+    for rank, c in enumerate(siting.candidates, start=1):
+        x, y = grid.cell_center(c.row, c.col)
+        lon, lat = to_lonlat.transform(x, y)
+        out.append(
+            SiteCandidateOut(
+                rank=rank,
+                location=PourPoint(lon=float(lon), lat=float(lat)),
+                score=q(Quantity(c.score, Unit.RATIO, None, "weighted sum of normalised criteria")),
+                upstream_area=q(
+                    Quantity(c.upstream_area_m2 / 1e4, Unit.HECTARE, 15.0, "D8 accumulation")
+                ),
+                local_slope=q(Quantity(c.slope_pct, Unit.PERCENT, 15.0, "Horn (1981)")),
+                wetness_index=q(Quantity(c.twi, Unit.RATIO, None, "ln(a / tan beta)")),
+                impoundment_volume=q(
+                    Quantity(
+                        c.impoundment_volume_m3,
+                        Unit.CUBIC_METRE,
+                        30.0,
+                        f"flood fill of upstream cells below a {siting.rise_m:g} m rise",
+                    )
+                ),
+                impoundment_efficiency=q(
+                    Quantity(c.impoundment_efficiency_m, Unit.METRE, 30.0, "volume / footprint")
+                ),
+                criteria=c.criteria_scores,
+            )
+        )
+    return out

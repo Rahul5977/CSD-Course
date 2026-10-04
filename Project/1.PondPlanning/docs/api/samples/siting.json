@@ -1,0 +1,195 @@
+{
+  "candidate_sites": [
+    {
+      "rank": 1,
+      "location": {
+        "lon": 81.28414897486398,
+        "lat": 21.26222084697471
+      },
+      "score": {
+        "value": 0.9310940281236284,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 0.9310940281236284,
+        "high": 0.9310940281236284,
+        "method": "weighted sum of normalised criteria",
+        "display": "0.93 ratio"
+      },
+      "upstream_area": {
+        "value": 38.25,
+        "unit": "ha",
+        "uncertainty_pct": 15.0,
+        "low": 32.512499999999996,
+        "high": 43.9875,
+        "method": "D8 accumulation",
+        "display": "38.25 ha (±15 %)"
+      },
+      "local_slope": {
+        "value": 1.082205780623498,
+        "unit": "%",
+        "uncertainty_pct": 15.0,
+        "low": 0.9198749135299732,
+        "high": 1.2445366477170225,
+        "method": "Horn (1981)",
+        "display": "1.08 % (±15 %)"
+      },
+      "wetness_index": {
+        "value": 13.979455388814198,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 13.979455388814198,
+        "high": 13.979455388814198,
+        "method": "ln(a / tan beta)",
+        "display": "13.98 ratio"
+      },
+      "impoundment_volume": {
+        "value": 255030.69832401324,
+        "unit": "m3",
+        "uncertainty_pct": 30.0,
+        "low": 178521.48882680925,
+        "high": 331539.9078212172,
+        "method": "flood fill of upstream cells below a 2 m rise",
+        "display": "255,030.70 m3 (±30 %)"
+      },
+      "impoundment_efficiency": {
+        "value": 1.4992986380012536,
+        "unit": "m",
+        "uncertainty_pct": 30.0,
+        "low": 1.0495090466008774,
+        "high": 1.9490882294016298,
+        "method": "volume / footprint",
+        "display": "1.50 m (±30 %)"
+      },
+      "criteria": {
+        "upstream_area": 1.0,
+        "flatness": 1.0,
+        "wetness": 0.589575203442102,
+        "impoundment": 0.9755258253577104
+      }
+    },
+    {
+      "rank": 2,
+      "location": {
+        "lon": 81.28874072778146,
+        "lat": 21.244323162166793
+      },
+      "score": {
+        "value": 0.9197836121588074,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 0.9197836121588074,
+        "high": 0.9197836121588074,
+        "method": "weighted sum of normalised criteria",
+        "display": "0.92 ratio"
+      },
+      "upstream_area": {
+        "value": 37.98,
+        "unit": "ha",
+        "uncertainty_pct": 15.0,
+        "low": 32.282999999999994,
+        "high": 43.67699999999999,
+        "method": "D8 accumulation",
+        "display": "37.98 ha (±15 %)"
+      },
+      "local_slope": {
+        "value": 2.1434121698330326,
+        "unit": "%",
+        "uncertainty_pct": 15.0,
+        "low": 1.8219003443580777,
+        "high": 2.4649239953079873,
+        "method": "Horn (1981)",
+        "display": "2.14 % (±15 %)"
+      },
+      "wetness_index": {
+        "value": 13.288973850588583,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 13.288973850588583,
+        "high": 13.288973850588583,
+        "method": "ln(a / tan beta)",
+        "display": "13.29 ratio"
+      },
+      "impoundment_volume": {
+        "value": 816242.047900549,
+        "unit": "m3",
+        "uncertainty_pct": 30.0,
+        "low": 571369.4335303843,
+        "high": 1061114.6622707138,
+        "method": "flood fill of upstream cells below a 2 m rise",
+        "display": "816,242.05 m3 (±30 %)"
+      },
+      "impoundment_efficiency": {
+        "value": 1.5166147303986417,
+        "unit": "m",
+        "uncertainty_pct": 30.0,
+        "low": 1.061630311279049,
+        "high": 1.9715991495182343,
+        "method": "volume / footprint",
+        "display": "1.52 m (±30 %)"
+      },
+      "criteria": {
+        "upstream_area": 1.0,
+        "flatness": 1.0,
+        "wetness": 0.48260542104511284,
+        "impoundment": 0.9913093300068015
+      }
+    },
+    "… 3 more"
+  ],
+  "siting": {
+    "weights": {
+      "upstream_area": 0.35,
+      "flatness": 0.2,
+      "wetness": 0.15,
+      "impoundment": 0.3
+    },
+    "nominal_rise": {
+      "value": 2.0,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 2.0,
+      "high": 2.0,
+      "method": "configured",
+      "display": "2.00 m"
+    },
+    "max_slope": {
+      "value": 15.0,
+      "unit": "%",
+      "uncertainty_pct": null,
+      "low": 15.0,
+      "high": 15.0,
+      "method": "constraint",
+      "display": "15.00 %"
+    },
+    "suppression_radius": {
+      "value": 200.0,
+      "unit": "m",
+      "uncertainty_pct": null,
+      "low": 200.0,
+      "high": 200.0,
+      "method": "non-maximum suppression",
+      "display": "200.00 m"
+    },
+    "stream_threshold": {
+      "value": 5.0,
+      "unit": "ha",
+      "uncertainty_pct": null,
+      "low": 5.0,
+      "high": 5.0,
+      "method": "upstream area defining a channel",
+      "display": "5.00 ha"
+    },
+    "upstream_area_bounds_ha": [
+      1.0,
+      10.0,
+      "… 2 more"
+    ],
+    "candidates_considered": 672,
+    "description": "Weighted sum over drainage-network cells of an upstream-area plateau (1 between 10 and 150 ha, 0 at 1 and 1000 ha), a slope plateau (1 on 0-3 %, 0 at 15 %), normalised TWI, and impoundment efficiency (volume behind a nominal rise / footprint); constraints applied first; non-maximum suppression last."
+  },
+  "suggested_pond_location": {
+    "lon": 81.28414897486398,
+    "lat": 21.26222084697471
+  },
+  "location_rationale": "Highest composite score (0.93) of 672 drainage cells: upstream area 38.2 ha, local slope 1.1 %, TWI 14.0, impounds 255,031 m³ behind a 2 m rise (mean depth 1.50 m)."
+}

@@ -1,0 +1,16 @@
+{
+  "name": "pond-planner-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Pond Planner design system — the token-based React primitives the workspace is built from.",
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": { ".": { "types": "./dist/index.d.ts", "import": "./dist/index.js" }, "./styles.css": "./dist/styles.css" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && { echo \"@import url('https://fonts.googleapis.com/css2?family=Noto+Sans:wght@400;600&family=Mukta:wght@400;600&display=swap');\"; cat ../design/tokens.css ../design/components.css; } > dist/styles.css"
+  },
+  "peerDependencies": { "react": "^19.0.0" }
+}

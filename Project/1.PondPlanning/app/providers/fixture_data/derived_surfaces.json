@@ -1,0 +1,338 @@
+{
+  "slope": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "surface": "slope",
+    "algorithm": "Horn (1981) 3x3 finite difference",
+    "statistics": {
+      "min": {
+        "value": 0.0,
+        "unit": "deg",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 \u00b0"
+      },
+      "max": {
+        "value": 18.4,
+        "unit": "deg",
+        "uncertainty_pct": 15,
+        "low": 15.64,
+        "high": 21.16,
+        "method": null,
+        "display": "18.40 \u00b0 (\u00b115 %)"
+      },
+      "mean": {
+        "value": 2.7,
+        "unit": "deg",
+        "uncertainty_pct": 15,
+        "low": 2.295,
+        "high": 3.105,
+        "method": null,
+        "display": "2.70 \u00b0 (\u00b115 %)"
+      }
+    },
+    "layer": {
+      "layer_id": "slope",
+      "kind": "raster",
+      "title": "Slope",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/slope/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Horn (1981) 3x3 finite difference"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "aspect": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "surface": "aspect",
+    "algorithm": "Horn (1981) 3x3 finite difference",
+    "statistics": {
+      "min": {
+        "value": 0.0,
+        "unit": "deg",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 \u00b0"
+      },
+      "max": {
+        "value": 360.0,
+        "unit": "deg",
+        "uncertainty_pct": null,
+        "low": 360.0,
+        "high": 360.0,
+        "method": null,
+        "display": "360.00 \u00b0"
+      },
+      "mean": {
+        "value": 196.3,
+        "unit": "deg",
+        "uncertainty_pct": 20,
+        "low": 157.04,
+        "high": 235.56,
+        "method": null,
+        "display": "196.30 \u00b0 (\u00b120 %)"
+      }
+    },
+    "layer": {
+      "layer_id": "aspect",
+      "kind": "raster",
+      "title": "Aspect",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/aspect/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Horn (1981) 3x3 finite difference"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "curvature": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "surface": "curvature",
+    "algorithm": "Zevenbergen & Thorne (1987)",
+    "statistics": {
+      "min": {
+        "value": -0.041,
+        "unit": "ratio",
+        "uncertainty_pct": 25,
+        "low": -0.0307,
+        "high": -0.0513,
+        "method": null,
+        "display": "-0.04 ratio (\u00b125 %)"
+      },
+      "max": {
+        "value": 0.038,
+        "unit": "ratio",
+        "uncertainty_pct": 25,
+        "low": 0.0285,
+        "high": 0.0475,
+        "method": null,
+        "display": "0.04 ratio (\u00b125 %)"
+      },
+      "mean": {
+        "value": 0.0,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 0.0,
+        "high": 0.0,
+        "method": null,
+        "display": "0.00 ratio"
+      }
+    },
+    "layer": {
+      "layer_id": "curvature",
+      "kind": "raster",
+      "title": "Curvature",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/curvature/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Zevenbergen & Thorne (1987)"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "twi": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "surface": "twi",
+    "algorithm": "ln(a / tan(beta)), Beven & Kirkby (1979)",
+    "statistics": {
+      "min": {
+        "value": 1.2,
+        "unit": "ratio",
+        "uncertainty_pct": 20,
+        "low": 0.96,
+        "high": 1.44,
+        "method": null,
+        "display": "1.20 ratio (\u00b120 %)"
+      },
+      "max": {
+        "value": 19.7,
+        "unit": "ratio",
+        "uncertainty_pct": 20,
+        "low": 15.76,
+        "high": 23.64,
+        "method": null,
+        "display": "19.70 ratio (\u00b120 %)"
+      },
+      "mean": {
+        "value": 7.4,
+        "unit": "ratio",
+        "uncertainty_pct": 20,
+        "low": 5.92,
+        "high": 8.88,
+        "method": null,
+        "display": "7.40 ratio (\u00b120 %)"
+      }
+    },
+    "layer": {
+      "layer_id": "twi",
+      "kind": "raster",
+      "title": "Twi",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/twi/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "ln(a / tan(beta)), Beven & Kirkby (1979)"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "hillshade": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "surface": "hillshade",
+    "algorithm": "Horn, azimuth 315, altitude 45",
+    "statistics": {
+      "min": {
+        "value": 0,
+        "unit": "count",
+        "uncertainty_pct": null,
+        "low": 0,
+        "high": 0,
+        "method": null,
+        "display": "0.00 count"
+      },
+      "max": {
+        "value": 255,
+        "unit": "count",
+        "uncertainty_pct": null,
+        "low": 255,
+        "high": 255,
+        "method": null,
+        "display": "255.00 count"
+      },
+      "mean": {
+        "value": 171.2,
+        "unit": "count",
+        "uncertainty_pct": null,
+        "low": 171.2,
+        "high": 171.2,
+        "method": null,
+        "display": "171.20 count"
+      }
+    },
+    "layer": {
+      "layer_id": "hillshade",
+      "kind": "raster",
+      "title": "Hillshade",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/hillshade/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Horn, azimuth 315, altitude 45"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      }
+    ]
+  },
+  "flow_accumulation": {
+    "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+    "surface": "flow_accumulation",
+    "algorithm": "D8 (O'Callaghan & Mark 1984)",
+    "statistics": {
+      "min": {
+        "value": 1,
+        "unit": "count",
+        "uncertainty_pct": null,
+        "low": 1,
+        "high": 1,
+        "method": null,
+        "display": "1.00 count"
+      },
+      "max": {
+        "value": 184320,
+        "unit": "count",
+        "uncertainty_pct": 10,
+        "low": 165888.0,
+        "high": 202752.0,
+        "method": null,
+        "display": "184,320.00 count (\u00b110 %)"
+      },
+      "mean": {
+        "value": 412.6,
+        "unit": "count",
+        "uncertainty_pct": 10,
+        "low": 371.34,
+        "high": 453.86,
+        "method": null,
+        "display": "412.60 count (\u00b110 %)"
+      }
+    },
+    "layer": {
+      "layer_id": "flow_accumulation",
+      "kind": "raster",
+      "title": "Flow Accumulation",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/flow_accumulation/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "D8 (O'Callaghan & Mark 1984)"
+    },
+    "warnings": [
+      {
+        "code": "fixture_data",
+        "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+        "severity": "critical"
+      },
+      {
+        "code": "interpolated_precision",
+        "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+        "severity": "caution"
+      }
+    ]
+  }
+}

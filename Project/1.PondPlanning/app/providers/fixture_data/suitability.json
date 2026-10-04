@@ -1,0 +1,837 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "sites": [
+    {
+      "rank": 1,
+      "location": {
+        "lon": 81.742,
+        "lat": 21.1927
+      },
+      "total_score": {
+        "value": 0.871,
+        "unit": "ratio",
+        "uncertainty_pct": 15,
+        "low": 0.7403,
+        "high": 1.0016,
+        "method": "Weighted sum of normalised criteria",
+        "display": "0.87 ratio (\u00b115 %)"
+      },
+      "criteria": [
+        {
+          "criterion": "catchment_area",
+          "raw_value": {
+            "value": 27.0,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 21.6,
+            "high": 32.4,
+            "method": null,
+            "display": "27.00 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.871,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.7403,
+            "high": 1.0016,
+            "method": null,
+            "display": "0.87 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.31,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.31,
+            "high": 0.31,
+            "method": null,
+            "display": "0.31 ratio"
+          },
+          "contribution": {
+            "value": 0.27,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.2295,
+            "high": 0.3105,
+            "method": null,
+            "display": "0.27 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "slope",
+          "raw_value": {
+            "value": 20.9,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 16.72,
+            "high": 25.08,
+            "method": null,
+            "display": "20.90 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.921,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.7829,
+            "high": 1.0592,
+            "method": null,
+            "display": "0.92 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.24,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.24,
+            "high": 0.24,
+            "method": null,
+            "display": "0.24 ratio"
+          },
+          "contribution": {
+            "value": 0.209,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.1776,
+            "high": 0.2403,
+            "method": null,
+            "display": "0.21 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "twi",
+          "raw_value": {
+            "value": 15.68,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 12.544,
+            "high": 18.816,
+            "method": null,
+            "display": "15.68 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.971,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8253,
+            "high": 1.1166,
+            "method": null,
+            "display": "0.97 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.18,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.18,
+            "high": 0.18,
+            "method": null,
+            "display": "0.18 ratio"
+          },
+          "contribution": {
+            "value": 0.1568,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.1333,
+            "high": 0.1803,
+            "method": null,
+            "display": "0.16 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "distance_to_settlement",
+          "raw_value": {
+            "value": 11.32,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 9.056,
+            "high": 13.584,
+            "method": null,
+            "display": "11.32 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.99,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8415,
+            "high": 1.1385,
+            "method": null,
+            "display": "0.99 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.13,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.13,
+            "high": 0.13,
+            "method": null,
+            "display": "0.13 ratio"
+          },
+          "contribution": {
+            "value": 0.1132,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0962,
+            "high": 0.1302,
+            "method": null,
+            "display": "0.11 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "land_availability",
+          "raw_value": {
+            "value": 7.84,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 6.272,
+            "high": 9.408,
+            "method": null,
+            "display": "7.84 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.99,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8415,
+            "high": 1.1385,
+            "method": null,
+            "display": "0.99 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.09,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.09,
+            "high": 0.09,
+            "method": null,
+            "display": "0.09 ratio"
+          },
+          "contribution": {
+            "value": 0.0784,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0666,
+            "high": 0.0902,
+            "method": null,
+            "display": "0.08 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "soil_permeability",
+          "raw_value": {
+            "value": 4.35,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 3.48,
+            "high": 5.22,
+            "method": null,
+            "display": "4.35 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.99,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8415,
+            "high": 1.1385,
+            "method": null,
+            "display": "0.99 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.05,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.05,
+            "high": 0.05,
+            "method": null,
+            "display": "0.05 ratio"
+          },
+          "contribution": {
+            "value": 0.0436,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0371,
+            "high": 0.0501,
+            "method": null,
+            "display": "0.04 ratio (\u00b115 %)"
+          }
+        }
+      ],
+      "catchment_area": {
+        "value": 214.6,
+        "unit": "ha",
+        "uncertainty_pct": 15,
+        "low": 182.41,
+        "high": 246.79,
+        "method": null,
+        "display": "214.60 ha (\u00b115 %)"
+      },
+      "estimated_storage": {
+        "value": 18950.0,
+        "unit": "m3",
+        "uncertainty_pct": 25,
+        "low": 14212.5,
+        "high": 23687.5,
+        "method": null,
+        "display": "18,950.00 m\u00b3 (\u00b125 %)"
+      }
+    },
+    {
+      "rank": 2,
+      "location": {
+        "lon": 81.7338,
+        "lat": 21.197
+      },
+      "total_score": {
+        "value": 0.804,
+        "unit": "ratio",
+        "uncertainty_pct": 15,
+        "low": 0.6834,
+        "high": 0.9246,
+        "method": "Weighted sum of normalised criteria",
+        "display": "0.80 ratio (\u00b115 %)"
+      },
+      "criteria": [
+        {
+          "criterion": "catchment_area",
+          "raw_value": {
+            "value": 24.92,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 19.936,
+            "high": 29.904,
+            "method": null,
+            "display": "24.92 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.804,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.6834,
+            "high": 0.9246,
+            "method": null,
+            "display": "0.80 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.31,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.31,
+            "high": 0.31,
+            "method": null,
+            "display": "0.31 ratio"
+          },
+          "contribution": {
+            "value": 0.2492,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.2118,
+            "high": 0.2866,
+            "method": null,
+            "display": "0.25 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "slope",
+          "raw_value": {
+            "value": 19.3,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 15.44,
+            "high": 23.16,
+            "method": null,
+            "display": "19.30 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.854,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.7259,
+            "high": 0.9821,
+            "method": null,
+            "display": "0.85 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.24,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.24,
+            "high": 0.24,
+            "method": null,
+            "display": "0.24 ratio"
+          },
+          "contribution": {
+            "value": 0.193,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.1641,
+            "high": 0.2219,
+            "method": null,
+            "display": "0.19 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "twi",
+          "raw_value": {
+            "value": 14.47,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 11.576,
+            "high": 17.364,
+            "method": null,
+            "display": "14.47 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.904,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.7684,
+            "high": 1.0396,
+            "method": null,
+            "display": "0.90 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.18,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.18,
+            "high": 0.18,
+            "method": null,
+            "display": "0.18 ratio"
+          },
+          "contribution": {
+            "value": 0.1447,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.123,
+            "high": 0.1664,
+            "method": null,
+            "display": "0.14 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "distance_to_settlement",
+          "raw_value": {
+            "value": 10.45,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 8.36,
+            "high": 12.54,
+            "method": null,
+            "display": "10.45 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.954,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8109,
+            "high": 1.0971,
+            "method": null,
+            "display": "0.95 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.13,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.13,
+            "high": 0.13,
+            "method": null,
+            "display": "0.13 ratio"
+          },
+          "contribution": {
+            "value": 0.1045,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0888,
+            "high": 0.1202,
+            "method": null,
+            "display": "0.10 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "land_availability",
+          "raw_value": {
+            "value": 7.24,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 5.792,
+            "high": 8.688,
+            "method": null,
+            "display": "7.24 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.99,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8415,
+            "high": 1.1385,
+            "method": null,
+            "display": "0.99 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.09,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.09,
+            "high": 0.09,
+            "method": null,
+            "display": "0.09 ratio"
+          },
+          "contribution": {
+            "value": 0.0724,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0615,
+            "high": 0.0833,
+            "method": null,
+            "display": "0.07 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "soil_permeability",
+          "raw_value": {
+            "value": 4.02,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 3.216,
+            "high": 4.824,
+            "method": null,
+            "display": "4.02 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.99,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8415,
+            "high": 1.1385,
+            "method": null,
+            "display": "0.99 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.05,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.05,
+            "high": 0.05,
+            "method": null,
+            "display": "0.05 ratio"
+          },
+          "contribution": {
+            "value": 0.0402,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0342,
+            "high": 0.0462,
+            "method": null,
+            "display": "0.04 ratio (\u00b115 %)"
+          }
+        }
+      ],
+      "catchment_area": {
+        "value": 168.2,
+        "unit": "ha",
+        "uncertainty_pct": 15,
+        "low": 142.97,
+        "high": 193.43,
+        "method": null,
+        "display": "168.20 ha (\u00b115 %)"
+      },
+      "estimated_storage": {
+        "value": 15420.0,
+        "unit": "m3",
+        "uncertainty_pct": 25,
+        "low": 11565.0,
+        "high": 19275.0,
+        "method": null,
+        "display": "15,420.00 m\u00b3 (\u00b125 %)"
+      }
+    },
+    {
+      "rank": 3,
+      "location": {
+        "lon": 81.7493,
+        "lat": 21.1986
+      },
+      "total_score": {
+        "value": 0.762,
+        "unit": "ratio",
+        "uncertainty_pct": 15,
+        "low": 0.6477,
+        "high": 0.8763,
+        "method": "Weighted sum of normalised criteria",
+        "display": "0.76 ratio (\u00b115 %)"
+      },
+      "criteria": [
+        {
+          "criterion": "catchment_area",
+          "raw_value": {
+            "value": 23.62,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 18.896,
+            "high": 28.344,
+            "method": null,
+            "display": "23.62 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.762,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.6477,
+            "high": 0.8763,
+            "method": null,
+            "display": "0.76 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.31,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.31,
+            "high": 0.31,
+            "method": null,
+            "display": "0.31 ratio"
+          },
+          "contribution": {
+            "value": 0.2362,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.2008,
+            "high": 0.2716,
+            "method": null,
+            "display": "0.24 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "slope",
+          "raw_value": {
+            "value": 18.29,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 14.632,
+            "high": 21.948,
+            "method": null,
+            "display": "18.29 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.812,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.6902,
+            "high": 0.9338,
+            "method": null,
+            "display": "0.81 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.24,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.24,
+            "high": 0.24,
+            "method": null,
+            "display": "0.24 ratio"
+          },
+          "contribution": {
+            "value": 0.1829,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.1555,
+            "high": 0.2103,
+            "method": null,
+            "display": "0.18 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "twi",
+          "raw_value": {
+            "value": 13.72,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 10.976,
+            "high": 16.464,
+            "method": null,
+            "display": "13.72 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.862,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.7327,
+            "high": 0.9913,
+            "method": null,
+            "display": "0.86 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.18,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.18,
+            "high": 0.18,
+            "method": null,
+            "display": "0.18 ratio"
+          },
+          "contribution": {
+            "value": 0.1372,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.1166,
+            "high": 0.1578,
+            "method": null,
+            "display": "0.14 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "distance_to_settlement",
+          "raw_value": {
+            "value": 9.91,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 7.928,
+            "high": 11.892,
+            "method": null,
+            "display": "9.91 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.912,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.7752,
+            "high": 1.0488,
+            "method": null,
+            "display": "0.91 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.13,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.13,
+            "high": 0.13,
+            "method": null,
+            "display": "0.13 ratio"
+          },
+          "contribution": {
+            "value": 0.0991,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0842,
+            "high": 0.114,
+            "method": null,
+            "display": "0.10 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "land_availability",
+          "raw_value": {
+            "value": 6.86,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 5.488,
+            "high": 8.232,
+            "method": null,
+            "display": "6.86 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.962,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8177,
+            "high": 1.1063,
+            "method": null,
+            "display": "0.96 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.09,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.09,
+            "high": 0.09,
+            "method": null,
+            "display": "0.09 ratio"
+          },
+          "contribution": {
+            "value": 0.0686,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0583,
+            "high": 0.0789,
+            "method": null,
+            "display": "0.07 ratio (\u00b115 %)"
+          }
+        },
+        {
+          "criterion": "soil_permeability",
+          "raw_value": {
+            "value": 3.81,
+            "unit": "ratio",
+            "uncertainty_pct": 20,
+            "low": 3.048,
+            "high": 4.572,
+            "method": null,
+            "display": "3.81 ratio (\u00b120 %)"
+          },
+          "normalised_score": {
+            "value": 0.99,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.8415,
+            "high": 1.1385,
+            "method": null,
+            "display": "0.99 ratio (\u00b115 %)"
+          },
+          "weight": {
+            "value": 0.05,
+            "unit": "ratio",
+            "uncertainty_pct": null,
+            "low": 0.05,
+            "high": 0.05,
+            "method": null,
+            "display": "0.05 ratio"
+          },
+          "contribution": {
+            "value": 0.0381,
+            "unit": "ratio",
+            "uncertainty_pct": 15,
+            "low": 0.0324,
+            "high": 0.0438,
+            "method": null,
+            "display": "0.04 ratio (\u00b115 %)"
+          }
+        }
+      ],
+      "catchment_area": {
+        "value": 132.7,
+        "unit": "ha",
+        "uncertainty_pct": 15,
+        "low": 112.795,
+        "high": 152.605,
+        "method": null,
+        "display": "132.70 ha (\u00b115 %)"
+      },
+      "estimated_storage": {
+        "value": 12180.0,
+        "unit": "m3",
+        "uncertainty_pct": 25,
+        "low": 9135.0,
+        "high": 15225.0,
+        "method": null,
+        "display": "12,180.00 m\u00b3 (\u00b125 %)"
+      }
+    }
+  ],
+  "weights": {
+    "catchment_area": 0.31,
+    "slope": 0.24,
+    "twi": 0.18,
+    "distance_to_settlement": 0.13,
+    "land_availability": 0.09,
+    "soil_permeability": 0.05
+  },
+  "consistency_ratio": 0.042,
+  "consistency_acceptable": true,
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "ahp_subjective",
+      "message": "AHP weights encode an expert judgement about what makes a good pond site. CR = 0.042 shows the pairwise comparisons are self-consistent; it does not show they are correct.",
+      "severity": "caution"
+    }
+  ]
+}

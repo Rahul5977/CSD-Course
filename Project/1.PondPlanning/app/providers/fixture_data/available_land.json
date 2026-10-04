@@ -1,0 +1,412 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "constraints_applied": [
+    "ownership class in {government, community}",
+    "mean slope <= 5 deg",
+    "LULC not in {built-up, forest, water}",
+    "buffer >= 100 m from settlement",
+    "buffer >= 50 m from road/canal",
+    "minimum contiguous area >= 0.5 ha"
+  ],
+  "total_eligible_area": {
+    "value": 7.16,
+    "unit": "ha",
+    "uncertainty_pct": 10,
+    "low": 6.444,
+    "high": 7.876,
+    "method": "Sum of eligible parcel areas in EPSG:32644",
+    "display": "7.16 ha (\u00b110 %)"
+  },
+  "parcels": [
+    {
+      "parcel_id": "P-0142",
+      "ownership_class": "government",
+      "area": {
+        "value": 4.82,
+        "unit": "ha",
+        "uncertainty_pct": 5,
+        "low": 4.579,
+        "high": 5.061,
+        "method": null,
+        "display": "4.82 ha (\u00b15 %)"
+      },
+      "mean_slope": {
+        "value": 2.1,
+        "unit": "deg",
+        "uncertainty_pct": 15,
+        "low": 1.785,
+        "high": 2.415,
+        "method": null,
+        "display": "2.10 \u00b0 (\u00b115 %)"
+      },
+      "lulc_class": "barren",
+      "excluded_by": [],
+      "eligible": true
+    },
+    {
+      "parcel_id": "P-0143",
+      "ownership_class": "community",
+      "area": {
+        "value": 2.34,
+        "unit": "ha",
+        "uncertainty_pct": 5,
+        "low": 2.223,
+        "high": 2.457,
+        "method": null,
+        "display": "2.34 ha (\u00b15 %)"
+      },
+      "mean_slope": {
+        "value": 3.4,
+        "unit": "deg",
+        "uncertainty_pct": 15,
+        "low": 2.89,
+        "high": 3.91,
+        "method": null,
+        "display": "3.40 \u00b0 (\u00b115 %)"
+      },
+      "lulc_class": "scrub",
+      "excluded_by": [],
+      "eligible": true
+    },
+    {
+      "parcel_id": "P-0187",
+      "ownership_class": "government",
+      "area": {
+        "value": 1.06,
+        "unit": "ha",
+        "uncertainty_pct": 5,
+        "low": 1.007,
+        "high": 1.113,
+        "method": null,
+        "display": "1.06 ha (\u00b15 %)"
+      },
+      "mean_slope": {
+        "value": 9.7,
+        "unit": "deg",
+        "uncertainty_pct": 15,
+        "low": 8.245,
+        "high": 11.155,
+        "method": null,
+        "display": "9.70 \u00b0 (\u00b115 %)"
+      },
+      "lulc_class": "barren",
+      "excluded_by": [
+        "slope > 5 deg"
+      ],
+      "eligible": false
+    },
+    {
+      "parcel_id": "P-0201",
+      "ownership_class": "private",
+      "area": {
+        "value": 6.15,
+        "unit": "ha",
+        "uncertainty_pct": 5,
+        "low": 5.8425,
+        "high": 6.4575,
+        "method": null,
+        "display": "6.15 ha (\u00b15 %)"
+      },
+      "mean_slope": {
+        "value": 1.8,
+        "unit": "deg",
+        "uncertainty_pct": 15,
+        "low": 1.53,
+        "high": 2.07,
+        "method": null,
+        "display": "1.80 \u00b0 (\u00b115 %)"
+      },
+      "lulc_class": "cropland",
+      "excluded_by": [
+        "ownership class not eligible"
+      ],
+      "eligible": false
+    }
+  ],
+  "geojson": {
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.7418,
+                21.1938
+              ],
+              [
+                81.741752,
+                21.194472
+              ],
+              [
+                81.741,
+                21.194839
+              ],
+              [
+                81.7402,
+                21.194856
+              ],
+              [
+                81.7394,
+                21.194839
+              ],
+              [
+                81.738648,
+                21.194472
+              ],
+              [
+                81.7386,
+                21.1938
+              ],
+              [
+                81.738981,
+                21.193272
+              ],
+              [
+                81.7394,
+                21.192761
+              ],
+              [
+                81.7402,
+                21.192456
+              ],
+              [
+                81.741,
+                21.192761
+              ],
+              [
+                81.741419,
+                21.193272
+              ],
+              [
+                81.7418,
+                21.1938
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "parcel_id": "P-0142",
+          "eligible": true,
+          "ownership_class": "government"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.7438,
+                21.1953
+              ],
+              [
+                81.743752,
+                21.195972
+              ],
+              [
+                81.743,
+                21.196339
+              ],
+              [
+                81.7422,
+                21.196356
+              ],
+              [
+                81.7414,
+                21.196339
+              ],
+              [
+                81.740648,
+                21.195972
+              ],
+              [
+                81.7406,
+                21.1953
+              ],
+              [
+                81.740981,
+                21.194772
+              ],
+              [
+                81.7414,
+                21.194261
+              ],
+              [
+                81.7422,
+                21.193956
+              ],
+              [
+                81.743,
+                21.194261
+              ],
+              [
+                81.743419,
+                21.194772
+              ],
+              [
+                81.7438,
+                21.1953
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "parcel_id": "P-0143",
+          "eligible": true,
+          "ownership_class": "community"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.7458,
+                21.1968
+              ],
+              [
+                81.745752,
+                21.197472
+              ],
+              [
+                81.745,
+                21.197839
+              ],
+              [
+                81.7442,
+                21.197856
+              ],
+              [
+                81.7434,
+                21.197839
+              ],
+              [
+                81.742648,
+                21.197472
+              ],
+              [
+                81.7426,
+                21.1968
+              ],
+              [
+                81.742981,
+                21.196272
+              ],
+              [
+                81.7434,
+                21.195761
+              ],
+              [
+                81.7442,
+                21.195456
+              ],
+              [
+                81.745,
+                21.195761
+              ],
+              [
+                81.745419,
+                21.196272
+              ],
+              [
+                81.7458,
+                21.1968
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "parcel_id": "P-0187",
+          "eligible": false,
+          "ownership_class": "government"
+        }
+      },
+      {
+        "type": "Feature",
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [
+                81.7478,
+                21.1983
+              ],
+              [
+                81.747752,
+                21.198972
+              ],
+              [
+                81.747,
+                21.199339
+              ],
+              [
+                81.7462,
+                21.199356
+              ],
+              [
+                81.7454,
+                21.199339
+              ],
+              [
+                81.744648,
+                21.198972
+              ],
+              [
+                81.7446,
+                21.1983
+              ],
+              [
+                81.744981,
+                21.197772
+              ],
+              [
+                81.7454,
+                21.197261
+              ],
+              [
+                81.7462,
+                21.196956
+              ],
+              [
+                81.747,
+                21.197261
+              ],
+              [
+                81.747419,
+                21.197772
+              ],
+              [
+                81.7478,
+                21.1983
+              ]
+            ]
+          ]
+        },
+        "properties": {
+          "parcel_id": "P-0201",
+          "eligible": false,
+          "ownership_class": "private"
+        }
+      }
+    ],
+    "crs": "EPSG:4326"
+  },
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "ownership_class_only",
+      "message": "Ownership is reported as a class, never as an owner's name. Owner names are personal data under the DPDP Act 2023 and are deliberately not stored.",
+      "severity": "info"
+    }
+  ]
+}

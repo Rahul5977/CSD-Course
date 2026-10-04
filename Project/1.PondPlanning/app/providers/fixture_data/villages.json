@@ -1,0 +1,28 @@
+{
+  "items": [
+    {
+      "id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+      "name": "Demo Village",
+      "state_code": "CG",
+      "district": "Raipur",
+      "centroid": [
+        81.7402,
+        21.1938
+      ],
+      "utm_epsg": 32644,
+      "area": {
+        "value": 1284.6,
+        "unit": "ha",
+        "uncertainty_pct": 2,
+        "low": 1258.908,
+        "high": 1310.292,
+        "method": "Boundary polygon area in EPSG:32644",
+        "display": "1,284.60 ha (\u00b12 %)"
+      },
+      "created_at": "2026-08-18T06:30:00Z"
+    }
+  ],
+  "total": 1,
+  "limit": 50,
+  "offset": 0
+}

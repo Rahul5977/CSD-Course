@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Workspace — Village Pond Planner</title>
+<link rel="stylesheet" href="../tokens.css">
+<link rel="stylesheet" href="../components.css">
+<style>
+.app { display: grid; height: 100vh; grid-template-rows: var(--topbar) 1fr; grid-template-columns: var(--rail) 1fr; grid-template-areas: "top top" "rail map"; }
+.topbar { grid-area: top; }
+.rail { grid-area: rail; border-right: 1px solid var(--line); background: var(--paper); }
+.map { grid-area: map; position: relative; background: #223 url("../../../docs/figures/p5-all-overlays.jpg") 72% 50% / 150% no-repeat; }
+.overlay { position: absolute; right: var(--s-4); bottom: var(--s-4); width: 330px; background: rgba(255,255,255,0.96); border: 1px solid var(--line); border-radius: var(--r-md); box-shadow: var(--shadow); padding: var(--s-3) var(--s-4); display: grid; gap: var(--s-2); }
+.overlay h3 { font-size: var(--t-sm); text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+.maptools { position: absolute; left: var(--s-4); top: var(--s-4); display: grid; gap: var(--s-2); }
+.maptools .btn { background: rgba(255,255,255,0.95); }
+.hint { position: absolute; left: 50%; bottom: var(--s-4); transform: translateX(-50%); background: var(--night); color: #fff; font-size: var(--t-sm); padding: 6px 12px; border-radius: 999px; }
+@media (max-width: 767px) { .app { grid-template-columns: 1fr; grid-template-rows: var(--topbar) 45vh 1fr; grid-template-areas: "top" "map" "rail"; } .rail { border-right: 0; border-top: 1px solid var(--line); } .overlay { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <a class="brand" href="#"><svg class="mark" viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="11" fill="none" stroke="#7cc4dc" stroke-width="1.6"/><ellipse cx="13" cy="14" rx="7.5" ry="5.5" fill="none" stroke="#d9b48a" stroke-width="1.6"/><ellipse cx="13" cy="15" rx="3.5" ry="2.4" fill="#7cc4dc"/></svg>Pond Planner</a>
+    <select aria-label="Village"><option>Khapri · Durg, Chhattisgarh</option></select>
+    <span class="badge badge-stale">Rainfall from cache · 2 h ago</span>
+    <span class="spacer"></span>
+    <button class="btn btn-sm lang">हिन्दी</button>
+    <button class="btn btn-sm btn-secondary">Sign in</button>
+  </div>
+
+  <aside class="rail">
+    <section class="panel">
+      <header><h2>Contour map</h2><span class="badge badge-ok">analysed</span><button class="chev" aria-label="Collapse">▾</button></header>
+      <div class="body">
+        <div class="empty"><span>Upload another KML/KMZ to analyse a new area.</span><button class="btn btn-sm btn-secondary">Choose file…</button></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Area</h2><span class="muted">EPSG:32644</span><button class="chev" aria-label="Collapse">▾</button></header>
+      <div class="body">
+        <div class="qty-grid">
+          <div class="qty"><span class="label">Area</span><span class="value">830<small>ha</small></span><span class="band">upload extent</span></div>
+          <div class="qty"><span class="label">Relief</span><span class="value">27<small>m</small></span><span class="band">267–294 m</span></div>
+          <div class="qty"><span class="label">Mean slope</span><span class="value">1.9<small>°</small></span><span class="band">Horn 1981</span></div>
+        </div>
+        <div class="callout">DEM interpolated from 1 m contours of a 30 m source — planning-grade, ±6 m relative.</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Suggested sites</h2><span class="muted">AHP · CR 0.004</span><button class="chev" aria-label="Collapse">▾</button></header>
+      <div class="body">
+        <div class="site"><span class="rank">1</span><div><div>Upstream 38 ha · slope 1.2 %</div><div class="bars"><i><b style="width:100%"></b></i><i><b style="width:88%"></b></i><i><b style="width:64%"></b></i><i><b style="width:71%"></b></i></div></div><span class="score">0.82</span></div>
+        <div class="site"><span class="rank">2</span><div><div>Upstream 22 ha · slope 0.9 %</div><div class="bars"><i><b style="width:90%"></b></i><i><b style="width:95%"></b></i><i><b style="width:40%"></b></i><i><b style="width:58%"></b></i></div></div><span class="score">0.76</span></div>
+        <div class="site"><span class="rank">3</span><div><div>Upstream 104 ha · slope 2.1 %</div><div class="bars"><i><b style="width:100%"></b></i><i><b style="width:60%"></b></i><i><b style="width:70%"></b></i><i><b style="width:44%"></b></i></div></div><span class="score">0.71</span></div>
+        <p class="muted">Bars: upstream area · flatness · wetness · impoundment. Click a site to delineate its catchment.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Catchment</h2><span class="badge badge-info">running</span><button class="chev" aria-label="Collapse">▾</button></header>
+      <div class="body">
+        <div class="job"><div class="meta"><span>Delineating upstream cells</span><span>62 %</span></div><div class="bar"><div class="fill" style="width:62%"></div></div></div>
+        <div class="row"><button class="btn btn-sm btn-ghost">Cancel</button><span class="muted">interactive queue · ~2 s</span></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <header><h2>Rainfall</h2><span class="badge badge-stale">cached</span><button class="chev" aria-label="Collapse">▾</button></header>
+      <div class="body">
+        <div class="qty qty-lg"><span class="label">In 3 of every 4 years, at least</span><span class="value">1 168<small>mm</small></span><span class="band">75 % dependable · 45 complete years · <b>±15 %</b> vs gauges</span></div>
+        <div class="qty-grid">
+          <div class="qty"><span class="label">Mean</span><span class="value">1 313<small>mm</small></span></div>
+          <div class="qty"><span class="label">Monsoon share</span><span class="value">89<small>%</small></span></div>
+          <div class="qty"><span class="label">Rainy days</span><span class="value">86</span></div>
+        </div>
+        <div class="callout-warn callout">Served from cache — the provider was unreachable at 14:02. Values are unchanged since the last refresh.</div>
+      </div>
+      <footer><button class="btn btn-primary btn-sm">Design a pond at the outlet</button></footer>
+    </section>
+
+    <section class="panel">
+      <header><h2>Available land</h2><span class="badge badge-error">failed</span><button class="chev" aria-label="Collapse">▾</button></header>
+      <div class="body">
+        <div class="callout callout-critical"><b>provider_unavailable</b> — Sentinel-2 scenes could not be read. Nothing was changed.</div>
+        <div class="row"><button class="btn btn-sm btn-secondary">Retry</button><a class="small" href="#">What this needs</a></div>
+      </div>
+    </section>
+
+    <section class="panel collapsed">
+      <header><h2>Layers</h2><span class="muted">13</span><button class="chev" aria-label="Expand">▸</button></header>
+    </section>
+  </aside>
+
+  <main class="map" aria-label="Map">
+    <span class="hint">Click anywhere on the map for the catchment of that point</span>
+    <div class="maptools"><button class="btn btn-sm btn-secondary">+</button><button class="btn btn-sm btn-secondary">−</button><button class="btn btn-sm btn-secondary">⌂</button></div>
+    <div class="overlay">
+      <h3>Results · site 1</h3>
+      <div class="qty-grid">
+        <div class="qty"><span class="label">Catchment</span><span class="value">38.3<small>ha</small></span><span class="band"><b>±26 %</b></span></div>
+        <div class="qty"><span class="label">Runoff (SCS-CN)</span><span class="value">99<small>k m³</small></span><span class="band">18–244 k across methods</span></div>
+        <div class="qty"><span class="label">Gross storage</span><span class="value">50 000<small>m³</small></span><span class="band"><b>±20 %</b> · capped</span></div>
+        <div class="qty"><span class="label">Pond</span><span class="value">126×126<small>m</small></span><span class="band">3.5 m deep · fills 25/25 yrs</span></div>
+      </div>
+      <div class="row"><span class="badge badge-warn">confidence low · soil assumed</span></div>
+    </div>
+  </main>
+</div>
+</body>
+</html>

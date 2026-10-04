@@ -1,0 +1,252 @@
+{
+  "village_id": "e176c3b5-e0c8-4124-9fc5-0ed0496db739",
+  "catchment_area": {
+    "value": 38.25,
+    "unit": "ha",
+    "uncertainty_pct": 26.352941176470587,
+    "low": 28.170000000000005,
+    "high": 48.33,
+    "method": "D8 upstream cell count",
+    "display": "38.25 ha (±26.3529 %)"
+  },
+  "results": [
+    {
+      "method": "scs_cn",
+      "annual_runoff_volume": {
+        "value": 99227.6180861407,
+        "unit": "m3",
+        "uncertainty_pct": 30.0,
+        "low": 69459.33266029849,
+        "high": 128995.90351198292,
+        "method": "scs_cn: 75 % dependable annual runoff depth x catchment area",
+        "display": "99,227.62 m3 (±30 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.23319947879870478,
+        "unit": "ratio",
+        "uncertainty_pct": 30.0,
+        "low": 0.16323963515909334,
+        "high": 0.3031593224383162,
+        "method": "mean annual runoff / rainfall",
+        "display": "0.23 ratio (±30 %)"
+      },
+      "parameters": {
+        "curve_number": {
+          "value": 87.76489404238305,
+          "unit": "count",
+          "uncertainty_pct": null,
+          "low": 87.76489404238305,
+          "high": 87.76489404238305,
+          "method": "AMC II, HSG C, area-weighted",
+          "display": "87.76 count"
+        },
+        "potential_retention_S": {
+          "value": 35.40956719817768,
+          "unit": "mm",
+          "uncertainty_pct": null,
+          "low": 35.40956719817768,
+          "high": 35.40956719817768,
+          "method": "25400/CN - 254",
+          "display": "35.41 mm"
+        },
+        "initial_abstraction_ratio": {
+          "value": 0.2,
+          "unit": "ratio",
+          "uncertainty_pct": null,
+          "low": 0.2,
+          "high": 0.2,
+          "method": "Ia = 0.2 S, standard TR-55",
+          "display": "0.20 ratio"
+        },
+        "mean_annual_runoff_depth": {
+          "value": 312.30727159263176,
+          "unit": "mm",
+          "uncertainty_pct": 30.0,
+          "low": 218.61509011484222,
+          "high": 405.9994530704213,
+          "method": "mean of annual sums",
+          "display": "312.31 mm (±30 %)"
+        },
+        "dependable_75_runoff_depth": {
+          "value": 259.4186093755312,
+          "unit": "mm",
+          "uncertainty_pct": 30.0,
+          "low": 181.59302656287184,
+          "high": 337.2441921881906,
+          "method": "Weibull 75 % on annual runoff",
+          "display": "259.42 mm (±30 %)"
+        },
+        "years": {
+          "value": 25.0,
+          "unit": "count",
+          "uncertainty_pct": null,
+          "low": 25.0,
+          "high": 25.0,
+          "method": "complete years",
+          "display": "25.00 count"
+        }
+      },
+      "reference": "USDA-SCS (1972) National Engineering Handbook §4; TR-55 (1986)"
+    },
+    {
+      "method": "rational",
+      "annual_runoff_volume": {
+        "value": 244082.15734831066,
+        "unit": "m3",
+        "uncertainty_pct": 40.0,
+        "low": 146449.2944089864,
+        "high": 341715.0202876349,
+        "method": "rational: 75 % dependable annual runoff depth x catchment area",
+        "display": "244,082.16 m3 (±40 %)"
+      },
+      "runoff_coefficient": {
+        "value": 0.5353158736505398,
+        "unit": "ratio",
+        "uncertainty_pct": 40.0,
+        "low": 0.32118952419032387,
+        "high": 0.7494422231107557,
+        "method": "mean annual runoff / rainfall",
+        "display": "0.54 ratio (±40 %)"
+      },
+      "parameters": {
+        "runoff_coefficient_C": {
+          "value": 0.5353158736505398,
+          "unit": "ratio",
+          "uncertainty_pct": null,
+          "low": 0.5353158736505398,
+          "high": 0.5353158736505398,
+          "method": "area-weighted by land cover",
+          "display": "0.54 ratio"
+        },
+        "mean_annual_runoff_depth": {
+          "value": 716.9100068372651,
+          "unit": "mm",
+          "uncertainty_pct": 40.0,
+          "low": 430.14600410235903,
+          "high": 1003.674009572171,
+          "method": "mean of annual sums",
+          "display": "716.91 mm (±40 %)"
+        },
+        "dependable_75_runoff_depth": {
+          "value": 638.123287185126,
+          "unit": "mm",
+          "uncertainty_pct": 40.0,
+          "low": 382.87397231107553,
+          "high": 893.3726020591763,
+          "method": "Weibull 75 % on annual runoff",
+          "display": "638.12 mm (±40 %)"
+        },
+        "years": {
+          "value": 25.0,
+          "unit": "count",
+          "uncertainty_pct": null,
+          "low": 25.0,
+          "high": 25.0,
+          "method": "complete years",
+          "display": "25.00 count"
+        }
+      },
+      "reference": "ASCE (1969) runoff coefficients; Kuichling (1889) rational formula"
+    },
+    "… 1 more"
+  ],
+  "recommended": {
+    "method": "scs_cn",
+    "annual_runoff_volume": {
+      "value": 99227.6180861407,
+      "unit": "m3",
+      "uncertainty_pct": 30.0,
+      "low": 69459.33266029849,
+      "high": 128995.90351198292,
+      "method": "scs_cn: 75 % dependable annual runoff depth x catchment area",
+      "display": "99,227.62 m3 (±30 %)"
+    },
+    "runoff_coefficient": {
+      "value": 0.23319947879870478,
+      "unit": "ratio",
+      "uncertainty_pct": 30.0,
+      "low": 0.16323963515909334,
+      "high": 0.3031593224383162,
+      "method": "mean annual runoff / rainfall",
+      "display": "0.23 ratio (±30 %)"
+    },
+    "parameters": {
+      "curve_number": {
+        "value": 87.76489404238305,
+        "unit": "count",
+        "uncertainty_pct": null,
+        "low": 87.76489404238305,
+        "high": 87.76489404238305,
+        "method": "AMC II, HSG C, area-weighted",
+        "display": "87.76 count"
+      },
+      "potential_retention_S": {
+        "value": 35.40956719817768,
+        "unit": "mm",
+        "uncertainty_pct": null,
+        "low": 35.40956719817768,
+        "high": 35.40956719817768,
+        "method": "25400/CN - 254",
+        "display": "35.41 mm"
+      },
+      "initial_abstraction_ratio": {
+        "value": 0.2,
+        "unit": "ratio",
+        "uncertainty_pct": null,
+        "low": 0.2,
+        "high": 0.2,
+        "method": "Ia = 0.2 S, standard TR-55",
+        "display": "0.20 ratio"
+      },
+      "mean_annual_runoff_depth": {
+        "value": 312.30727159263176,
+        "unit": "mm",
+        "uncertainty_pct": 30.0,
+        "low": 218.61509011484222,
+        "high": 405.9994530704213,
+        "method": "mean of annual sums",
+        "display": "312.31 mm (±30 %)"
+      },
+      "dependable_75_runoff_depth": {
+        "value": 259.4186093755312,
+        "unit": "mm",
+        "uncertainty_pct": 30.0,
+        "low": 181.59302656287184,
+        "high": 337.2441921881906,
+        "method": "Weibull 75 % on annual runoff",
+        "display": "259.42 mm (±30 %)"
+      },
+      "years": {
+        "value": 25.0,
+        "unit": "count",
+        "uncertainty_pct": null,
+        "low": 25.0,
+        "high": 25.0,
+        "method": "complete years",
+        "display": "25.00 count"
+      }
+    },
+    "reference": "USDA-SCS (1972) National Engineering Handbook §4; TR-55 (1986)"
+  },
+  "spread_pct": {
+    "value": 187.66931209167254,
+    "unit": "%",
+    "uncertainty_pct": null,
+    "low": 187.66931209167254,
+    "high": 187.66931209167254,
+    "method": "(max - min) / mean across methods",
+    "display": "187.67 %"
+  },
+  "warnings": [
+    {
+      "code": "methods_disagree",
+      "message": "The methods disagree by 188 %; treat the SCS-CN figure as planning-grade and confirm with a season of observation.",
+      "severity": "caution"
+    },
+    {
+      "code": "curve_number_basis",
+      "message": "CN 88 (HSG C, AMC II) from permanent water 38%, cropland 23%, tree cover 21%, grassland 18%; ESA WorldCover 2021 v200 (10 m), © ESA WorldCover project / Contains modified Copernicus Sentinel data (2021); assumed hydrologic soil group (SoilGrids unreachable).",
+      "severity": "info"
+    }
+  ]
+}

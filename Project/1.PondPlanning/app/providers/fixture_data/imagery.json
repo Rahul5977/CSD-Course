@@ -1,0 +1,8 @@
+{
+  "layer_id": "esri-world-imagery",
+  "provider": "Esri World Imagery",
+  "tile_url_template": "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  "attribution": "Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+  "captured": "2023-2024 mosaic",
+  "max_zoom": 19
+}

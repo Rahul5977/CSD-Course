@@ -1,0 +1,133 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "layers": [
+    {
+      "layer_id": "satellite",
+      "kind": "raster",
+      "title": "Satellite imagery",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/satellite/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Esri World Imagery"
+    },
+    {
+      "layer_id": "hillshade",
+      "kind": "raster",
+      "title": "Hillshade",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/hillshade/{z}/{x}/{y}.png",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "SRTM 30 m, Horn azimuth 315 alt 45"
+    },
+    {
+      "layer_id": "contours",
+      "kind": "vector",
+      "title": "Contours (1 m)",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/contours/{z}/{x}/{y}.pbf",
+      "legend_url": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/contours/legend.json",
+      "units": "m",
+      "value_range": [
+        267,
+        298
+      ],
+      "source": "gdal_contour on the conditioned DEM"
+    },
+    {
+      "layer_id": "streams",
+      "kind": "vector",
+      "title": "Modelled streams",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/streams/{z}/{x}/{y}.pbf",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "D8 accumulation > 500 cells"
+    },
+    {
+      "layer_id": "slope",
+      "kind": "raster",
+      "title": "Slope",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/slope/{z}/{x}/{y}.png",
+      "legend_url": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/slope/legend.json",
+      "units": "deg",
+      "value_range": [
+        0,
+        18.4
+      ],
+      "source": "Horn (1981)"
+    },
+    {
+      "layer_id": "aspect",
+      "kind": "raster",
+      "title": "Aspect",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/aspect/{z}/{x}/{y}.png",
+      "legend_url": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/aspect/legend.json",
+      "units": "deg",
+      "value_range": [
+        0,
+        360
+      ],
+      "source": "Horn (1981)"
+    },
+    {
+      "layer_id": "curvature",
+      "kind": "raster",
+      "title": "Profile curvature",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/curvature/{z}/{x}/{y}.png",
+      "legend_url": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/curvature/legend.json",
+      "units": "1/m",
+      "value_range": [
+        -0.04,
+        0.04
+      ],
+      "source": "Zevenbergen & Thorne (1987)"
+    },
+    {
+      "layer_id": "twi",
+      "kind": "raster",
+      "title": "Topographic wetness",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/twi/{z}/{x}/{y}.png",
+      "legend_url": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/twi/legend.json",
+      "units": "ratio",
+      "value_range": [
+        1.2,
+        19.7
+      ],
+      "source": "ln(a / tan(beta))"
+    },
+    {
+      "layer_id": "flow_accumulation",
+      "kind": "raster",
+      "title": "Flow accumulation",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/flow_accumulation/{z}/{x}/{y}.png",
+      "legend_url": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/flow_accumulation/legend.json",
+      "units": "count",
+      "value_range": [
+        1,
+        184320
+      ],
+      "source": "D8 accumulation"
+    },
+    {
+      "layer_id": "catchment",
+      "kind": "vector",
+      "title": "Catchment",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/catchment/{z}/{x}/{y}.pbf",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Upslope BFS from the snapped pour point"
+    },
+    {
+      "layer_id": "available_land",
+      "kind": "vector",
+      "title": "Land for excavation",
+      "tile_url_template": "/api/v1/tiles/3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93/available_land/{z}/{x}/{y}.pbf",
+      "legend_url": null,
+      "units": null,
+      "value_range": null,
+      "source": "Constraint intersection"
+    }
+  ]
+}

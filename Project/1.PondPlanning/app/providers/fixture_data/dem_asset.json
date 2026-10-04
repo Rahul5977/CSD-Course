@@ -1,0 +1,60 @@
+{
+  "village_id": "3f2a9c1e-5b7d-4e8a-9c1f-2d6b8e4a7c93",
+  "source": "NASA/USGS SRTM v3 (srtm/N21E081.tif) via Mapzen terraincache",
+  "native_resolution": {
+    "value": 30.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 30.0,
+    "high": 30.0,
+    "method": null,
+    "display": "30.00 m"
+  },
+  "working_resolution": {
+    "value": 30.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 30.0,
+    "high": 30.0,
+    "method": "Floored at the source resolution \u2014 never interpolated finer",
+    "display": "30.00 m"
+  },
+  "vertical_accuracy_relative": {
+    "value": 6.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 6.0,
+    "high": 6.0,
+    "method": "SRTM relative, LE90",
+    "display": "6.00 m"
+  },
+  "vertical_accuracy_absolute": {
+    "value": 16.0,
+    "unit": "m",
+    "uncertainty_pct": null,
+    "low": 16.0,
+    "high": 16.0,
+    "method": "SRTM absolute, LE90",
+    "display": "16.00 m"
+  },
+  "crs": "EPSG:32644",
+  "acquired": "2000-02 (SRTM mission)",
+  "attribution": [
+    "NASA/USGS SRTM",
+    "USGS GMTED2010",
+    "HydroSHEDS \u00a9 WWF",
+    "Mapzen terrain tiles"
+  ],
+  "warnings": [
+    {
+      "code": "fixture_data",
+      "message": "This payload is contract scaffolding from P0, not a computed result. The route exists so the frontend can be built in parallel; the engine behind it is not implemented yet.",
+      "severity": "critical"
+    },
+    {
+      "code": "interpolated_precision",
+      "message": "The source DEM is SRTM at ~30 m (\u00b16 m relative, \u00b116 m absolute LE90). Relief below about 5 m is interpolated, not measured, so sub-metre figures here describe the model, not the ground.",
+      "severity": "caution"
+    }
+  ]
+}
