@@ -1,0 +1,14 @@
+# all markdown stays local (planning notes, drafts)
+*.md
+
+# python
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# runtime
+*.log
+*.pid
+.DS_Store
