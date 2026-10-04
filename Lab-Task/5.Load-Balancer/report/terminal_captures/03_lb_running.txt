@@ -1,0 +1,7 @@
+$ ssh lbsys1 'ss -tlnp | grep 3000; tail -5 assignment5/lb.log'
+LISTEN 0      512          0.0.0.0:3000      0.0.0.0:*    users:(("python3",pid=70804,fd=4))
+[lb] backend sys3 re-admitted
+[lb] config loaded: round_robin, 1 backend(s): ['sys2']
+[lb] config loaded: round_robin, 1 backend(s): ['sys2']
+[lb] config loaded: round_robin, 3 backend(s): ['sys2', 'sys3', 'sys4']
+[lb] backend sys2 EJECTED (passive: connect/proxy failure)

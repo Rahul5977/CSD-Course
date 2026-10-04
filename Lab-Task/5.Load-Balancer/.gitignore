@@ -1,0 +1,15 @@
+.env
+*.env
+!.env.example
+__pycache__/
+*.pyc
+node_modules/
+venv/
+.DS_Store
+data/
+*.log
+logs/*.log
+cm-*
+
+# process/report markdown kept local only
+*.md

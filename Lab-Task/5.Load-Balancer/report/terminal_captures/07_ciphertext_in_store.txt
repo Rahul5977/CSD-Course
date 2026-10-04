@@ -1,0 +1,2 @@
+$ ssh lbsys1 'grep enc assignment5/data/messages.jsonl | head -2'
+{"seq":2,"room":"secrets","id":"9268a404-b0d6-413d-b0e2-ca419276906b","from":"rahul","ts":1787562465888,"via":"sys2","kind":"enc","env":{"alg":"A256GCM","kid":1,"n":"RWkWFYqd2OiaCSzJyLKqcA==","iv":"Jp7ZO4xuCYlTmZ6l","ct":"cy42xeIVaqXzcILu0YN+hCdTFT8MsW0qIoj1vFCZG0WfZVffZW7PpDb9Wb2O1U7dj8sbBMswLUzh31CAInEeCM2FmyXdMMPxLw==","aadv":1}}

@@ -1,0 +1,3 @@
+   health during outage: [('sys2', True), ('sys3', False), ('sys4', False)]
+post-recovery health: [('sys2', False), ('sys3', False), ('sys4', True)]
+settled state ~25s after run end: [('sys2', True), ('sys3', True), ('sys4', True)] — flapping during overload is the D-009 health-stall behaviour; pool fully re-admitted

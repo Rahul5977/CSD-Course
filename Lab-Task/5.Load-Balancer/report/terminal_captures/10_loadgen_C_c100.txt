@@ -1,0 +1,30 @@
+      "requests": 91,
+      "errors": 0
+    },
+    "35": {
+      "requests": 146,
+      "errors": 0
+    },
+    "40": {
+      "requests": 97,
+      "errors": 0
+    },
+    "45": {
+      "requests": 180,
+      "errors": 0
+    },
+    "50": {
+      "requests": 136,
+      "errors": 0
+    },
+    "55": {
+      "requests": 76,
+      "errors": 0
+    },
+    "60": {
+      "requests": 2,
+      "errors": 0
+    }
+  }
+}
+[loadgen] wrote /Users/rahulraj/Desktop/7thSemester/CSD-Course/Lab-Task/5.Load-Balancer/loadgen/../results/raw/C_c100_rep1.json

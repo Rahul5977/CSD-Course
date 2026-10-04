@@ -1,0 +1,7 @@
+# Backend health — Mon Aug 24 14:31:23 IST 2026
+http://10.1.75.53:3270/health ->
+
+http://10.1.75.53:3271/health ->
+{"status":"ok","backend":"sys3","uptime":21,"connections":0,"state_firehose":true}
+http://10.1.75.53:3272/health ->
+{"status":"ok","backend":"sys4","uptime":19,"connections":0,"state_firehose":true}

@@ -1,0 +1,20 @@
+{
+  "listen_host": "0.0.0.0",
+  "listen_port": 3000,
+  "algorithm": "round_robin",
+  "backends": [
+    {
+      "id": "sys2",
+      "host": "172.17.0.71",
+      "port": 3000,
+      "weight": 1
+    }
+  ],
+  "health_interval_s": 5,
+  "health_timeout_s": 8,
+  "fail_threshold": 3,
+  "rise_threshold": 2,
+  "connect_timeout_s": 3,
+  "upstream_timeout_s": 30,
+  "access_log": "logs/lb_access.csv"
+}

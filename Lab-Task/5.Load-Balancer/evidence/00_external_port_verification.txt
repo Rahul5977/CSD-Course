@@ -1,0 +1,14 @@
+# External port reachability verification — 2026-08-24T16:15:55+05:30
+# Confirms D-008 port model: external 327x -> sysN container port 3000
+
+$ curl -sS -m 6 http://10.1.75.53:3270/health
+{"status":"ok","backend":"sys2","uptime":72,"connections":0,"state_firehose":true}
+
+$ curl -sS -m 6 http://10.1.75.53:3271/health
+{"status":"ok","backend":"sys3","uptime":69,"connections":0,"state_firehose":true}
+
+$ curl -sS -m 6 http://10.1.75.53:3272/health
+{"status":"ok","backend":"sys4","uptime":68,"connections":0,"state_firehose":true}
+
+$ curl -sS -m 6 http://10.1.75.53:3269/health   (LB)
+{"status":"ok","backend":"sys4","uptime":68,"connections":0,"state_firehose":true}

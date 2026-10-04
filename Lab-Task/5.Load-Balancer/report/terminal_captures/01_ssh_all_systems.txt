@@ -1,0 +1,17 @@
+$ bash scripts/ssh_all.sh 'hostname; hostname -I'
+===== lbsys1 =====
+[lbsys1] stu78_sys1
+[lbsys1] 172.17.0.70 
+[lbsys1] exit: 0
+===== lbsys2 =====
+[lbsys2] stu78_sys2
+[lbsys2] 172.17.0.71 
+[lbsys2] exit: 0
+===== lbsys3 =====
+[lbsys3] stu78_sys3
+[lbsys3] 172.17.0.72 
+[lbsys3] exit: 0
+===== lbsys4 =====
+[lbsys4] stu78_sys4
+[lbsys4] 172.17.0.73 
+[lbsys4] exit: 0
