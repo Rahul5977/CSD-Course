@@ -1,0 +1,6 @@
+[submodule "Lab-Task/4.GroupChat-Encypted"]
+	path = Lab-Task/4.GroupChat-Encypted
+	url = https://github.com/rajeev-sr/chatfat-encrypted.git
+[submodule "Lab-Task/2.ChatApp/Group-chat"]
+	path = Lab-Task/2.ChatApp/Group-chat
+	url = https://github.com/rajeev-sr/Group-chat

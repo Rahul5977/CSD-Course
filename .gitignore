@@ -1,5 +1,18 @@
+# Python
 venv/
+.venv/
 __pycache__/
 *.pyc
+
+# Node
+node_modules/
+
+# Secrets (keep only examples)
+.env
+*.env
+!.env.example
+
+# Logs / OS noise
+*.log
 flask_server.log
 .DS_Store
