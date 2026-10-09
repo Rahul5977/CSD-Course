@@ -62,7 +62,8 @@ cp "$ROOT/.run.sh" "$ROOT/run.sh.deploy"
 rm -f "$ROOT/.run.sh" "$ROOT/run.sh.deploy"
 
 # 4. Offline install + start detached.
-"${SSH[@]}" "cd ~/$DIR && { [ -x .venv/bin/python ] || python3 -m venv .venv; } \
-  && .venv/bin/pip install -q --no-index --find-links wheels -r requirements.txt \
-  && setsid nohup ./run.sh > /dev/null 2>&1 < /dev/null & sleep 4; $remote_status"
+# The boxes lack ensurepip, so the venv borrows the system pip (--system-site-packages).
+"${SSH[@]}" "cd ~/$DIR && rm -rf .venv && python3 -m venv --without-pip --system-site-packages .venv \
+  && .venv/bin/python -m pip install -q --no-index --find-links wheels -r requirements.txt \
+  && { setsid nohup ./run.sh > /dev/null 2>&1 < /dev/null & } && sleep 4; $remote_status"
 echo "deployed to $HOST:$PORT"

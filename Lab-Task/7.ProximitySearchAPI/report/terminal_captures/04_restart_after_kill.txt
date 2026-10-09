@@ -1,0 +1,4 @@
+$ ssh lbsys2 'cd ~/assignment7; kill -9 $(cat server.pid); sleep 4; cat server.pid; curl localhost:3000/health'
+killed 873, now 955
+health 200
+(supervisor loop restarted uvicorn within ~1 s; public URL kept answering after restart)

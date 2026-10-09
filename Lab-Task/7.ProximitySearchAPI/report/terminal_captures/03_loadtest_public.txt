@@ -1,0 +1,4 @@
+$ scripts/loadtest.py http://10.1.75.53:3270 --requests 2000 --concurrency 1
+requests=2000 concurrency=1 errors=0 wall=19.44s throughput=103 req/s p50=7.9ms p95=11.1ms p99=94.6ms mean=9.7ms
+$ scripts/loadtest.py http://10.1.75.53:3270 --requests 5000 --concurrency 32
+requests=5000 concurrency=32 errors=0 wall=14.68s throughput=341 req/s p50=50.8ms p95=286.4ms p99=453.8ms mean=93.6ms

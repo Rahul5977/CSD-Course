@@ -1,0 +1,21 @@
+$ curl -s 'http://10.1.75.53:3270/health'
+{"status":"ok","locations":10000,"grid":"100x100","roads":14800,"roads_missing":5000,"road_file":"link.txt","categories":["bank","cafe","hospital","park","pharmacy","restaurant","school","store"],"load_ms":121.0}   [HTTP 200]
+
+$ curl -s 'http://10.1.75.53:3270/search/?lat=0.74&long=0.6&cat=bank&rad=0.1'
+{"ids":[7160,7059,6862,7167,7267,7067,6459,7454,6656,6953]}   [HTTP 200]
+
+$ curl -s 'http://10.1.75.53:3270/search?lat=0.5&long=0.5&cat=cafe&rad=0.12'
+{"ids":[5051,5053,5251,4949,5154,5149,4751,5047,4748,4653]}   [HTTP 200]
+
+$ curl -s 'http://10.1.75.53:3270/search/?lat=0.2&long=0.9&cat=Hospital&rad=0.2'
+{"ids":[2290,2389,2490,2388,2491,2194,1786,2285,1688,2195]}   [HTTP 200]
+
+$ curl -s 'http://10.1.75.53:3270/search/?lat=0.5&long=0.5&cat=spaceport&rad=0.1'
+{"error":"unknown category 'spaceport'; expected one of ['bank', 'cafe', 'hospital', 'park', 'pharmacy', 'restaurant', 'school', 'store']"}   [HTTP 400]
+
+$ curl -s 'http://10.1.75.53:3270/search/?lat=0.5&long=abc&cat=cafe&rad=0.1'
+{"error":"'long' must be a number, got 'abc'"}   [HTTP 400]
+
+$ curl -s 'http://10.1.75.53:3270/search/?lat=0.5&long=0.5&cat=cafe'
+{"error":"missing required query parameter 'rad'"}   [HTTP 400]
+
