@@ -36,3 +36,9 @@ Marks:
 For 10 queries and 10 matches, total = 100 points
 API Result Marks = Above Points/10 (Max = 10 )
 Report Marks = 10 
+
+
+Sample link.txt file : https://drive.google.com/file/d/1OzFDZx3-u259JU7ORwcLdNCb34scoblP/view?usp=sharing
+Each line is of format : Longitude_A Latitude_A Longitude_B Latitude_B (Space separated)
+
+Note: All points are on grid, no diagonal links and links can only exist between neighbor.
