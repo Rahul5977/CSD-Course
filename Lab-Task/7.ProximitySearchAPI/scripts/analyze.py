@@ -184,7 +184,7 @@ def compare_metrics(queries=2000, seed=11):
     for name in names:
         s = scores[name]
         full = sum(x == 10 for x in s) / n
-        rows.append((name, f"{statistics.fmean(s) * 10:.1f}", f"{full:.1%}".replace("%", "\\%"), f"{min(s)}/10"))
+        rows.append((name, f"{statistics.fmean(s) * 10:.1f}\\%", f"{full:.1%}".replace("%", "\\%")))
     save_table("metrics.tex", rows)
     results["metric_comparison"] = {"queries": n, **{k: statistics.fmean(v) * 10 for k, v in scores.items()}}
 

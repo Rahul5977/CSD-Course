@@ -16,7 +16,7 @@
 \usepackage{float}
 \usepackage[hidelinks]{hyperref}
 
-\graphicspath{{../results/charts/}}
+\graphicspath{{../results/charts/}{screenshots/}}
 \setlist{itemsep=2pt, topsep=4pt}
 \captionsetup{font=small, labelfont=bf}
 \renewcommand{\arraystretch}{1.15}
@@ -47,6 +47,8 @@
 \toprule
 API link & \texttt{\api/search/?lat=\&long=\&cat=\&rad=} \\
 Example & \texttt{\api/search/?lat=0.74\&long=0.6\&cat=bank\&rad=0.1} \\
+Code & \href{https://github.com/Rahul5977/CSD-Course/tree/main/Lab-Task/7.ProximitySearchAPI}{\texttt{https://github.com/Rahul5977/CSD-Course}} \\
+ & folder \texttt{Lab-Task/7.ProximitySearchAPI} \\
 \bottomrule
 \end{tabular}
 \end{center}
@@ -103,20 +105,20 @@ Shortest path, one-way links & does not match the data (most points become unrea
 \end{table}
 
 \paragraph{Evidence.} I generated 2,000 random queries with at least 10 valid answers each, and computed the
-correct answer for each with an independent Dijkstra search. I then scored each ranking the same way the
-assignment does: one point per correct ID, out of 100 for 10 queries. IDs tied with the correct 10th also
-count, since ties are accepted.
+true 10 nearest locations for each with an independent Dijkstra search. Table~\ref{tab:compare} shows how
+often each way of ranking returns the correct IDs. IDs tied with the true 10th count as correct.
 
 \begin{table}[H]
 \centering
-\begin{tabular}{lrrr}
+\begin{tabular}{lrr}
 \toprule
-Ranking & Expected score / 100 & Queries fully correct & Worst query \\
+Ranking & Correct IDs & Queries with all 10 correct \\
 \midrule
 \tabinput{tables/metrics.tex}
 \bottomrule
 \end{tabular}
-\caption{Simulated marks for each way of ranking (2,000 random queries).}
+\caption{Accuracy of each way of ranking on 2,000 random queries.}
+\label{tab:compare}
 \end{table}
 
 Euclidean and Manhattan ranking would get the full list right in less than a third of the queries.
@@ -128,7 +130,7 @@ of the 10 IDs right.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.62\textwidth]{example_query.png}
+\includegraphics[width=0.5\textwidth]{example_query.png}
 \caption{Query \texttt{lat=0.74, long=0.6, cat=bank, rad=0.1}. Grey lines are links (gaps are missing
 links); orange shows the 10 results and the paths to them; circled points are what Manhattan ranking would
 return instead.}
@@ -155,10 +157,11 @@ before stopping. The circle only filters the results and does not limit the sear
 path to a location inside the circle can pass outside it. Locations that cannot be reached are never
 returned.
 
-\paragraph{Cost.} Each query explores only the area around the query point (about 116 nodes on average),
-not the whole grid. The graph is built once when the server starts.
-
-\lstinputlisting[firstline=55, lastline=97, firstnumber=55, caption={The search (\texttt{app/search.py}).}]{../app/search.py}
+\paragraph{Complexity.} Building the graph takes $O(V + E)$ time and memory, once when the server starts
+($V = 10{,}000$ locations, $E = 14{,}800$ links). A query takes $O(n_c + V' + E' + h\log h)$ time, where
+$n_c = 1{,}250$ is the number of locations in the category (the radius count), $V'$ and $E'$ are the nodes
+and links the BFS actually explores, and $h \approx 10$ is the number of results sorted. In the worst case
+this is $O(V + E)$, but on average the BFS explores only about 116 nodes, and a query takes about 0.025\,ms.
 
 \paragraph{Details.}
 \begin{itemize}
@@ -167,6 +170,10 @@ not the whole grid. The graph is built once when the server starts.
   \item \textbf{Category:} spaces are trimmed and case is ignored.
   \item \textbf{Ties:} broken by straight-line distance, then by ID, so results are always the same.
 \end{itemize}
+
+\noindent\begin{minipage}{\linewidth}
+\lstinputlisting[firstline=55, lastline=97, firstnumber=55, caption={The search (\texttt{app/search.py}).}]{../app/search.py}
+\end{minipage}
 
 % ---------------------------------------------------------------------------
 \section{API}
@@ -180,7 +187,16 @@ $ curl 'http://10.1.75.53:3270/search/?lat=0.74&long=0.6&cat=bank&rad=0.1'
 \end{lstlisting}
 
 Adding \texttt{\&debug=1} also returns, for each result, the path length, the straight-line distance and the
-path itself.
+path itself. The server also has a demo page at \texttt{\api/} that draws the links, the radius and the
+paths to the results (Figure~\ref{fig:demo}).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{demo_map.png}
+\caption{The deployed API answering the example query. The square is the grid point the query snaps to,
+and the orange line is the path to result 1.}
+\label{fig:demo}
+\end{figure}
 
 % ---------------------------------------------------------------------------
 \section{Testing}
