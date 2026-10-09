@@ -50,6 +50,11 @@ def _flag(params, name):
     return params.get(name, "").strip().lower() in ("1", "true", "yes")
 
 
+def _detour(road, a, b):
+    crow = math.hypot(NET.lat[a] - NET.lat[b], NET.lon[a] - NET.lon[b])
+    return road / crow if crow > 0 else 1.0
+
+
 def _point(v):
     return {"lat": NET.lat[v], "long": NET.lon[v]}
 
@@ -61,7 +66,7 @@ async def bad_request(_, exc):
 
 @app.get("/search/")
 @app.get("/search", include_in_schema=False)
-def search(request: Request):
+async def search(request: Request):  # sub-millisecond CPU work: no threadpool hop
     p = request.query_params
     lat, lon, rad = _number(p, "lat"), _number(p, "long"), _number(p, "rad")
     cat = (p.get("cat") or "").strip().lower()
@@ -96,7 +101,8 @@ def search(request: Request):
             "road_distance": hit.hops * h,
             "straight_line": hit.euclid,
             "manhattan": abs(NET.lat[hit.node] - NET.lat[src]) + abs(NET.lon[hit.node] - NET.lon[src]),
-            "detour_factor": (hit.hops * h / hit.euclid) if hit.euclid > 0 else 1.0,
+            # road length vs straight line, both measured from the pickup intersection
+            "detour_factor": _detour(hit.hops * h, src, hit.node),
             "route": [NET.ids[v] for v in ENGINE.path(res, hit.node)],
         } for i, hit in enumerate(res.hits)],
     })

@@ -1,0 +1,94 @@
+{
+  "dataset": {
+    "Locations": "10,000 on a 100\u00d7100 lattice, spacing h = 1/99 \u2248 0.010101",
+    "ID layout": "ID = row\u00b7100 + col + 1 (row = lat\u00b799, col = long\u00b799)",
+    "Categories": "bank 1250, cafe 1250, hospital 1250, park 1250, pharmacy 1250, restaurant 1250, school 1250, store 1250",
+    "Possible neighbour roads": "19,800",
+    "Roads present (link.txt)": "14,800 (74.7%)",
+    "Roads missing": "5,000 (2,511 east-west, 2,489 north-south)",
+    "Connected components": "1 (every location reachable)",
+    "Intersection degree": "1 roads: 111, 2 roads: 2,601, 3 roads: 4,865, 4 roads: 2,423",
+    "Dead ends (degree 1)": "111",
+    "Cycle rank (roads \u2212 nodes + 1)": "4,801 independent loops"
+  },
+  "detour": {
+    "pairs": 84871,
+    "equal_manhattan": 0.48426435413745567,
+    "mean": 1.179741929326004,
+    "p50": 1.1333333333333333,
+    "p90": 1.4615384615384615,
+    "p99": 2.142857142857143,
+    "max": 13.0
+  },
+  "metric_comparison": {
+    "queries": 2000,
+    "Road network (this API)": 10.0,
+    "Euclidean (straight line)": 8.9645,
+    "Manhattan (full grid)": 8.9035,
+    "One-way roads (A\u2192B)": 4.715
+  },
+  "example": {
+    "query": [
+      0.74,
+      0.6,
+      "bank",
+      0.1
+    ],
+    "ids": [
+      7160,
+      7059,
+      6862,
+      7167,
+      7267,
+      7067,
+      6459,
+      7454,
+      6656,
+      6953
+    ],
+    "manhattan_ids": [
+      7460,
+      7461,
+      7362,
+      7160,
+      7659,
+      7059,
+      7563,
+      7564,
+      7960,
+      7656
+    ]
+  },
+  "latency": {
+    "bfs_p50": 0.01599999814061448,
+    "bfs_p99": 0.024458997359033674,
+    "oracle_p50": 3.0268749978858978,
+    "explored_mean": 90.819
+  },
+  "scaling": [
+    [
+      "100\u00d7100 = 10,000",
+      "14,850",
+      "0.0 s",
+      "0.016",
+      "0.025",
+      "90"
+    ],
+    [
+      "316\u00d7316 = 99,856",
+      "149,310",
+      "0.2 s",
+      "0.045",
+      "0.062",
+      "92"
+    ],
+    [
+      "1000\u00d71000 = 1,000,000",
+      "1,498,500",
+      "3.1 s",
+      "0.274",
+      "0.325",
+      "92"
+    ]
+  ]
+}

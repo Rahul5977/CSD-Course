@@ -1,0 +1,23 @@
+$ .venv/bin/python -m pytest -v
+tests/test_api.py::test_search_route_and_shape PASSED
+tests/test_api.py::test_no_slash_variant_answers_directly PASSED
+tests/test_api.py::test_category_is_case_and_space_insensitive PASSED
+tests/test_api.py::test_debug_explains_results PASSED
+tests/test_api.py::test_validation_errors_are_400 PASSED
+tests/test_api.py::test_health_and_demo PASSED
+tests/test_search.py::test_dataset_shape PASSED
+tests/test_search.py::test_network_is_connected PASSED
+tests/test_search.py::test_matches_dijkstra_oracle[0] PASSED
+tests/test_search.py::test_matches_dijkstra_oracle[1] PASSED
+tests/test_search.py::test_matches_dijkstra_oracle[2] PASSED
+tests/test_search.py::test_matches_dijkstra_oracle[3] PASSED
+tests/test_search.py::test_always_ten_when_ten_qualify PASSED
+tests/test_search.py::test_results_respect_radius_and_category PASSED
+tests/test_search.py::test_point_exactly_on_circle_is_included PASSED
+tests/test_search.py::test_corner_query_and_off_grid_clamping PASSED
+tests/test_search.py::test_road_distance_differs_from_manhattan_somewhere PASSED
+tests/test_search.py::test_missing_link_forces_detour PASSED
+tests/test_search.py::test_unreachable_nodes_are_never_returned PASSED
+tests/test_search.py::test_link_parser_rejects_diagonals PASSED
+tests/test_search.py::test_full_lattice_fallback_equals_manhattan PASSED
+============================== 21 passed in 5.24s ==============================

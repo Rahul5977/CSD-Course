@@ -12,3 +12,6 @@ __pycache__/
 *.log
 *.pid
 .DS_Store
+
+# deploy cache
+.wheelhouse/
