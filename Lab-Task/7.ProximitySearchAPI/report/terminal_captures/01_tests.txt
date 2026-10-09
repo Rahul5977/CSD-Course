@@ -1,23 +1,23 @@
 $ .venv/bin/python -m pytest -v
-tests/test_api.py::test_search_route_and_shape PASSED
-tests/test_api.py::test_no_slash_variant_answers_directly PASSED
-tests/test_api.py::test_category_is_case_and_space_insensitive PASSED
-tests/test_api.py::test_debug_explains_results PASSED
-tests/test_api.py::test_validation_errors_are_400 PASSED
-tests/test_api.py::test_health_and_demo PASSED
-tests/test_search.py::test_dataset_shape PASSED
-tests/test_search.py::test_network_is_connected PASSED
-tests/test_search.py::test_matches_dijkstra_oracle[0] PASSED
-tests/test_search.py::test_matches_dijkstra_oracle[1] PASSED
-tests/test_search.py::test_matches_dijkstra_oracle[2] PASSED
-tests/test_search.py::test_matches_dijkstra_oracle[3] PASSED
-tests/test_search.py::test_always_ten_when_ten_qualify PASSED
-tests/test_search.py::test_results_respect_radius_and_category PASSED
-tests/test_search.py::test_point_exactly_on_circle_is_included PASSED
-tests/test_search.py::test_corner_query_and_off_grid_clamping PASSED
-tests/test_search.py::test_road_distance_differs_from_manhattan_somewhere PASSED
-tests/test_search.py::test_missing_link_forces_detour PASSED
-tests/test_search.py::test_unreachable_nodes_are_never_returned PASSED
-tests/test_search.py::test_link_parser_rejects_diagonals PASSED
-tests/test_search.py::test_full_lattice_fallback_equals_manhattan PASSED
-============================== 21 passed in 5.24s ==============================
+tests/test_api.py::test_search_returns_ten_ids PASSED
+tests/test_api.py::test_search_without_slash PASSED
+tests/test_api.py::test_category_case_and_spaces PASSED
+tests/test_api.py::test_debug_output PASSED
+tests/test_api.py::test_bad_input_gives_400 PASSED
+tests/test_api.py::test_health_and_demo_page PASSED
+tests/test_search.py::test_dataset PASSED
+tests/test_search.py::test_every_location_is_reachable PASSED
+tests/test_search.py::test_bfs_matches_brute_force[0] PASSED
+tests/test_search.py::test_bfs_matches_brute_force[1] PASSED
+tests/test_search.py::test_bfs_matches_brute_force[2] PASSED
+tests/test_search.py::test_bfs_matches_brute_force[3] PASSED
+tests/test_search.py::test_returns_ten_when_ten_exist PASSED
+tests/test_search.py::test_results_are_valid_and_sorted PASSED
+tests/test_search.py::test_point_on_the_circle_is_included PASSED
+tests/test_search.py::test_corner_and_outside_points PASSED
+tests/test_search.py::test_road_ranking_differs_from_manhattan PASSED
+tests/test_search.py::test_missing_road_forces_a_detour PASSED
+tests/test_search.py::test_unreachable_places_are_skipped PASSED
+tests/test_search.py::test_diagonal_link_is_rejected PASSED
+tests/test_search.py::test_without_link_file_distance_is_manhattan PASSED
+============================== 21 passed in 5.60s ==============================

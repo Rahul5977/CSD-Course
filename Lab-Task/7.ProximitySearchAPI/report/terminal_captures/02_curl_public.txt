@@ -1,5 +1,5 @@
 $ curl -s 'http://10.1.75.53:3270/health'
-{"status":"ok","locations":10000,"grid":"100x100","roads":14800,"roads_missing":5000,"road_file":"link.txt","categories":["bank","cafe","hospital","park","pharmacy","restaurant","school","store"],"load_ms":121.0}   [HTTP 200]
+{"status":"ok","locations":10000,"grid":"100x100","roads":14800,"roads_missing":5000,"road_file":"link.txt","categories":["bank","cafe","hospital","park","pharmacy","restaurant","school","store"],"load_ms":114.6}   [HTTP 200]
 
 $ curl -s 'http://10.1.75.53:3270/search/?lat=0.74&long=0.6&cat=bank&rad=0.1'
 {"ids":[7160,7059,6862,7167,7267,7067,6459,7454,6656,6953]}   [HTTP 200]

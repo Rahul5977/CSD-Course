@@ -1,7 +1,10 @@
-#!/usr/bin/env python3
-"""Evidence for the report: dataset facts, metric comparison, latency, scaling, figures.
+"""Generates the numbers, tables and plots used in the report.
 
-    .venv/bin/python scripts/analyze.py          # writes report/tables/*.md, results/*.json, results/charts/*.png
+    .venv/bin/python scripts/analyze.py                 # everything
+    .venv/bin/python scripts/analyze.py metrics latency # only some parts
+
+Tables go to report/tables/*.tex, plots to results/charts/*.png and the raw
+numbers to results/analysis.json.
 """
 import collections
 import json
@@ -22,250 +25,275 @@ import matplotlib.pyplot as plt
 from app.network import RoadNetwork, load_network
 from app.search import ProximitySearch, rank_by, road_distances
 
-TABLES = os.path.join(ROOT, "report", "tables")
-CHARTS = os.path.join(ROOT, "results", "charts")
-os.makedirs(TABLES, exist_ok=True)
-os.makedirs(CHARTS, exist_ok=True)
-RESULTS = {}
+TABLE_DIR = os.path.join(ROOT, "report", "tables")
+CHART_DIR = os.path.join(ROOT, "results", "charts")
+os.makedirs(TABLE_DIR, exist_ok=True)
+os.makedirs(CHART_DIR, exist_ok=True)
 
-NET = load_network()
-ENG = ProximitySearch(NET)
-N = NET.n
+net = load_network()
+engine = ProximitySearch(net)
+N = net.n
+results = {}
 
 
-def rc(v):
+def row_col(v):
     return divmod(v, N)
 
 
-def write_table(name, header, rows):
-    lines = ["| " + " | ".join(header) + " |", "|" + "|".join("---" for _ in header) + "|"]
-    lines += ["| " + " | ".join(str(c) for c in r) + " |" for r in rows]
-    open(os.path.join(TABLES, name), "w").write("\n".join(lines) + "\n")
+def manhattan_from(src):
+    sr, sc = row_col(src)
+    return lambda v: abs(v // N - sr) + abs(v % N - sc)
 
 
-# ---------------------------------------------------------------- 1. dataset + network
-def dataset_facts():
-    cats = collections.Counter(NET.cat)
-    deg = collections.Counter(len(a) for a in NET.adj)
-    missing = NET.missing_links()
-    horiz = sum(1 for a, b in missing if b == a + 1)
-    d0 = road_distances(NET, 0)
+def percentile(values, p):
+    values = sorted(values)
+    return values[int(p * (len(values) - 1))]
+
+
+def save_table(name, rows):
+    """Writes the body rows of a LaTeX table; the header lives in report.tex."""
+    with open(os.path.join(TABLE_DIR, name), "w") as f:
+        for row in rows:
+            f.write(" & ".join(str(x) for x in row) + r" \\" + "\n")
+
+
+def save_chart(fig, name):
+    fig.tight_layout()
+    fig.savefig(os.path.join(CHART_DIR, name), dpi=160)
+    plt.close(fig)
+
+
+def dataset():
+    degree = collections.Counter(len(a) for a in net.adj)
+    missing = net.missing_links()
+    east_west = sum(1 for a, b in missing if b == a + 1)
+    connected = all(math.isfinite(d) for d in road_distances(net, 0))
+    possible = 2 * N * (N - 1)
+    info = {
+        "locations": net.size,
+        "per_category": collections.Counter(net.cat).most_common(1)[0][1],
+        "possible_roads": possible,
+        "roads": net.n_links,
+        "missing": len(missing),
+        "missing_east_west": east_west,
+        "connected": connected,
+        "degree": dict(sorted(degree.items())),
+        "loops": net.n_links - net.size + 1,
+    }
     rows = [
-        ("Locations", f"{NET.size:,} on a {N}×{N} lattice, spacing h = 1/{N - 1} ≈ {NET.spacing:.6f}"),
-        ("ID layout", "ID = row·100 + col + 1 (row = lat·99, col = long·99)"),
-        ("Categories", ", ".join(f"{c} {n}" for c, n in sorted(cats.items()))),
-        ("Possible neighbour roads", f"{2 * N * (N - 1):,}"),
-        ("Roads present (link.txt)", f"{NET.n_links:,} ({NET.n_links / (2 * N * (N - 1)):.1%})"),
-        ("Roads missing", f"{len(missing):,} ({horiz:,} east-west, {len(missing) - horiz:,} north-south)"),
-        ("Connected components", "1 (every location reachable)" if all(math.isfinite(x) for x in d0) else "more than 1"),
-        ("Intersection degree", ", ".join(f"{k} roads: {deg[k]:,}" for k in sorted(deg))),
-        ("Dead ends (degree 1)", f"{deg[1]:,}"),
-        ("Cycle rank (roads − nodes + 1)", f"{NET.n_links - NET.size + 1:,} independent loops"),
+        ("Locations", f"{net.size:,} on a {N}$\\times${N} grid, spacing $1/{N - 1}$"),
+        ("Categories", f"{len(net.categories)} categories, {info['per_category']:,} locations each"),
+        ("Possible roads between neighbours", f"{possible:,}"),
+        ("Roads in \\texttt{link.txt}", f"{net.n_links:,} ({net.n_links / possible:.1%})".replace("%", "\\%")),
+        ("Missing roads", f"{len(missing):,} ({east_west:,} east--west, {len(missing) - east_west:,} north--south)"),
+        ("Connected components", "1" if connected else "more than 1"),
+        ("Roads per intersection", ", ".join(f"{k}: {degree[k]:,}" for k in sorted(degree))),
+        ("Independent loops (roads $-$ nodes $+$ 1)", f"{info['loops']:,}"),
     ]
-    write_table("dataset.md", ["Property", "Value"], rows)
-    RESULTS["dataset"] = dict(rows)
+    save_table("dataset.tex", rows)
+    results["dataset"] = info
 
 
-# ---------------------------------------------------------------- 2. detour factor
-def detour_stats(samples=200, seed=3):
+def detours(samples=200, seed=3):
     rng = random.Random(seed)
-    ratios, by_m = [], collections.defaultdict(list)
+    ratios = []
+    by_length = collections.defaultdict(list)
     for _ in range(samples):
-        s = rng.randrange(NET.size)
-        d = road_distances(NET, s)
-        sr, sc = rc(s)
-        for t in range(NET.size):
-            tr, tc = rc(t)
-            m = abs(tr - sr) + abs(tc - sc)
+        s = rng.randrange(net.size)
+        dist = road_distances(net, s)
+        manh = manhattan_from(s)
+        for t in range(net.size):
+            m = manh(t)
             if 0 < m <= 15:
-                ratios.append(d[t] / m)
-                by_m[m].append(d[t] / m)
-    ratios.sort()
-    q = lambda p: ratios[int(p * (len(ratios) - 1))]
-    RESULTS["detour"] = {"pairs": len(ratios), "equal_manhattan": sum(r == 1 for r in ratios) / len(ratios),
-                         "mean": statistics.fmean(ratios), "p50": q(.5), "p90": q(.9), "p99": q(.99), "max": ratios[-1]}
-    write_table("detour.md", ["Pairs (Manhattan ≤ 15 steps)", "Road = Manhattan", "Mean detour", "p90", "p99", "Max"],
-                [(f"{len(ratios):,}", f"{RESULTS['detour']['equal_manhattan']:.1%}", f"{RESULTS['detour']['mean']:.2f}×",
-                  f"{q(.9):.2f}×", f"{q(.99):.2f}×", f"{ratios[-1]:.1f}×")])
+                ratios.append(dist[t] / m)
+                by_length[m].append(dist[t] / m)
+
+    same = sum(r == 1 for r in ratios) / len(ratios)
+    results["detour"] = {
+        "pairs": len(ratios), "same_as_manhattan": same, "mean": statistics.fmean(ratios),
+        "p90": percentile(ratios, 0.9), "p99": percentile(ratios, 0.99), "max": max(ratios),
+    }
+    d = results["detour"]
+    save_table("detour.tex", [(f"{d['pairs']:,}", f"{same:.1%}".replace("%", "\\%"), f"{d['mean']:.2f}",
+                               f"{d['p90']:.2f}", f"{d['p99']:.2f}", f"{d['max']:.1f}")])
 
     fig, ax = plt.subplots(1, 2, figsize=(10, 3.4))
     ax[0].hist([min(r, 4) for r in ratios], bins=40, color="#4e79a7")
     ax[0].set_xlabel("road distance / Manhattan distance (capped at 4)")
     ax[0].set_ylabel("pairs")
-    ax[0].set_title("Detour factor caused by missing roads")
-    ms = sorted(by_m)
-    ax[1].plot(ms, [sum(r == 1 for r in by_m[m]) / len(by_m[m]) for m in ms], marker="o", color="#e15759")
+    ax[0].set_title("Detours caused by missing roads")
+    lengths = sorted(by_length)
+    ax[1].plot(lengths, [sum(r == 1 for r in by_length[m]) / len(by_length[m]) for m in lengths],
+               marker="o", color="#e15759")
     ax[1].set_xlabel("Manhattan distance (grid steps)")
-    ax[1].set_ylabel("share with road = Manhattan")
+    ax[1].set_ylabel("fraction with road = Manhattan")
     ax[1].set_ylim(0, 1)
-    ax[1].set_title("Manhattan is right less often as trips get longer")
+    ax[1].set_title("Longer trips hit more missing roads")
     for a in ax:
         a.spines[["top", "right"]].set_visible(False)
-    fig.tight_layout()
-    fig.savefig(os.path.join(CHARTS, "detour.png"), dpi=160)
-    plt.close(fig)
+    save_chart(fig, "detour.png")
 
 
-# ---------------------------------------------------------------- 3. metric comparison
-def reverse_directed_net():
-    """Interpretation check: treat each line 'A B' as a one-way road A -> B."""
-    path = os.path.join(ROOT, "data", "link.txt")
-    out = [[] for _ in range(NET.size)]
-    for line in open(path):
-        a, b, c, d = map(float, line.split())
-        u = round(b * (N - 1)) * N + round(a * (N - 1))
-        v = round(d * (N - 1)) * N + round(c * (N - 1))
-        out[u].append(v)
-    return RoadNetwork(n=N, ids=NET.ids, lat=NET.lat, lon=NET.lon, cat=NET.cat,
-                       adj=[tuple(x) for x in out], categories=NET.categories)
+def one_way_network():
+    """Same links, but read as one-way roads from A to B."""
+    out = [[] for _ in range(net.size)]
+    with open(os.path.join(ROOT, "data", "link.txt")) as f:
+        for line in f:
+            a, b, c, d = map(float, line.split())
+            u = round(b * (N - 1)) * N + round(a * (N - 1))
+            v = round(d * (N - 1)) * N + round(c * (N - 1))
+            out[u].append(v)
+    return RoadNetwork(N, net.ids, net.lat, net.lon, net.cat, [tuple(x) for x in out], net.categories)
 
 
-def metric_comparison(queries=2000, seed=11):
+def compare_metrics(queries=2000, seed=11):
+    """How many marks would each way of ranking get?"""
     rng = random.Random(seed)
-    directed = reverse_directed_net()
-    scores = collections.defaultdict(list)
-    exact = collections.Counter()
+    one_way = one_way_network()
+    names = ["Road network (this API)", "Euclidean", "Manhattan", "One-way roads"]
+    scores = {name: [] for name in names}
+
     for i in range(queries):
-        # half the queries sit on a location (as a grader would likely pick), half anywhere
         if i % 2 == 0:
-            v = rng.randrange(NET.size)
-            lat, lon = NET.lat[v], NET.lon[v]
+            v = rng.randrange(net.size)
+            lat, lon = net.lat[v], net.lon[v]
         else:
             lat, lon = rng.random(), rng.random()
-        cat = rng.choice(NET.categories)
+        cat = rng.choice(net.categories)
         rad = rng.uniform(0.08, 0.35)
-        if ENG.count_in_radius(lat, lon, cat, rad) < 10:
+        if engine.count_in_radius(lat, lon, cat, rad) < 10:
             continue
-        src = NET.node_of(lat, lon)
-        sr, sc = rc(src)
-        d_road = road_distances(NET, src)
-        d_dir = road_distances(directed, src)
-        truth = rank_by(NET, lat, lon, cat, rad, lambda v: d_road[v])
-        tie_ok = lambda ids: sum(1 for x in ids if d_road[x - 1] <= truth[-1][0])
-        variants = {
-            "Road network (this API)": [h.id for h in ENG.search(lat, lon, cat, rad).hits],
-            "Euclidean (straight line)": [c for *_, c, _ in rank_by(NET, lat, lon, cat, rad, lambda v: 0)],
-            "Manhattan (full grid)": [c for *_, c, _ in rank_by(NET, lat, lon, cat, rad,
-                                                              lambda v: abs(rc(v)[0] - sr) + abs(rc(v)[1] - sc))],
-            "One-way roads (A→B)": [c for *_, c, _ in rank_by(NET, lat, lon, cat, rad, lambda v: d_dir[v])],
+
+        src = net.node_of(lat, lon)
+        road = road_distances(net, src)
+        directed = road_distances(one_way, src)
+        tenth = rank_by(net, lat, lon, cat, rad, lambda v: road[v])[-1][0]
+
+        answers = {
+            "Road network (this API)": [h.id for h in engine.search(lat, lon, cat, rad).hits],
+            "Euclidean": [r[2] for r in rank_by(net, lat, lon, cat, rad, lambda v: 0)],
+            "Manhattan": [r[2] for r in rank_by(net, lat, lon, cat, rad, manhattan_from(src))],
+            "One-way roads": [r[2] for r in rank_by(net, lat, lon, cat, rad, lambda v: directed[v])],
         }
-        for name, ids in variants.items():
-            s = tie_ok(ids)   # a returned ID counts if it is as close by road as the true 10th
-            scores[name].append(s)
-            exact[name] += s == 10
-    n = len(scores["Road network (this API)"])
-    rows = [(name, f"{statistics.fmean(v) * 10:.1f} / 100", f"{exact[name] / n:.1%}", f"{min(v)}/10")
-            for name, v in scores.items()]
-    write_table("metric_comparison.md", ["Ranking used", "Expected score (10 queries × 10 IDs)",
-                                         "Queries fully correct", "Worst query"], rows)
-    RESULTS["metric_comparison"] = {"queries": n, **{k: statistics.fmean(v) for k, v in scores.items()}}
+        for name, ids in answers.items():
+            # an ID scores if it is at least as close by road as the true 10th (ties are accepted)
+            scores[name].append(sum(1 for x in ids if road[x - 1] <= tenth))
 
-    fig, ax = plt.subplots(figsize=(7.5, 3.0))
-    names = list(scores)
-    vals = [statistics.fmean(scores[k]) * 10 for k in names]
-    bars = ax.barh(names[::-1], vals[::-1], color=["#9c755f", "#f28e2b", "#e15759", "#59a14f"])
+    n = len(scores[names[0]])
+    rows = []
+    for name in names:
+        s = scores[name]
+        full = sum(x == 10 for x in s) / n
+        rows.append((name, f"{statistics.fmean(s) * 10:.1f}", f"{full:.1%}".replace("%", "\\%"), f"{min(s)}/10"))
+    save_table("metrics.tex", rows)
+    results["metric_comparison"] = {"queries": n, **{k: statistics.fmean(v) * 10 for k, v in scores.items()}}
+
+    fig, ax = plt.subplots(figsize=(7.5, 2.8))
+    values = [statistics.fmean(scores[k]) * 10 for k in names]
+    bars = ax.barh(names[::-1], values[::-1], color=["#9c755f", "#f28e2b", "#e15759", "#59a14f"])
     ax.bar_label(bars, fmt="%.1f", padding=3)
-    ax.set_xlim(0, 105)
-    ax.set_xlabel(f"expected marks out of 100 ({n:,} random queries, ties accepted)")
+    ax.set_xlim(0, 108)
+    ax.set_xlabel(f"expected marks out of 100 ({n:,} random queries)")
     ax.spines[["top", "right"]].set_visible(False)
-    fig.tight_layout()
-    fig.savefig(os.path.join(CHARTS, "metric_comparison.png"), dpi=160)
-    plt.close(fig)
+    save_chart(fig, "metric_comparison.png")
 
 
-# ---------------------------------------------------------------- 4. example figure
-def example_figure(lat=0.74, lon=0.6, cat="bank", rad=0.1):
-    res = ENG.search(lat, lon, cat, rad, want_paths=True)
+def example(lat=0.74, lon=0.6, cat="bank", rad=0.1):
+    res = engine.search(lat, lon, cat, rad, want_paths=True)
     src = res.source
-    sr, sc = rc(src)
-    manh = rank_by(NET, lat, lon, cat, rad, lambda v: abs(rc(v)[0] - sr) + abs(rc(v)[1] - sc))
-    road_ids = {h.id for h in res.hits}
-    manh_only = [v for *_, v in manh if NET.ids[v] not in road_ids]
+    sr, sc = row_col(src)
+    manh = rank_by(net, lat, lon, cat, rad, manhattan_from(src))
+    chosen = {h.id for h in res.hits}
+    manhattan_only = [r[3] for r in manh if r[2] not in chosen]
+
+    r0, r1, c0, c1 = sr - 12, sr + 12, sc - 12, sc + 12
+    inside = lambda v: r0 <= v // N <= r1 and c0 <= v % N <= c1
+    missing = set(net.missing_links())
+
     fig, ax = plt.subplots(figsize=(6.4, 6.4))
-    lo_r, hi_r, lo_c, hi_c = sr - 12, sr + 12, sc - 12, sc + 12
-    missing = set(NET.missing_links())
-    for v in range(NET.size):
-        r, c = rc(v)
-        if not (lo_r <= r <= hi_r and lo_c <= c <= hi_c):
+    for v in range(net.size):
+        if not inside(v):
             continue
-        for w, (dr, dc) in ((v + 1, (0, 1)), (v + N, (1, 0))):
-            if c + dc < N and r + dr < N and (v, w) not in missing:
-                ax.plot([c, c + dc], [r, r + dr], color="#c9ced8", lw=0.9, zorder=1)
-    xs = [rc(v)[1] for v in range(NET.size) if NET.cat[v] == cat and lo_r <= rc(v)[0] <= hi_r and lo_c <= rc(v)[1] <= hi_c]
-    ys = [rc(v)[0] for v in range(NET.size) if NET.cat[v] == cat and lo_r <= rc(v)[0] <= hi_r and lo_c <= rc(v)[1] <= hi_c]
-    ax.scatter(xs, ys, s=10, color="#76b7b2", zorder=2, label=f"{cat} locations")
+        r, c = row_col(v)
+        if c + 1 < N and (v, v + 1) not in missing:
+            ax.plot([c, c + 1], [r, r], color="#c9ced8", lw=0.9, zorder=1)
+        if r + 1 < N and (v, v + N) not in missing:
+            ax.plot([c, c], [r, r + 1], color="#c9ced8", lw=0.9, zorder=1)
+
+    same_cat = [v for v in range(net.size) if net.cat[v] == cat and inside(v)]
+    ax.scatter([v % N for v in same_cat], [v // N for v in same_cat], s=10, color="#76b7b2", zorder=2,
+               label=f"{cat} locations")
     ax.add_patch(plt.Circle((lon * 99, lat * 99), rad * 99, fill=False, ls="--", color="#4e79a7", lw=1.4))
     for h in res.hits:
-        p = ENG.path(res, h.node)
-        ax.plot([rc(v)[1] for v in p], [rc(v)[0] for v in p], color="#e0663a", lw=1.6, alpha=.75, zorder=3)
-    ax.scatter([rc(h.node)[1] for h in res.hits], [rc(h.node)[0] for h in res.hits], s=70, color="#e0663a",
-               zorder=4, label="top 10 by road (this API)")
-    ax.scatter([rc(v)[1] for v in manh_only], [rc(v)[0] for v in manh_only], s=90, facecolors="none",
-               edgecolors="#1d2330", lw=1.6, zorder=5, label="Manhattan picks that road rejects")
-    ax.scatter([lon * 99], [lat * 99], marker="*", s=220, color="#1d2330", zorder=6, label="query point")
-    ax.set_xlim(lo_c - .5, hi_c + .5)
-    ax.set_ylim(lo_r - .5, hi_r + .5)
+        route = engine.path(res, h.node)
+        ax.plot([v % N for v in route], [v // N for v in route], color="#e0663a", lw=1.6, alpha=0.75, zorder=3)
+    ax.scatter([h.node % N for h in res.hits], [h.node // N for h in res.hits], s=70, color="#e0663a",
+               zorder=4, label="top 10 by road")
+    ax.scatter([v % N for v in manhattan_only], [v // N for v in manhattan_only], s=90, facecolors="none",
+               edgecolors="#1d2330", lw=1.6, zorder=5, label="Manhattan picks not in the top 10")
+    ax.scatter([lon * 99], [lat * 99], marker="*", s=220, color="#1d2330", zorder=6, label="query")
+    ax.set_xlim(c0 - 0.5, c1 + 0.5)
+    ax.set_ylim(r0 - 0.5, r1 + 0.5)
     ax.set_aspect("equal")
-    ax.set_xlabel("column (long × 99)")
-    ax.set_ylabel("row (lat × 99)")
-    ax.legend(loc="upper left", fontsize=8, framealpha=.95)
+    ax.set_xlabel("column (long x 99)")
+    ax.set_ylabel("row (lat x 99)")
+    ax.legend(loc="upper left", fontsize=8, framealpha=0.95)
     ax.set_title(f"lat={lat}, long={lon}, cat={cat}, rad={rad}", fontsize=11)
-    fig.tight_layout()
-    fig.savefig(os.path.join(CHARTS, "example_query.png"), dpi=160)
-    plt.close(fig)
+    save_chart(fig, "example_query.png")
+
     rows = []
-    for i, h in enumerate(res.hits, 1):
-        r, c = rc(h.node)
-        rows.append((i, h.id, f"({NET.lat[h.node]:.4f}, {NET.lon[h.node]:.4f})", h.hops,
-                     abs(r - sr) + abs(c - sc), f"{h.euclid * 99:.2f}"))
-    write_table("example_query.md", ["Rank", "ID", "(lat, long)", "Road steps", "Manhattan steps",
-                                     "Straight line (steps)"], rows)
-    RESULTS["example"] = {"query": [lat, lon, cat, rad], "ids": [h.id for h in res.hits],
-                          "manhattan_ids": [NET.ids[v] for *_, v in manh]}
+    for rank, h in enumerate(res.hits, 1):
+        rows.append((rank, h.id, f"({net.lat[h.node]:.4f}, {net.lon[h.node]:.4f})", h.hops,
+                     manhattan_from(src)(h.node), f"{h.euclid * 99:.2f}"))
+    save_table("example.tex", rows)
+    results["example"] = {"ids": [h.id for h in res.hits], "manhattan_ids": [r[2] for r in manh],
+                          "manhattan_correct": 10 - len(manhattan_only)}
 
 
-# ---------------------------------------------------------------- 5. latency + scaling
 def latency(queries=5000, seed=5):
     rng = random.Random(seed)
     qs = []
     while len(qs) < queries:
-        lat, lon, cat = rng.random(), rng.random(), rng.choice(NET.categories)
-        rad = rng.uniform(0.06, 0.5)
-        if ENG.count_in_radius(lat, lon, cat, rad) >= 10:
-            qs.append((lat, lon, cat, rad))
+        q = (rng.random(), rng.random(), rng.choice(net.categories), rng.uniform(0.06, 0.5))
+        if engine.count_in_radius(*q) >= 10:
+            qs.append(q)
+
     fast, explored = [], []
     for q in qs:
         t = time.perf_counter()
-        r = ENG.search(*q)
-        fast.append((time.perf_counter() - t) * 1e3)
+        r = engine.search(*q)
+        fast.append((time.perf_counter() - t) * 1000)
         explored.append(r.visited)
+
     slow = []
     for q in qs[:300]:
         t = time.perf_counter()
-        d = road_distances(NET, NET.node_of(q[0], q[1]))
-        rank_by(NET, *q, key=lambda v: d[v])
-        slow.append((time.perf_counter() - t) * 1e3)
-    pct = lambda xs, p: sorted(xs)[int(p * (len(xs) - 1))]
-    rows = [
-        ("Early-stop BFS (API)", f"{pct(fast, .5):.3f}", f"{pct(fast, .95):.3f}", f"{pct(fast, .99):.3f}",
-         f"{statistics.fmean(explored):.0f} (p99 {pct(explored, .99)})"),
-        ("Full Dijkstra + scan (oracle)", f"{pct(slow, .5):.2f}", f"{pct(slow, .95):.2f}", f"{pct(slow, .99):.2f}",
-         f"{NET.size:,}"),
-    ]
-    write_table("latency.md", ["Method (10,000 locations)", "p50 ms", "p95 ms", "p99 ms", "Nodes explored"], rows)
-    RESULTS["latency"] = {"bfs_p50": pct(fast, .5), "bfs_p99": pct(fast, .99), "oracle_p50": pct(slow, .5),
-                          "explored_mean": statistics.fmean(explored)}
+        dist = road_distances(net, net.node_of(q[0], q[1]))
+        rank_by(net, *q, key=lambda v: dist[v])
+        slow.append((time.perf_counter() - t) * 1000)
+
+    save_table("latency.tex", [
+        ("BFS with early stop (API)", f"{percentile(fast, .5):.3f}", f"{percentile(fast, .95):.3f}",
+         f"{percentile(fast, .99):.3f}", f"{statistics.fmean(explored):.0f}"),
+        ("Dijkstra to all nodes + scan", f"{percentile(slow, .5):.2f}", f"{percentile(slow, .95):.2f}",
+         f"{percentile(slow, .99):.2f}", f"{net.size:,}"),
+    ])
+    results["latency"] = {"bfs_p50": percentile(fast, .5), "bfs_p99": percentile(fast, .99),
+                          "oracle_p50": percentile(slow, .5), "explored_mean": statistics.fmean(explored)}
 
 
-def synthetic_network(n, keep=0.75, seed=0):
-    """n×n lattice, random categories, ~keep of the roads (random spanning tree + extras, like link.txt)."""
+def random_city(n, keep=0.75, seed=0):
+    """n x n grid with a random spanning tree plus extra roads, like link.txt."""
     rng = random.Random(seed)
     edges = []
     for v in range(n * n):
         r, c = divmod(v, n)
-        if c + 1 < n: edges.append((v, v + 1))
-        if r + 1 < n: edges.append((v, v + n))
+        if c + 1 < n:
+            edges.append((v, v + 1))
+        if r + 1 < n:
+            edges.append((v, v + n))
     rng.shuffle(edges)
+
     parent = list(range(n * n))
 
     def find(x):
@@ -273,63 +301,65 @@ def synthetic_network(n, keep=0.75, seed=0):
             parent[x] = parent[parent[x]]
             x = parent[x]
         return x
-    chosen, extra = [], []
+
+    tree, extra = [], []
     for a, b in edges:
         ra, rb = find(a), find(b)
         if ra != rb:
             parent[ra] = rb
-            chosen.append((a, b))
+            tree.append((a, b))
         else:
             extra.append((a, b))
-    chosen += extra[:max(0, int(keep * len(edges)) - len(chosen))]
+    roads = tree + extra[:max(0, int(keep * len(edges)) - len(tree))]
+
     adj = [[] for _ in range(n * n)]
-    for a, b in chosen:
+    for a, b in roads:
         adj[a].append(b)
         adj[b].append(a)
-    cats = ["bank", "cafe", "hospital", "park", "pharmacy", "restaurant", "school", "store"]
+    cats = sorted(net.categories)
     last = n - 1
-    lat = [divmod(v, n)[0] / last for v in range(n * n)]
-    lon = [divmod(v, n)[1] / last for v in range(n * n)]
-    return RoadNetwork(n=n, ids=list(range(1, n * n + 1)), lat=lat, lon=lon,
-                       cat=[rng.choice(cats) for _ in range(n * n)], adj=[tuple(a) for a in adj],
-                       categories=cats, n_links=len(chosen))
+    return RoadNetwork(n, list(range(1, n * n + 1)), [(v // n) / last for v in range(n * n)],
+                       [(v % n) / last for v in range(n * n)], [rng.choice(cats) for _ in range(n * n)],
+                       [tuple(a) for a in adj], cats, "random", len(roads))
 
 
 def scaling(sizes=(100, 316, 1000), queries=2000):
     rows = []
     for n in sizes:
         t = time.perf_counter()
-        net = synthetic_network(n)
-        eng = ProximitySearch(net)
+        city = random_city(n)
+        city_engine = ProximitySearch(city)
         build = time.perf_counter() - t
-        rng = random.Random(n)
-        h = 1 / (n - 1)
-        ts, ex = [], []
-        for _ in range(queries):
-            lat, lon, cat = rng.random(), rng.random(), rng.choice(net.categories)
-            rad = 12 * h  # same neighbourhood size in grid steps at every scale
-            t = time.perf_counter()
-            r = eng.search(lat, lon, cat, rad)
-            ts.append((time.perf_counter() - t) * 1e3)
-            ex.append(r.visited)
-        ts.sort()
-        rows.append((f"{n}×{n} = {n * n:,}", f"{net.n_links:,}", f"{build:.1f} s", f"{ts[len(ts) // 2]:.3f}",
-                     f"{ts[int(.99 * len(ts))]:.3f}", f"{statistics.fmean(ex):.0f}"))
-        print("  scaling", rows[-1], flush=True)
-    write_table("scaling.md", ["Locations", "Roads", "Load + index", "p50 ms", "p99 ms", "Nodes explored (mean)"], rows)
-    RESULTS["scaling"] = rows
 
+        rng = random.Random(n)
+        rad = 12 / (n - 1)
+        times, explored = [], []
+        for _ in range(queries):
+            q = (rng.random(), rng.random(), rng.choice(city.categories), rad)
+            t = time.perf_counter()
+            r = city_engine.search(*q)
+            times.append((time.perf_counter() - t) * 1000)
+            explored.append(r.visited)
+        rows.append((f"{n * n:,}", f"{city.n_links:,}", f"{build:.1f}", f"{percentile(times, .5):.3f}",
+                     f"{percentile(times, .99):.3f}", f"{statistics.fmean(explored):.0f}"))
+        print("  ", rows[-1], flush=True)
+    save_table("scaling.tex", rows)
+    results["scaling"] = rows
+
+
+STEPS = {"dataset": dataset, "detour": detours, "metrics": compare_metrics,
+         "example": example, "latency": latency, "scaling": scaling}
 
 if __name__ == "__main__":
-    steps = sys.argv[1:] or ["dataset", "detour", "metrics", "example", "latency", "scaling"]
-    for s in steps:
-        print("==", s, flush=True)
-        {"dataset": dataset_facts, "detour": detour_stats, "metrics": metric_comparison,
-         "example": example_figure, "latency": latency, "scaling": scaling}[s]()
-    os.makedirs(os.path.join(ROOT, "results"), exist_ok=True)
+    for step in sys.argv[1:] or list(STEPS):
+        print("running", step, flush=True)
+        STEPS[step]()
+
     out = os.path.join(ROOT, "results", "analysis.json")
-    old = json.load(open(out)) if os.path.exists(out) else {}
-    old.update(RESULTS)
-    json.dump(old, open(out, "w"), indent=2, default=str)
-    for f in sorted(os.listdir(TABLES)):
-        print(f"\n# {f}\n" + open(os.path.join(TABLES, f)).read())
+    saved = {}
+    if os.path.exists(out):
+        with open(out) as f:
+            saved = json.load(f)
+    saved.update(results)
+    with open(out, "w") as f:
+        json.dump(saved, f, indent=2, default=str)

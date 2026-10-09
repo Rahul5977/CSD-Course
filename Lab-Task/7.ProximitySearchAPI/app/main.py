@@ -1,9 +1,7 @@
-"""Proximity Search API.
+"""Proximity search API.
 
-    GET /search/?lat=<float>&long=<float>&cat=<category>&rad=<float>
-    -> {"ids": [10 location IDs, nearest by road first]}
-
-Add &debug=1 for per-result road/straight-line distances and the driven route.
+GET /search/?lat=..&long=..&cat=..&rad=..  ->  {"ids": [...10 location IDs...]}
+Add debug=1 to also get distances and the route to every result.
 """
 import math
 import os
@@ -17,15 +15,14 @@ from .network import load_network
 from .search import ProximitySearch
 
 K = 10
-STATIC = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 
-t0 = time.perf_counter()
-NET = load_network()
-ENGINE = ProximitySearch(NET)
-LOAD_MS = (time.perf_counter() - t0) * 1e3
+_start = time.perf_counter()
+net = load_network()
+engine = ProximitySearch(net)
+load_ms = (time.perf_counter() - _start) * 1000
 
-app = FastAPI(title="Proximity Search API", version="1.0",
-              description="Nearest locations by road-network distance inside a circular radius.")
+app = FastAPI(title="Proximity Search API", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["GET"], allow_headers=["*"])
 
 
@@ -33,81 +30,92 @@ class BadRequest(Exception):
     pass
 
 
-def _number(params, name):
-    raw = params.get(name)
-    if raw is None or raw.strip() == "":
-        raise BadRequest(f"missing required query parameter '{name}'")
-    try:
-        x = float(raw)
-    except ValueError:
-        raise BadRequest(f"'{name}' must be a number, got {raw!r}")
-    if not math.isfinite(x):
-        raise BadRequest(f"'{name}' must be finite")
-    return x
-
-
-def _flag(params, name):
-    return params.get(name, "").strip().lower() in ("1", "true", "yes")
-
-
-def _detour(road, a, b):
-    crow = math.hypot(NET.lat[a] - NET.lat[b], NET.lon[a] - NET.lon[b])
-    return road / crow if crow > 0 else 1.0
-
-
-def _point(v):
-    return {"lat": NET.lat[v], "long": NET.lon[v]}
-
-
 @app.exception_handler(BadRequest)
-async def bad_request(_, exc):
+async def bad_request_handler(request, exc):
     return JSONResponse(status_code=400, content={"error": str(exc)})
 
 
-@app.get("/search/")
-@app.get("/search", include_in_schema=False)
-async def search(request: Request):  # sub-millisecond CPU work: no threadpool hop
-    p = request.query_params
-    lat, lon, rad = _number(p, "lat"), _number(p, "long"), _number(p, "rad")
-    cat = (p.get("cat") or "").strip().lower()
+def get_number(params, name):
+    raw = params.get(name, "").strip()
+    if not raw:
+        raise BadRequest(f"missing required query parameter '{name}'")
+    try:
+        value = float(raw)
+    except ValueError:
+        raise BadRequest(f"'{name}' must be a number, got {raw!r}")
+    if not math.isfinite(value):
+        raise BadRequest(f"'{name}' must be finite")
+    return value
+
+
+def get_category(params):
+    cat = params.get("cat", "").strip().lower()
     if not cat:
         raise BadRequest("missing required query parameter 'cat'")
-    if cat not in ENGINE.by_cat:
-        raise BadRequest(f"unknown category {cat!r}; expected one of {NET.categories}")
+    if cat not in engine.by_cat:
+        raise BadRequest(f"unknown category {cat!r}; expected one of {net.categories}")
+    return cat
+
+
+def describe(result, lat, lon, cat, rad):
+    """Extra output for debug=1."""
+    src = result.source
+    step = net.spacing
+    rows = []
+    for rank, hit in enumerate(result.hits, 1):
+        v = hit.node
+        road = hit.hops * step
+        straight_from_src = math.hypot(net.lat[v] - net.lat[src], net.lon[v] - net.lon[src])
+        rows.append({
+            "rank": rank,
+            "id": hit.id,
+            "lat": net.lat[v],
+            "long": net.lon[v],
+            "category": net.cat[v],
+            "road_segments": hit.hops,
+            "road_distance": road,
+            "straight_line": hit.euclid,
+            "manhattan": abs(net.lat[v] - net.lat[src]) + abs(net.lon[v] - net.lon[src]),
+            "detour_factor": road / straight_from_src if straight_from_src > 0 else 1.0,
+            "route": [net.ids[u] for u in engine.path(result, v)],
+        })
+
+    info = {
+        "query": {"lat": lat, "long": lon, "cat": cat, "rad": rad},
+        "pickup_node": {
+            "id": net.ids[src],
+            "lat": net.lat[src],
+            "long": net.lon[src],
+            "snap_offset": math.hypot(net.lat[src] - lat, net.lon[src] - lon),
+        },
+        "matches_in_radius": result.in_radius,
+        "nodes_explored": result.visited,
+        "search_ms": round(result.elapsed_ms, 3),
+        "results": rows,
+    }
+    if len(result.hits) < K:
+        info["note"] = f"only {len(result.hits)} location(s) match inside the radius"
+    return info
+
+
+# Both paths are registered so /search does not get a 307 redirect.
+@app.get("/search/")
+@app.get("/search", include_in_schema=False)
+async def search(request: Request):
+    params = request.query_params
+    lat = get_number(params, "lat")
+    lon = get_number(params, "long")
+    rad = get_number(params, "rad")
+    cat = get_category(params)
     if rad < 0:
         raise BadRequest("'rad' must be >= 0")
 
-    debug = _flag(p, "debug")
-    res = ENGINE.search(lat, lon, cat, rad, k=K, want_paths=debug)
-    body = {"ids": [h.id for h in res.hits]}
-    if not debug:
-        return body
+    debug = params.get("debug", "").lower() in ("1", "true", "yes")
+    result = engine.search(lat, lon, cat, rad, k=K, want_paths=debug)
 
-    h = NET.spacing
-    src = res.source
-    body.update({
-        "query": {"lat": lat, "long": lon, "cat": cat, "rad": rad},
-        "pickup_node": {"id": NET.ids[src], **_point(src),
-                        "snap_offset": math.hypot(NET.lat[src] - lat, NET.lon[src] - lon)},
-        "matches_in_radius": res.in_radius,
-        "nodes_explored": res.visited,
-        "search_ms": round(res.elapsed_ms, 3),
-        "results": [{
-            "rank": i + 1,
-            "id": hit.id,
-            **_point(hit.node),
-            "category": NET.cat[hit.node],
-            "road_segments": hit.hops,
-            "road_distance": hit.hops * h,
-            "straight_line": hit.euclid,
-            "manhattan": abs(NET.lat[hit.node] - NET.lat[src]) + abs(NET.lon[hit.node] - NET.lon[src]),
-            # road length vs straight line, both measured from the pickup intersection
-            "detour_factor": _detour(hit.hops * h, src, hit.node),
-            "route": [NET.ids[v] for v in ENGINE.path(res, hit.node)],
-        } for i, hit in enumerate(res.hits)],
-    })
-    if len(res.hits) < K:
-        body["note"] = f"only {len(res.hits)} reachable location(s) match inside the radius"
+    body = {"ids": [hit.id for hit in result.hits]}
+    if debug:
+        body.update(describe(result, lat, lon, cat, rad))
     return body
 
 
@@ -115,29 +123,29 @@ async def search(request: Request):  # sub-millisecond CPU work: no threadpool h
 def health():
     return {
         "status": "ok",
-        "locations": NET.size,
-        "grid": f"{NET.n}x{NET.n}",
-        "roads": NET.n_links,
-        "roads_missing": 2 * NET.n * (NET.n - 1) - NET.n_links,
-        "road_file": NET.links_source,
-        "categories": NET.categories,
-        "load_ms": round(LOAD_MS, 1),
+        "locations": net.size,
+        "grid": f"{net.n}x{net.n}",
+        "roads": net.n_links,
+        "roads_missing": 2 * net.n * (net.n - 1) - net.n_links,
+        "road_file": net.links_source,
+        "categories": net.categories,
+        "load_ms": round(load_ms, 1),
     }
 
 
 @app.get("/network", include_in_schema=False)
 def network():
-    """Compact network dump for the demo map: category per node + missing roads."""
-    idx = {c: i for i, c in enumerate(NET.categories)}
+    """Data for the map on the demo page."""
+    cat_index = {c: i for i, c in enumerate(net.categories)}
     return {
-        "n": NET.n,
-        "categories": NET.categories,
-        "cat": [idx[c] for c in NET.cat],
-        "ids": NET.ids,
-        "missing": NET.missing_links(),
+        "n": net.n,
+        "categories": net.categories,
+        "cat": [cat_index[c] for c in net.cat],
+        "ids": net.ids,
+        "missing": net.missing_links(),
     }
 
 
 @app.get("/", include_in_schema=False)
 def index():
-    return FileResponse(os.path.join(STATIC, "index.html"))
+    return FileResponse(os.path.join(STATIC_DIR, "index.html"))
