@@ -273,3 +273,26 @@ now fixes the submission set and adds one functional requirement the v1.0 build 
 - [x] LaTeX report in the course template (`docs/report/Final_Report.pdf`, body ≤ 10 pages + appendix); `docs/DEMO_VIDEO.md`; README and landing links verified (60 links)
 - [ ] YouTube video recorded and uploaded — **the user's**; link goes into `\videourl` and the README
 - [x] `make check` green (219 tests) · commits · `docs/progress/DAY_11.md`
+
+## 10. P10 — Phase 3 add-on: OpenTelemetry (added 2026-10-16)
+
+`docs/assignment/Phase3.txt` gained an *ADD_ON*: implement OpenTelemetry in this project, capture
+logs, traces and metrics, show them in observability tools, and submit a report with screenshots
+from the running project and an explanation of what the data means. Design: ADR 0022.
+
+| Add-on requirement | Where it lands |
+|---|---|
+| Instrument components and backend services | `app/core/telemetry.py` — SDK providers; FastAPI, SQLAlchemy, Redis, Celery, urllib instrumentation; job span + one span per pipeline stage via the `StageObservingJobs` decorator; domain metrics; OTLP log handler |
+| Logs, traces **and** metrics | traces → Jaeger, metrics → Prometheus, logs → Loki, through `infra/otel/collector.yaml` |
+| Run and verify; visualise with tools | `make up` (14 services) → Jaeger :16686, Grafana `pond-otel` dashboard + Explore; `tests/test_telemetry.py` (in-memory exporters) |
+| Report: implementation, tools, screenshots + what each shows, understanding | `docs/report/OpenTelemetry_Report.pdf` (`make report-otel`), screenshots in `docs/figures/otel/` |
+| Demonstrate in the viva | `docs/DEMO.md` § OpenTelemetry segment |
+
+### G10 — exit criteria
+- [x] One upload is one trace: `POST /analyzeContour` (pond-api) → `apply_async` → `run` (pond-worker-heavy) → `job contour_analysis` → stage spans incl. Priority-Flood and D8 — test + `docs/figures/otel/02`, `03`
+- [x] Metrics in Prometheus from OTLP (`pond_job_stage_duration_seconds`, `http_server_request_duration_seconds`, `pond_catchment_area_ha`) and a provisioned dashboard — `docs/figures/otel/06`
+- [x] Logs in Loki with `trace_id`/`span_id`, linked to Jaeger — `docs/figures/otel/07`
+- [x] A real finding from the data, explained: water-body-mask read is 52–70 % of the contour job; a pond design's "confidence low" traced to a SoilGrids DNS failure (span error + correlated WARN log, same trace id)
+- [x] Layering intact (engines import no OTel), `make check` green
+- [x] Report PDF built; ADR 0022; README observability section + troubleshooting rows
+- [ ] Viva: demonstrate live (the user's)

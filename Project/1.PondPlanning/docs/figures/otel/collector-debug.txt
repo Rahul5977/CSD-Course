@@ -1,0 +1,6 @@
+2026-10-16T07:25:05.614Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 1, "metrics": 8, "data points": 38}
+2026-10-16T07:25:09.619Z	info	LogsExporter	{"kind": "exporter", "data_type": "logs", "name": "debug", "resource logs": 1, "log records": 2}
+2026-10-16T07:25:09.619Z	info	TracesExporter	{"kind": "exporter", "data_type": "traces", "name": "debug", "resource spans": 2, "spans": 11}
+2026-10-16T07:25:13.625Z	info	LogsExporter	{"kind": "exporter", "data_type": "logs", "name": "debug", "resource logs": 1, "log records": 2}
+2026-10-16T07:25:13.625Z	info	TracesExporter	{"kind": "exporter", "data_type": "traces", "name": "debug", "resource spans": 2, "spans": 11}
+2026-10-16T07:25:13.626Z	info	MetricsExporter	{"kind": "exporter", "data_type": "metrics", "name": "debug", "resource metrics": 2, "metrics": 16, "data points": 49}

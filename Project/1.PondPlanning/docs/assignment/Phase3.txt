@@ -21,3 +21,27 @@ Generation of results based on the selected land area.
 Results must include: Suggested pond location, Catchment area and Expected water volume that can be collected
 The pond location, catchment area, and expected water volume must be overlaid and visualized on the map.
 The solution should be fast and functional, with appropriate consideration for stress, scaling, and system limitations within the four systems provided
+
+ADD_ON
+Objective
+The objective of this assignment is to familiarise students with OpenTelemetry and its practical application for monitoring, debugging, and understanding distributed systems and backend services.
+
+Background
+As discussed in the previous lab, you were expected to integrate and run OpenTelemetry with your existing Assignment 1 project and demonstrate the generated logs, traces, metrics, or other observability data during the VIVA. However, many students were unable to demonstrate the expected results during the evaluation.
+Therefore, this assignment is intended to ensure that every student successfully implements OpenTelemetry, understands what it captures, and can explain its usefulness for monitoring system services.
+
+Assignment Requirements
+Use your existing Assignment 1 project: Implement OpenTelemetry in your AI-based Village Pond Planning System. You are not required to develop a new project from scratch.
+Integrate OpenTelemetry: Instrument the relevant application components and backend services to capture observability data, including logs, traces, and metrics.
+Run and verify the implementation: Execute your application and demonstrate that OpenTelemetry collects and exports the expected data. Use suitable observability tools or backends to visualise and inspect the collected information.
+Prepare a report: 
+Submit a report containing:
+A brief description of your OpenTelemetry implementation
+The tools, libraries, and backend services used.
+Screenshots showing the generated logs, traces, metrics, or other relevant OpenTelemetry outputs.
+A description of what each screenshot demonstrates.
+Your understanding of the collected data and how OpenTelemetry helps monitor, debug, and analyse your application.
+Submission Requirements
+Submit a report documenting your implementation, with relevant screenshots and explanations.
+Ensure that the screenshots are taken from your own running Assignment 1 project.
+The implementation must be functional, and the report must demonstrate that you understand the results rather than merely displaying screenshots.

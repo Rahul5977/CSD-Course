@@ -1,0 +1,9 @@
+{
+ "ts": "2026-10-16T07:19:37+0000",
+ "level": "INFO",
+ "logger": "uvicorn.access",
+ "message": "172.21.0.1:61746 - \"GET /api/v1/jobs/ea6f4f0b-e69f-4dac-8a57-25359226b146 HTTP/1.1\" 200",
+ "request_id": "-",
+ "trace_id": "f99435df7fb3cd30071f41000a09e5be",
+ "span_id": "19522e380ff6f544"
+}

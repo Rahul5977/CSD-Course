@@ -82,6 +82,23 @@ make api-dev     # API alone, no Docker: in-memory persistence, inline jobs, loc
 make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 ```
 
+### Observability (OpenTelemetry)
+
+`make up` also starts an OpenTelemetry Collector, Jaeger and Loki (ADR 0022). The API and both
+Celery workers export **traces, metrics and logs** over OTLP; one upload is one trace from the
+HTTP request through Redis into the worker, with a span per algorithm stage (Priority-Flood, D8,
+siting, catchment).
+
+| What | Where |
+|---|---|
+| Traces — search service `pond-api`, operation `POST /api/v1/analyzeContour` | http://localhost:16686 (Jaeger) |
+| Metrics + logs — dashboard *Pond — OpenTelemetry*; Explore → Loki for logs with their `trace_id` | http://localhost:3001/d/pond-otel (Grafana) |
+| Raw OTel metrics (`pond_job_stage_duration_seconds`, `http_server_request_duration_seconds`) | http://localhost:9090 (Prometheus) |
+| Collector pipeline proof | `docker logs pond-planner-otel-collector-1` (the `debug` exporter) |
+| Without Docker | `make otel-up` (backends only), then `POND_OTEL_ENABLED=true make api-dev` |
+
+Report with screenshots and interpretation: `docs/report/OpenTelemetry_Report.pdf` (`make report-otel`).
+
 ### Troubleshooting
 
 | Symptom | Cause | Fix |
@@ -109,6 +126,9 @@ make web-dev     # Vite dev server for the frontend, proxying /api and /tiles
 | `503 upstream_unavailable` from `/analyzeArea` | The Copernicus GLO-30 bucket on AWS was unreachable | Check outbound HTTPS; the contour-upload route works offline |
 | Result warning `no_complete_catchment` | Every candidate's catchment runs out of the selected box | Redraw a larger box that includes the land upslope of the site |
 | Planner shows *Failed to fetch* / *Network unreachable* | The request never reached the server (lossy Wi-Fi/VPN route to the lab); the app already retried 4 times with backoff | Hard-reload (`Cmd+Shift+R`) and press the button again — the idempotency key makes a repeat safe; use a wired campus connection for the demo |
+| App at :3000 shows *Bad Gateway* after rebuilding only the API | nginx resolved the old API container address at start | `docker restart pond-planner-web-1` (or `make up`, which recreates both) |
+| Jaeger shows no `pond-*` services | Telemetry off, or the collector is not up | `make ps` (expect `otel-collector`, `jaeger`, `loki`); `POND_OTEL_ENABLED` must be `true`; traces appear ~5 s after a request (batch export) |
+| Loki/Grafana Explore has no application logs | Logs are exported in batches; Celery resets root handlers at start | Wait 5 s; `docker logs pond-planner-otel-collector-1` should show `LogsExporter` lines |
 | Lab URL times out from a laptop but works from another lab VM | Packet loss on the laptop's route into the campus network (measured 4/10 connects from a laptop, 10/10 inside the lab) | Use the campus wired network; the e2e client retries connects |
 | Lab replica died / URL returns nothing | No supervisor on the VMs | `infra/lab/run_replica.sh` restarts uvicorn in a loop; start it with `ssh -f <vm> 'cd ~/pond/app && PORT=4000 exec setsid infra/lab/run_replica.sh >> ~/pond/server.log 2>&1 < /dev/null'` |
 | Planner still shows the old version after a redeploy | The browser cached `index.html` from a build that sent no `Cache-Control` header | Reload once (Cmd/Ctrl-Shift-R); builds since 2026-10-03 send `no-cache` on HTML, so this does not recur |

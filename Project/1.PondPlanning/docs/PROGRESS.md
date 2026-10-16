@@ -8,7 +8,8 @@ the assistant reads this at the start of every session and updates it at the end
 
 ## Snapshot
 
-- **Last updated:** 2026-10-03
+- **Last updated:** 2026-10-16
+- **Add-on (2026-10-16):** `Phase3.txt` *ADD_ON* — OpenTelemetry. **P10 done, G10 closed** except the live viva demo: traces/metrics/logs → collector → Jaeger/Prometheus/Loki → Grafana; report `docs/report/OpenTelemetry_Report.pdf`; viva script in `docs/DEMO.md`.
 - **Current phase:** **P9 — Phase 3 final submission** (plan: `docs/ROADMAP.md` §9). The updated `docs/assignment/Phase3.txt` adds *select the land area on a map*, a 10-page Overleaf report, a ≤5-min YouTube demo, and scaling across the four lab systems. Viva 29–30 Sept.
 - **Active gate:** **G9** (open). G0–G8 closed.
 - **Live URL:** **http://10.1.75.53:4272** (nginx LB on lbsys4 → 4 replicas: lbsys1–3 :4000, lbsys4 :5000), 46/46 e2e on 2026-10-03; all four replicas run under the `run_replica.sh` supervisor loop.
@@ -34,6 +35,7 @@ Legend: ☐ not started · ◐ in progress · ☑ done (gate green, evidence cap
 | P7 Tests · Docs · Report | 8 | 99 | G7 | ☑ **done** |
 | P8 Landing page & UI/UX | protects FE 5 · UX 1 | 99 | G8 | ☑ **done** |
 | P9 Phase 3 submission (area select · deploy · report · video) | Phase 3 brief | — | G9 | ◐ **in progress** |
+| P10 Add-on: OpenTelemetry (traces · metrics · logs · report) | Add-on brief | — | G10 | ☑ **done** (viva demo pending) |
 
 Gate checklists: `docs/ROADMAP.md` §2. Evidence register: `docs/ROADMAP.md` §8 — 38 of 40 ticked; row 20 (ML AUC) deliberately not produced — ADR 0017; row 36 (public URL) is `make tunnel` on demo day.
 
@@ -163,6 +165,13 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 
 | Date | Decision | Reasoning | Alternative rejected |
 |---|---|---|---|
+| 2026-10-16 | **OpenTelemetry SDK in every process, OTLP/HTTP to one collector; collector routes traces → Jaeger, metrics → Prometheus, logs → Loki** (ADR 0022) | Add-on brief requires all three signals in tools; a collector keeps backends out of code and is the pipeline the brief asks students to understand | Direct export to backends; the `otel-lgtm` all-in-one image (hides the pipeline); zero-code agent (cannot see stages) |
+| 2026-10-16 | **Stage spans from a `StageObservingJobs` decorator over the job repository**, not spans inside engines | Workflows already write `jobs.update(stage=…)`; the decorator turns those into child spans of the job span, made current so SQL/HTTP nest under them — engines stay framework-free (`test_layering.py`) | `tracer.start_span` in the engines (breaks layering); one span per job only (hides where time goes) |
+| 2026-10-16 | **OTel metrics alongside `prometheus_client`, under `pond.*` names** | Backpressure and the P6 dashboard depend on the existing metrics; replacing them is risk with no grading gain | Migrating every metric to OTel |
+| 2026-10-16 | **ASGI `receive`/`send` spans excluded; HTTP semconv opted into stable (`http.server.request.duration`, s)** | A 6 MB upload produced ~85 per-chunk spans that buried the pipeline; stable conventions give seconds and `http_route` labels | Default settings |
+| 2026-10-16 | **`ThreadJobRunner` submits inside `contextvars.copy_context()`** | Pool threads start with an empty context: the job span would start a new trace on the lab deployment; the copy also carries the request id | Manual OTel context attach per task |
+| 2026-10-16 | **Telemetry off by default (`POND_OTEL_ENABLED`), on in compose** | Tests and the lab VMs (no Docker → no backends) need no collector; the API's no-op providers make it free when off | Always on (exporter retries/noise without a collector) |
+| 2026-10-16 | **`make seed` upload field `file` → `contour_map`** | Found running the add-on: the route was renamed on 2026-09-03 and `make seed` still sent `file` (422) | — |
 | 2026-10-03 | **Job WebSocket gets a watchdog: no first frame in 4 s, or 15 s of silence, → close and poll** (`web/src/api.ts`) | The server sends the current status on accept, so silence means a lost handshake, not a slow job. On the lossy campus route a dropped WS handshake fired neither `onerror` nor `onclose`, and the UI sat at "submitting 3 %" forever although the job had finished | No WebSocket (loses the push updates the P6 Observer earns); a single long timeout (still a frozen UI for its whole length) |
 | 2026-10-03 | **MapView applies updates when the style has loaded (`styleReady` ref), not when `isStyleLoaded()` is true** | MapLibre's `isStyleLoaded()` is false while *any* tile is streaming, and `"load"` fires once per map, so a catchment arriving mid-stream (the second site clicked) was silently never drawn | Re-subscribing to `"idle"` (fires late, after all tiles; visible lag) |
 | 2026-10-03 | **`Cache-Control: no-cache` on HTML, `immutable` on hashed `/assets/`** (single-server + compose nginx via `expires`) | With no header, browsers cached `index.html` heuristically and kept loading the previous bundle after a redeploy; ETag keeps the revalidation a 304. nginx uses `expires`, because a location-level `add_header` would drop the server-level security headers | `no-store` (forfeits the 304) |
@@ -273,6 +282,22 @@ Non-obvious choices go here **when made** — decision, reasoning, rejected alte
 ## Session log
 
 Newest first. One entry per working session: what changed, what is next.
+
+### 2026-10-16 (session 21)
+
+**Phase 3 add-on — OpenTelemetry, end to end.** Planned as P10/G10 (`docs/ROADMAP.md` §10) and built:
+`app/core/telemetry.py` (three SDK providers, OTLP/HTTP; FastAPI/SQLAlchemy/Redis/Celery/urllib
+instrumentation; `job_span` + stage spans via the `StageObservingJobs` repository decorator; domain
+metrics; OTLP log handler + `trace_id`/`span_id` in JSON logs); collector + Jaeger + Loki in compose
+(14 services), Grafana datasources with log↔trace links and the `pond-otel` dashboard; ADR 0022;
+`tests/test_telemetry.py` (5 tests, incl. "one upload is one trace down to Priority-Flood").
+Verified on the running stack from the browser: upload trace 133 spans across pond-api →
+pond-worker-heavy; **finding:** water-body-mask read 1.39–1.85 s of a 2.7 s job, Priority-Flood 31 ms,
+D8 8 ms; pond design 7.7 s with a SoilGrids `URLError [Errno -5]` (transient campus DNS) explaining
+the "confidence low" badge — same trace id on the WARN log in Loki. Screenshots
+`docs/figures/otel/01–07`; report `docs/report/OpenTelemetry_Report.pdf` (10 pp, ACM template);
+viva segment in `docs/DEMO.md`. Also fixed `make seed` (stale upload field name). `make check`
+green (226 passed). **Next:** user rehearses the OTel segment; submits the report.
 
 ### 2026-10-03 (session 20)
 
