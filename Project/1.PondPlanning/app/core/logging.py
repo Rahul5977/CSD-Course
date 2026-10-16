@@ -31,6 +31,7 @@ class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         """Serialise ``record``, merging any ``extra=`` keys into the payload."""
         from app.core.observability import request_id_var
+        from app.core.telemetry import current_trace_ids
 
         payload: dict[str, Any] = {
             "ts": self.formatTime(record, "%Y-%m-%dT%H:%M:%S%z"),
@@ -39,6 +40,9 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "request_id": request_id_var.get(),
         }
+        ids = current_trace_ids()
+        if ids is not None:
+            payload["trace_id"], payload["span_id"] = ids
         payload.update({k: v for k, v in record.__dict__.items() if k not in _RESERVED})
         if record.exc_info:
             payload["exception"] = self.formatException(record.exc_info)

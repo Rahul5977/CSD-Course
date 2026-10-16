@@ -1,8 +1,9 @@
 """Celery task definitions. Thin: each task resolves the context and calls a workflow.
 
 Every analysis task is wrapped by :func:`_timed`, which sets the correlation
-id to the job id (so worker log lines join the request's) and records the
-job's duration and outcome in the Prometheus histogram.
+id to the job id (so worker log lines join the request's), records the
+job's duration and outcome in the Prometheus histogram, and opens the job's
+OpenTelemetry span — the parent of one span per pipeline stage (ADR 0022).
 """
 
 from __future__ import annotations
@@ -19,6 +20,7 @@ from app.core.observability import (
     observe_job,
     request_id_var,
 )
+from app.core.telemetry import job_span
 from app.jobs.celery_app import HEAVY, INTERACTIVE, celery_app
 from app.jobs.context import get_context
 
@@ -30,7 +32,8 @@ def _timed(kind: str, job_id: str, work: Callable[[], Any]) -> None:
     started = time.perf_counter()
     status = "succeeded"
     try:
-        work()
+        with job_span(kind, job_id):
+            work()
     except Exception:
         status = "failed"
         raise

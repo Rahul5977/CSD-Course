@@ -2,21 +2,29 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from functools import lru_cache, partial
+from typing import cast
 
 from app.core.config import Settings, get_settings
+from app.core.telemetry import StageObservingJobs
 from app.engines.workflows.contour_analysis import WorkflowContext
 from app.providers.geocoding import reverse_geocode
 from app.providers.rainfall.service import build_rainfall_provider
 from app.providers.storage import build_object_store
 from app.repositories import build_repositories
+from app.repositories.ports import JobRepository
 
 
 def build_context(settings: Settings) -> WorkflowContext:
     """Wire adapters to ports according to settings."""
     store = build_object_store(settings)
+    repos = build_repositories(settings)
+    # Every stage the workflows write to the job row also opens a trace span
+    # (ADR 0022); a pass-through when OpenTelemetry is off.
+    repos = replace(repos, jobs=cast(JobRepository, StageObservingJobs(repos.jobs)))
     return WorkflowContext(
-        repos=build_repositories(settings),
+        repos=repos,
         store=store,
         rainfall=build_rainfall_provider(settings, store),
         default_floor_m=settings.default_dem_floor_m,

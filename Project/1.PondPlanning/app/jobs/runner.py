@@ -11,6 +11,7 @@ All three are identical from the router's point of view.
 
 from __future__ import annotations
 
+import contextvars
 import logging
 import threading
 from collections.abc import Callable
@@ -114,7 +115,10 @@ class ThreadJobRunner:
                 with self._lock:
                     self._pending[queue] -= 1
 
-        self._pools[queue].submit(run)
+        # A pool thread starts with an empty context; copying the caller's keeps
+        # the request's trace (the job span becomes a child of the POST) and its
+        # correlation id.
+        self._pools[queue].submit(contextvars.copy_context().run, run)
 
 
 def build_job_runner(settings: Settings) -> JobRunner:

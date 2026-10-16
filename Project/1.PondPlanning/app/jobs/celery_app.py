@@ -22,7 +22,7 @@ from __future__ import annotations
 import logging
 
 from celery import Celery
-from celery.signals import worker_ready
+from celery.signals import after_setup_logger, worker_init, worker_ready
 
 from app.core.config import get_settings
 
@@ -70,3 +70,21 @@ def _start_metrics_server(**_kwargs: object) -> None:
 
         start_http_server(settings.metrics_port)
         logger.info("worker metrics on :%d", settings.metrics_port)
+
+
+@worker_init.connect  # type: ignore[untyped-decorator]
+def _start_telemetry(sender: object = None, **_kwargs: object) -> None:
+    """OpenTelemetry in the worker, named after its bulkhead (``pond-worker-heavy``...)."""
+    from app.core.telemetry import setup_telemetry
+
+    hostname = str(getattr(sender, "hostname", "") or "")
+    name = hostname.split("@")[0] if "@" in hostname else "worker"
+    setup_telemetry(settings, service_name=f"pond-worker-{name}")
+
+
+@after_setup_logger.connect  # type: ignore[untyped-decorator]
+def _keep_otel_log_handler(**_kwargs: object) -> None:
+    """Celery replaces the root handlers when it configures logging; put OTLP back."""
+    from app.core.telemetry import attach_log_handler
+
+    attach_log_handler()

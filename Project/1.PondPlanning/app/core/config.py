@@ -35,6 +35,12 @@ class Settings(BaseSettings):
     # -- observability ---------------------------------------------------
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = "INFO"
     log_format: Literal["json", "console"] = "console"
+    # OpenTelemetry (ADR 0022): traces, metrics and logs pushed over OTLP/HTTP to
+    # a collector. Off by default so tests and the lab VMs need no collector.
+    otel_enabled: bool = False
+    otel_endpoint: str = "http://localhost:4318"
+    otel_service_name: str = "pond-api"
+    otel_metric_interval_s: float = Field(default=10.0, gt=0)
 
     # -- postgres --------------------------------------------------------
     postgres_host: str = "localhost"

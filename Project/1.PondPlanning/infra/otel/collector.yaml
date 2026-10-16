@@ -1,0 +1,67 @@
+# OpenTelemetry Collector (ADR 0022) — the one place telemetry leaves the app.
+#
+# The API and the workers know only "send OTLP to the collector". Which backend
+# stores which signal is decided here, so swapping Jaeger for Tempo, or adding
+# a vendor, is a config change with no code change.
+#
+#   receivers   otlp (HTTP :4318, gRPC :4317)        ← pond-api, pond-worker-*
+#   processors  memory_limiter → batch
+#   exporters   traces  → Jaeger      (OTLP gRPC)
+#               metrics → Prometheus  (scraped from :8889)
+#               logs    → Loki        (native OTLP endpoint)
+#               all     → debug       (one summary line per batch in `docker logs`)
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  # Refuse data before the collector itself runs out of memory (backpressure
+  # to the SDKs, which retry), rather than being OOM-killed mid-demo.
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+    spike_limit_mib: 64
+  # Group points into batches: fewer, larger exports to every backend.
+  batch:
+    timeout: 2s
+    send_batch_size: 512
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  prometheus:
+    endpoint: 0.0.0.0:8889
+    # Copy service.name etc. onto every series so Grafana can filter by service.
+    resource_to_telemetry_conversion:
+      enabled: true
+  otlphttp/loki:
+    endpoint: http://loki:3100/otlp
+  debug:
+    verbosity: basic
+
+extensions:
+  health_check:
+    endpoint: 0.0.0.0:13133
+
+service:
+  extensions: [health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlp/jaeger, debug]
+    metrics:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [prometheus, debug]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki, debug]

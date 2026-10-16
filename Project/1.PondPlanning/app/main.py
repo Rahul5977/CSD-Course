@@ -28,6 +28,7 @@ from app.api.routers import (
 from app.core.config import get_settings
 from app.core.logging import configure_logging
 from app.core.observability import install as install_observability
+from app.core.telemetry import attach_log_handler, instrument_app, setup_telemetry
 
 logger = logging.getLogger(__name__)
 
@@ -52,6 +53,8 @@ def create_app() -> FastAPI:
     """
     settings = get_settings()
     configure_logging(level=settings.log_level, fmt=settings.log_format)
+    setup_telemetry(settings)
+    attach_log_handler()  # configure_logging replaced the root handlers
 
     app = FastAPI(
         title=settings.app_name,
@@ -68,6 +71,7 @@ def create_app() -> FastAPI:
 
     register_exception_handlers(app)
     install_observability(app)
+    instrument_app(app)
 
     # Probes stay unversioned — infrastructure consumes them, not clients.
     app.include_router(health.router)

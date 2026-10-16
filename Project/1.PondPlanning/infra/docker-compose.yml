@@ -4,6 +4,7 @@
 #   P0  postgres · redis · api
 #   P1  minio (COG storage) · worker (Celery) · titiler (raster tiles) · web (nginx + SPA)
 #   P6  worker split into interactive/heavy bulkheads · beat · prometheus · grafana
+#   P10 otel-collector · jaeger · loki (OpenTelemetry traces, metrics, logs — ADR 0022)
 # so that every service in this file is one whose purpose can be explained on demand.
 
 name: pond-planner
@@ -25,6 +26,11 @@ x-api-env: &api-env
   POND_MINIO_BUCKET: ${POND_MINIO_BUCKET:-pond}
   POND_TILES_PUBLIC_BASE: /tiles
   POND_GEOCODE_ENABLED: ${POND_GEOCODE_ENABLED:-true}
+  # OpenTelemetry: every process pushes OTLP to the collector (ADR 0022).
+  POND_OTEL_ENABLED: ${POND_OTEL_ENABLED:-true}
+  POND_OTEL_ENDPOINT: http://otel-collector:4318
+  # Stable HTTP semantic conventions: http.server.request.duration in seconds.
+  OTEL_SEMCONV_STABILITY_OPT_IN: http
 
 services:
   postgres:
@@ -210,13 +216,50 @@ services:
       - "${POND_PROMETHEUS_PORT:-9090}:9090"
     restart: unless-stopped
 
+  otel-collector:
+    # Receives OTLP from the API and the workers and routes each signal to its
+    # backend: traces → Jaeger, metrics → Prometheus, logs → Loki. The app
+    # never talks to a backend directly (infra/otel/collector.yaml).
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command: ["--config=/etc/otelcol/collector.yaml"]
+    volumes:
+      - ./otel/collector.yaml:/etc/otelcol/collector.yaml:ro
+    ports:
+      - "${POND_OTLP_HTTP_PORT:-4318}:4318"   # OTLP/HTTP — also for `make api-dev` on the laptop
+      - "${POND_OTLP_GRPC_PORT:-4317}:4317"
+    depends_on:
+      - jaeger
+      - loki
+    restart: unless-stopped
+
+  jaeger:
+    # Trace store + UI: the waterfall of one request through API → Redis →
+    # worker → each algorithm stage.
+    image: jaegertracing/all-in-one:1.62.0
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "${POND_JAEGER_PORT:-16686}:16686"
+    restart: unless-stopped
+
+  loki:
+    # Log store with a native OTLP endpoint (/otlp); trace_id and span_id are
+    # kept as structured metadata, so Grafana can jump from a line to its trace.
+    image: grafana/loki:3.2.0
+    command: ["-config.file=/etc/loki/local-config.yaml"]
+    ports:
+      - "${POND_LOKI_PORT:-3100}:3100"
+    restart: unless-stopped
+
   grafana:
-    # One provisioned dashboard: queue depth, job p50/p95, provider errors, cache hit rate.
+    # Dashboards (Prometheus) plus Explore over Jaeger traces and Loki logs.
     image: grafana/grafana:11.1.0
     environment:
       GF_SECURITY_ADMIN_PASSWORD: ${POND_GRAFANA_PASSWORD:-admin}
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      # Explore (ad-hoc Loki/Jaeger queries) for the anonymous viewer: local demo stack only.
+      GF_USERS_VIEWERS_CAN_EDIT: "true"
     volumes:
       - ./grafana/provisioning:/etc/grafana/provisioning:ro
       - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
@@ -224,6 +267,8 @@ services:
       - "${POND_GRAFANA_PORT:-3001}:3000"
     depends_on:
       - prometheus
+      - jaeger
+      - loki
     restart: unless-stopped
 
   web:
