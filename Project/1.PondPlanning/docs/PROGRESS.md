@@ -298,6 +298,11 @@ the "confidence low" badge — same trace id on the WARN log in Loki. Screenshot
 `docs/figures/otel/01–07`; report `docs/report/OpenTelemetry_Report.pdf` (10 pp, ACM template);
 viva segment in `docs/DEMO.md`. Also fixed `make seed` (stale upload field name). `make check`
 green (226 passed). **Next:** user rehearses the OTel segment; submits the report.
+Later the same session: the project's home is now **`Rahul5977/CSD-Course` → `Project/1.PondPlanning`**
+(the original repo is archived, push 403); commits replayed there with `git am --directory`. Reports
+and README link the new location. `infra/lab/deploy.sh` added; **lab replicas still run the pre-OTel
+code** — the session's permission check blocked SSH writes, so the user runs `infra/lab/deploy.sh`.
+Lab telemetry stays off (no Docker there for the backends).
 
 ### 2026-10-03 (session 20)
 
