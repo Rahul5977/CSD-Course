@@ -17,7 +17,7 @@ all derived from the selection or the upload.
 |---|---|
 | Final report (ACM template, ≤ 10 pages + appendix) | [`docs/report/Final_Report.pdf`](docs/report/Final_Report.pdf) · source `docs/report/latex/` (`make report-latex`) |
 | Working front-end | **http://10.1.75.53:4272** (nginx load balancer over four lab replicas, campus network) · planner at `/app`, API docs at `/docs` · replicas :4269, :4270, :4271 |
-| Repository | https://github.com/Rahul5977/AI-BasedPondAnalysis |
+| Repository | https://github.com/Rahul5977/CSD-Course/tree/main/Project/1.PondPlanning (development history: https://github.com/Rahul5977/AI-BasedPondAnalysis, archived) |
 | Demo video (≤ 5 min) | **https://www.youtube.com/watch?v=MsWABr4THGA** · script in [`docs/DEMO_VIDEO.md`](docs/DEMO_VIDEO.md) |
 
 7th-semester assignment · full specification in `docs/assignment/`, execution plan in
