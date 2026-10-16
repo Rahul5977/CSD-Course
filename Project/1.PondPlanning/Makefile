@@ -5,7 +5,7 @@ COMPOSE := docker compose -f infra/docker-compose.yml
 UV      := uv run
 
 .DEFAULT_GOAL := help
-.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures loadtest tunnel report report-latex crosscheck e2e
+.PHONY: help install up down logs ps shell seed migrate revision openapi test test-cov lint fmt typecheck check clean web-install web-dev web-build api-dev worker-dev figures loadtest tunnel report report-latex report-otel otel-up crosscheck e2e
 
 help:  ## Show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -23,6 +23,7 @@ up:  ## Build and start the stack, then apply migrations
 	@echo "App:        http://localhost:$${POND_WEB_PORT:-3000}"
 	@echo "Grafana:    http://localhost:$${POND_GRAFANA_PORT:-3001}  (anonymous viewer; admin/$${POND_GRAFANA_PASSWORD:-admin})"
 	@echo "Swagger UI: http://localhost:$${POND_API_PORT:-8000}/docs"
+	@echo "Jaeger:     http://localhost:$${POND_JAEGER_PORT:-16686}  (OpenTelemetry traces)"
 
 down:  ## Stop the stack (add ARGS=-v to also drop the volumes)
 	$(COMPOSE) down $(ARGS)
@@ -39,7 +40,7 @@ shell:  ## Open a shell in the api container
 seed:  ## Analyse the provided sample contour map through the running stack
 	@for i in $$(seq 1 30); do curl -sf http://localhost:$${POND_API_PORT:-8000}/ready >/dev/null && break; [ $$i = 30 ] && { echo "API not ready on :$${POND_API_PORT:-8000} — is the stack up? (make ps, make logs)"; exit 1; }; sleep 2; done
 	@echo "Uploading data/samples/contours_1m.kml to POST /api/v1/analyzeContour ..."
-	@JOB=$$(curl -sf -F "file=@data/samples/contours_1m.kml" http://localhost:$${POND_API_PORT:-8000}/api/v1/analyzeContour | python3 -c 'import sys,json;print(json.load(sys.stdin)["job_id"])'); \
+	@JOB=$$(curl -sf -F "contour_map=@data/samples/contours_1m.kml" http://localhost:$${POND_API_PORT:-8000}/api/v1/analyzeContour | python3 -c 'import sys,json;print(json.load(sys.stdin)["job_id"])'); \
 	[ -n "$$JOB" ] || { echo "upload failed — see make logs"; exit 1; }; \
 	echo "job $$JOB queued"; \
 	for i in $$(seq 1 90); do \
@@ -83,6 +84,13 @@ report:  ## Render docs/report/REPORT.md to REPORT.pdf (python-markdown + headle
 
 report-latex:  ## Build the submitted report (ACM template, docs/report/latex) -> docs/report/Final_Report.pdf (needs tectonic)
 	cd docs/report/latex && tectonic -X compile main.tex && cp main.pdf ../Final_Report.pdf
+
+otel-up:  ## Start only the OpenTelemetry backends (collector, Jaeger, Loki, Prometheus, Grafana) for `make api-dev`
+	$(COMPOSE) up -d otel-collector jaeger loki prometheus grafana
+	@echo "Jaeger: http://localhost:16686 · Grafana: http://localhost:3001/d/pond-otel · then POND_OTEL_ENABLED=true make api-dev"
+
+report-otel:  ## Build the OpenTelemetry add-on report -> docs/report/OpenTelemetry_Report.pdf (needs tectonic)
+	cd docs/report/otel && tectonic -X compile main.tex && cp main.pdf ../OpenTelemetry_Report.pdf
 
 crosscheck:  ## Terrain-source cross-check: sample KML vs Copernicus GLO-30 (network) -> docs/figures/p9-dem-crosscheck.*
 	$(UV) python scripts/crosscheck_dem_sources.py
