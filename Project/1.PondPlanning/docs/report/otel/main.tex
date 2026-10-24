@@ -271,9 +271,17 @@ Figure~\ref{fig:stages} reads as the methodology section of the main report:
 \textbf{What this told us.} The examined algorithms are not the bottleneck. Priority-Flood,
 D8 and catchment delineation together take about 50\,ms. The single largest stage is
 \emph{reading the water body mask}, a window read of a Copernicus GLO-30 file on AWS S3. It
-took 1.39\,s of 2.67\,s here (52\,\%) and 1.85\,s of 2.66\,s on the first run (70\,\%). The
-right optimisation is therefore to cache the mask per tile, not to speed up the hydrology.
-Without stage spans we would have guessed the opposite.
+took 1.39\,s of 2.67\,s here (52\,\%) and 1.85\,s of 2.66\,s on the first run (70\,\%). So the
+place to optimise is this read, not the hydrology. Without stage spans we would have guessed
+the opposite.
+
+The trace also shows the read's cache at work. The mask goes through an in-process
+\texttt{lru\_cache} keyed by the grid. The run above was \emph{cold}: it was the first job for
+that footprint in a freshly started worker. Re-analysing the same map later in the same worker
+(trace \texttt{0b7c157}, 24~October) took 5.8\,ms for the same stage. The cache, however, lives
+in one process. A restarted worker, the other pool, or another lab replica pays the full 1.4--1.9\,s
+again. The next optimisation the traces point to is a cache that all workers share (the
+warped mask in MinIO or Redis), or warming the cache when a worker starts.
 
 \subsection{Debugging a degraded result}
 \begin{figure}[h]
@@ -415,7 +423,7 @@ The full record is ADR~0022 in the repository.
 \texttt{infra/otel/collector.yaml}, \texttt{infra/grafana/dashboards/pond-otel.json},
 \texttt{tests/test\_telemetry.py}, \texttt{docs/adr/0022-opentelemetry.md}.
 
-\textbf{AI tool use.} Claude (Anthropic) was used as a coding assistant for the
+\textbf{AI tool use.} An AI coding assistant was used for the
 instrumentation, the configuration and this report. Every design decision above was
 reviewed and can be explained by the author.
 
