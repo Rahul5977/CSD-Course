@@ -1,0 +1,18 @@
+# comparison: a naive one-stage Dockerfile (FROM python:3.12-slim; pip install -r requirements.txt; COPY app/)
+$ docker images | grep proximity-api
+proximity-api:single                           422MB
+proximity-api:1.0                              367MB
+$ docker image inspect -f "{{.Size}}" proximity-api:1.0 proximity-api:single   # compressed bytes
+79715813
+107685648
+
+$ docker history proximity-api:1.0
+SIZE      CREATED BY
+0B        CMD ["sh" "-c" "exec uvicorn app.main:app --…
+0B        HEALTHCHECK &{["CMD-SHELL" "python -c \"impo…
+0B        EXPOSE [8000/tcp]
+0B        USER app
+53.2kB    COPY --chown=app:app app/ app/ # buildkit
+4.1kB     WORKDIR /srv
+128MB     COPY /opt/venv /opt/venv # buildkit
+69.6kB    RUN /bin/sh -c useradd --create-home --uid 1…

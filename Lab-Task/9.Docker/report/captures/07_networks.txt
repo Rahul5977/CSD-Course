@@ -1,0 +1,28 @@
+$ docker network ls --filter name=proximity
+NAME                 DRIVER    SCOPE
+proximity_backend    bridge    local
+proximity_frontend   bridge    local
+
+$ docker network inspect proximity_backend -f "internal={{.Internal}} subnet={{range .IPAM.Config}}{{.Subnet}}{{end}}"
+internal=true subnet=172.25.0.0/16
+
+$ docker network inspect proximity_frontend -f "internal={{.Internal}} subnet={{range .IPAM.Config}}{{.Subnet}}{{end}}"
+internal=false subnet=172.27.0.0/16
+
+# 1. web reaches api by service name (Docker DNS)
+$ docker compose exec web wget -qO- http://api:8000/health
+{"status":"ok","locations":10000,"grid":"100x100","roads":14800,"roads_missing":...
+
+# 2. the api has no published port on the host
+$ docker compose port api 8000
+:0          (empty: no host mapping exists)
+
+# 3. the api cannot reach the internet (internal network)
+$ docker compose exec api python -c "import urllib.request; urllib.request.urlopen(\"https://pypi.org\", timeout=5)"
+urllib.error.URLError: <urlopen error [Errno -3] Temporary failure in name resolution>
+
+# 4. a container on the frontend network only cannot resolve api
+$ docker compose --profile test run --rm --no-deps --entrypoint python loadtest -c "import socket; print(socket.gethostbyname(\"api\"))"
+socket.gaierror: [Errno -2] Name or service not known
+$ ... socket.gethostbyname("web")
+172.27.0.2

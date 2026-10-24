@@ -1,0 +1,36 @@
+# restart: unless-stopped -- the main process exits, Docker starts the container again
+$ docker inspect -f "{{.RestartCount}} {{.State.StartedAt}}" proximity-api-1
+0 2026-10-24T07:46:19.973524257Z
+$ docker compose exec --index 1 api python -c "import os,signal; os.kill(1, signal.SIGTERM)"
+$ docker compose ps api
+NAME              STATUS
+proximity-api-1   Up 1 second (health: starting)
+proximity-api-2   Up 18 seconds (healthy)
+proximity-api-3   Up 18 seconds (healthy)
+$ docker inspect -f "{{.RestartCount}} {{.State.StartedAt}} health={{.State.Health.Status}}" proximity-api-1
+1 2026-10-24T07:46:37.109777334Z health=healthy
+$ curl -s -o /dev/null -w "%{http_code}\n" "localhost:8088/search/?lat=0.5&long=0.5&cat=bank&rad=0.2"
+200
+
+$ docker compose logs --tail 4 api
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:     127.0.0.1:54444 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:46264 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:43986 - "GET /health HTTP/1.1" 200 OK
+
+$ docker compose logs --tail 2 web
+2026/10/24 07:45:52 [notice] 1#1: start worker process 45
+192.168.65.1 - - [24/Oct/2026:07:46:50 +0000] "GET /search/?lat=0.5&long=0.5&cat=bank&rad=0.2 HTTP/1.1" 200 59 "-" "curl/8.7.1"
+
+# no request fails while a replica restarts: 600 requests, replica 2 sent SIGTERM after 1 s
+$ (for i in $(seq 600); do curl -s -o /dev/null -w "%{http_code}\n" "localhost:8088/search/?lat=0.5&long=0.5&cat=bank&rad=0.2"; done | sort | uniq -c) &
+$ docker compose exec --index 2 api python -c "import os,signal; os.kill(1, signal.SIGTERM)"
+ 600 200
+$ docker inspect -f "{{.Name}} restarts={{.RestartCount}}" $(docker compose ps -q api)
+/proximity-api-1 restarts=1
+/proximity-api-2 restarts=2
+/proximity-api-3 restarts=0
+
+$ docker compose logs web | grep -m2 -E "refused|disabled"   # nginx skips the restarting replica and retries
+2026/10/24 07:47:07 [error] 36#36: *364 connect() failed (111: Connection refused) while connecting to upstream, upstream: "http://172.25.0.
+2026/10/24 07:47:07 [warn] 36#36: *364 upstream server temporarily disabled while connecting to upstream, upstream: "http://172.25.0.2:8000/

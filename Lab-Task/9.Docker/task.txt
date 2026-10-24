@@ -1,0 +1,13 @@
+Objective - Containerise your Lab 7 (Proximity Search API) so the full stack runs with one command.
+Task
+Write one Dockerfile for each service.
+Write a docker-compose.yml that builds and runs everything.
+Use personal systems, not allotted systems.
+Deliverables
+1. Report (PDF)
+Docker design choices (base images, ports, networks, volumes, environment variables)
+Steps you followed (install, build, run), with screenshots
+Errors faced and how you resolved them
+Docker commands used, plus a list of unique commands with their purpose
+What you learnt
+Submission - Submit the report.

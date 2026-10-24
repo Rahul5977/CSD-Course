@@ -1,0 +1,36 @@
+$ API_REPLICAS=3 docker compose up -d
+ Network proximity_backend Creating 
+ Network proximity_backend Created 
+ Network proximity_frontend Creating 
+ Network proximity_frontend Created 
+ Volume proximity_web-logs Creating 
+ Volume proximity_web-logs Created 
+ Container proximity-api-3 Creating 
+ Container proximity-api-2 Creating 
+ Container proximity-api-1 Creating 
+ Container proximity-api-2 Created 
+ Container proximity-api-3 Created 
+ Container proximity-api-1 Created 
+ Container proximity-web-1 Creating 
+ Container proximity-web-1 Created 
+ Container proximity-api-3 Starting 
+ Container proximity-api-3 Started 
+ Container proximity-api-2 Starting 
+ Container proximity-api-2 Started 
+ Container proximity-api-1 Starting 
+ Container proximity-api-1 Started 
+ Container proximity-api-3 Waiting 
+ Container proximity-api-2 Waiting 
+ Container proximity-api-1 Waiting 
+ Container proximity-api-3 Healthy 
+ Container proximity-api-2 Healthy 
+ Container proximity-api-1 Healthy 
+ Container proximity-web-1 Starting 
+ Container proximity-web-1 Started 
+
+$ docker compose ps
+NAME              IMAGE               STATUS                                     PORTS
+proximity-api-1   proximity-api:1.0   Up 5 seconds (healthy)                     8000/tcp
+proximity-api-2   proximity-api:1.0   Up 5 seconds (healthy)                     8000/tcp
+proximity-api-3   proximity-api:1.0   Up 6 seconds (healthy)                     8000/tcp
+proximity-web-1   proximity-web:1.0   Up Less than a second (health: starting)   0.0.0.0:8088->80/tcp, [::]:8088->80/tcp

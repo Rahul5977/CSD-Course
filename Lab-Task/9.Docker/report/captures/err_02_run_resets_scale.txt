@@ -1,0 +1,19 @@
+$ docker compose ps --format "{{.Name}}"
+proximity-api-3
+proximity-api-4
+proximity-api-5
+proximity-web-1
+
+$ docker compose --profile test run --rm loadtest http://web --requests 100
+ Container proximity-api-3 Running 
+ Container proximity-api-5 Stopping 
+ Container proximity-api-4 Stopping 
+ Container proximity-api-5 Stopped 
+ Container proximity-api-5 Removing 
+ Container proximity-api-4 Stopped 
+ Container proximity-api-4 Removing 
+ Container proximity-api-5 Removed 
+ Container proximity-api-4 Removed 
+ Container proximity-api-3 Waiting 
+ Container proximity-api-3 Healthy 
+requests=100 concurrency=32 errors=0 wall=0.11s throughput=899 req/s p50=23.8ms p95=65.5ms p99=76.4ms mean=27.7ms

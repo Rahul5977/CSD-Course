@@ -1,0 +1,12 @@
+$ sw_vers -productVersion; uname -m
+26.6.2
+arm64
+
+$ docker version --format "client {{.Client.Version}}  server {{.Server.Version}}  {{.Server.Os}}/{{.Server.Arch}}"
+client 29.1.3  server 29.1.3  linux/arm64
+$ docker compose version
+Docker Compose version v5.0.1
+$ docker info --format "{{.OperatingSystem}}  CPUs={{.NCPU}}  Mem={{.MemTotal}}  storage={{.Driver}}"
+Docker Desktop  CPUs=10  Mem=8217448448  storage=overlayfs
+$ docker run --rm hello-world | grep Hello
+Hello from Docker!

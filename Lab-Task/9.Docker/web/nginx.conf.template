@@ -1,0 +1,34 @@
+server {
+    listen 80;
+    server_name _;
+
+    # Docker's embedded DNS. Re-resolving every 10 s lets nginx pick up api
+    # replicas added with `docker compose up --scale api=N` without a restart;
+    # several A records for "api" are used round-robin.
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $api http://${API_UPSTREAM};
+
+    # the image links access.log to stdout, so a file is named explicitly to
+    # keep a copy on the web-logs volume; stdout still feeds `docker compose logs`
+    access_log /var/log/nginx/proximity_access.log combined;
+    access_log /dev/stdout combined;
+
+    root /usr/share/nginx/html;
+
+    location = / {
+        try_files /index.html =404;
+    }
+
+    location ~ ^/(search|network|health|docs|openapi\.json) {
+        proxy_pass $api;
+        proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        # which api container answered, to show the round-robin
+        add_header X-Upstream $upstream_addr always;
+    }
+
+    location = /nginx-health {
+        access_log off;
+        return 200 "ok\n";
+    }
+}

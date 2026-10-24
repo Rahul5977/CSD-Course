@@ -1,0 +1,16 @@
+$ docker compose exec api env | grep -E "^(PORT|WORKERS|LOCATIONS_CSV|LINKS_TXT)="
+LINKS_TXT=/data/link.txt
+LOCATIONS_CSV=/data/locations.csv
+PORT=8000
+WORKERS=1
+
+$ docker compose exec web grep -n "set \$api" /etc/nginx/conf.d/default.conf   # written by envsubst from API_UPSTREAM
+9:    set $api http://api:8000;
+
+$ API_WORKERS=2 docker compose up -d api
+$ docker compose exec api sh -c '<print /proc/*/cmdline>'   # slim image has no ps
+# PID 1 is the uvicorn master (exec in CMD), PIDs 8 and 9 are its two workers
+1 /opt/venv/bin/python /opt/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 2 
+7 /opt/venv/bin/python -B -c from multiprocessing.resource_tracker import main;main(6) 
+8 /opt/venv/bin/python -B -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=7, pipe_handl
+9 /opt/venv/bin/python -B -c from multiprocessing.spawn import spawn_main; spawn_main(tracker_fd=7, pipe_handl

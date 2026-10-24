@@ -1,0 +1,16 @@
+$ API_REPLICAS=3 docker compose --profile test run --rm loadtest
+requests=5000 concurrency=32 errors=0 wall=5.62s throughput=889 req/s p50=24.5ms p95=101.5ms p99=158.2ms mean=35.9ms
+
+$ docker compose ps --format "{{.Name}}"
+proximity-api-1
+proximity-api-2
+proximity-api-3
+proximity-web-1
+
+$ docker stats --no-stream   (sampled during a 20 000-request run)
+NAME                                  CPU %     MEM USAGE / LIMIT
+proximity-loadtest-run-ac7d479ffa76   97.92%    32.53MiB / 7.653GiB
+proximity-web-1                       9.30%     13.3MiB / 7.653GiB
+proximity-api-3                       10.57%    46.45MiB / 7.653GiB
+proximity-api-2                       10.29%    46.23MiB / 7.653GiB
+proximity-api-1                       10.91%    46.41MiB / 7.653GiB

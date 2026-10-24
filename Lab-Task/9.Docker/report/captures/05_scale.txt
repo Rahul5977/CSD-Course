@@ -1,0 +1,16 @@
+$ for i in $(seq 9); do curl -s -D - -o /dev/null "localhost:8088/search/?lat=0.5&long=0.5&cat=bank&rad=0.2" | grep X-Upstream; done
+X-Upstream: 172.25.0.3:8000
+X-Upstream: 172.25.0.3:8000
+X-Upstream: 172.25.0.3:8000
+X-Upstream: 172.25.0.2:8000
+X-Upstream: 172.25.0.3:8000
+X-Upstream: 172.25.0.3:8000
+X-Upstream: 172.25.0.4:8000
+X-Upstream: 172.25.0.4:8000
+X-Upstream: 172.25.0.4:8000
+
+$ docker inspect -f "{{.Name}} {{range $k,$v := .NetworkSettings.Networks}}{{$k}}={{$v.IPAddress}} {{end}}" $(docker compose ps -q)
+/proximity-api-1 proximity_backend=172.25.0.4 
+/proximity-api-2 proximity_backend=172.25.0.3 
+/proximity-api-3 proximity_backend=172.25.0.2 
+/proximity-web-1 proximity_backend=172.25.0.5 proximity_frontend=172.27.0.2 

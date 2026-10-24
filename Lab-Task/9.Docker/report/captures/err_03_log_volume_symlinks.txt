@@ -1,0 +1,8 @@
+$ docker volume ls --filter name=proximity
+DRIVER    VOLUME NAME
+local     proximity_web-logs
+
+$ docker compose exec web ls -l /var/log/nginx/
+total 0
+lrwxrwxrwx    1 root     root            11 Apr 16  2025 access.log -> /dev/stdout
+lrwxrwxrwx    1 root     root            11 Apr 16  2025 error.log -> /dev/stderr

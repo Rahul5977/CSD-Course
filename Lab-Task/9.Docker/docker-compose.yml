@@ -1,0 +1,69 @@
+# Lab 9: the Lab 7 Proximity Search API as a containerised stack.
+#
+#   docker compose up -d --build          # web + api
+#   API_REPLICAS=3 docker compose up -d   # three api replicas behind nginx
+#   docker compose --profile test run --rm loadtest
+#   docker compose down -v
+name: proximity
+
+x-lab7: &lab7 ../7.ProximitySearchAPI
+
+services:
+  api:
+    build:
+      context: *lab7
+      dockerfile: ../9.Docker/api/Dockerfile
+    image: proximity-api:1.0
+    environment:
+      PORT: 8000
+      WORKERS: ${API_WORKERS:-1}
+      LOCATIONS_CSV: /data/locations.csv
+      LINKS_TXT: /data/link.txt
+    volumes:
+      # dataset is mounted, not baked in: a new CSV needs a restart, not a rebuild
+      - ../7.ProximitySearchAPI/data:/data:ro
+    networks: [backend]
+    deploy:
+      # kept in the file, not only on the command line: `compose run` resets
+      # dependencies to this number (see report, errors section)
+      replicas: ${API_REPLICAS:-1}
+    restart: unless-stopped
+    # no ports: the api is reachable only through web
+
+  web:
+    build:
+      context: *lab7
+      dockerfile: ../9.Docker/web/Dockerfile
+      additional_contexts:
+        conf: ./web
+    image: proximity-web:1.0
+    ports:
+      - "${WEB_PORT:-8088}:80"
+    environment:
+      API_UPSTREAM: api:8000
+    volumes:
+      - web-logs:/var/log/nginx
+    networks: [frontend, backend]
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+
+  loadtest:
+    build:
+      context: *lab7
+      dockerfile: ../9.Docker/loadtest/Dockerfile
+    image: proximity-loadtest:1.0
+    networks: [frontend]
+    depends_on:
+      web:
+        condition: service_healthy
+    profiles: [test]
+
+networks:
+  frontend:
+  backend:
+    internal: true   # no route to the outside world or the host
+
+volumes:
+  web-logs:

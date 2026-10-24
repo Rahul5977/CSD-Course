@@ -1,0 +1,5 @@
+$ docker run --rm -v "$PWD/../7.ProximitySearchAPI":/src:ro -w /src proximity-api:1.0 sh -c "pip install -q pytest httpx"
+ERROR: Could not install packages due to an OSError: [Errno 13] Permission denied: '/opt/venv/lib/python3.12/site-packages/pygments'
+Check the permissions.
+
+

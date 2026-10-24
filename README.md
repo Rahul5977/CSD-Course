@@ -14,7 +14,8 @@ were merged in with their full commit history.
 | [`Lab-Task/4.GroupChat-Encypted`](Lab-Task/4.GroupChat-Encypted) | Lab 4 | Group chat with end-to-end encrypted rooms *(team repo, submodule)* | Node.js, Web Crypto |
 | [`Lab-Task/5.Load-Balancer`](Lab-Task/5.Load-Balancer) | Lab 5 | Load balancer over three chat backends + load generator and measurements | Node.js |
 | [`Lab-Task/6.Dynamic Load Balancing and Persistent Chat`](Lab-Task/6.Dynamic%20Load%20Balancing%20and%20Persistent%20Chat) | Lab 6 | Adaptive load balancing, live backend discovery, persistent SQLite chat | Node.js, SQLite |
-| [`Lab-Task/7.ProximitySearchAPI`](Lab-Task/7.ProximitySearchAPI) | Lab 7 | Proximity search API: 10 nearest locations by grid distance within a radius *(in progress)* | Python, FastAPI |
+| [`Lab-Task/7.ProximitySearchAPI`](Lab-Task/7.ProximitySearchAPI) | Lab 7 | Proximity search API: 10 nearest locations by grid distance within a radius | Python, FastAPI |
+| [`Lab-Task/9.Docker`](Lab-Task/9.Docker) | Lab 9 | Lab 7 API containerised: api (multi-stage, non-root) + nginx proxy/LB + load-test client, one `docker compose up` | Docker, Compose, nginx |
 
 ## Projects
 

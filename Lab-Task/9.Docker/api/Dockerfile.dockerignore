@@ -1,0 +1,5 @@
+# Build context is ../7.ProximitySearchAPI; only requirements.txt and app/ are needed.
+*
+!requirements.txt
+!app/
+**/__pycache__

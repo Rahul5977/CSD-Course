@@ -1,0 +1,31 @@
+$ docker volume ls --filter name=proximity
+DRIVER    VOLUME NAME
+local     proximity_web-logs
+
+$ docker compose exec web tail -n 2 /var/log/nginx/proximity_access.log
+192.168.65.1 - - [24/Oct/2026:07:45:45 +0000] "GET /search/?lat=0.2&long=0.5&cat=cafe&rad=0.2 HTTP/1.1" 200 59 "-" "curl/8.7.1"
+192.168.65.1 - - [24/Oct/2026:07:45:45 +0000] "GET /search/?lat=0.3&long=0.5&cat=cafe&rad=0.2 HTTP/1.1" 200 59 "-" "curl/8.7.1"
+
+$ docker compose down            # containers and networks removed, named volume kept
+ Container proximity-web-1 Stopping 
+ Container proximity-web-1 Stopped 
+ Container proximity-web-1 Removing 
+ Container proximity-web-1 Removed 
+ Network proximity_frontend Removing 
+ Network proximity_backend Removing 
+ Network proximity_backend Removed 
+ Network proximity_frontend Removed 
+$ docker compose up -d
+containers started: 4
+$ docker compose exec web wc -l /var/log/nginx/proximity_access.log   # lines from before the down survive
+3 /var/log/nginx/proximity_access.log
+
+$ docker compose exec api ls -l /data      # bind mount, read-only
+total 824
+-rw-r--r-- 1 app app 532800 Oct  9 12:53 link.txt
+-rw-r--r-- 1 app app 305774 Oct  4 08:10 locations.csv
+$ docker compose exec api touch /data/x
+touch: cannot touch '/data/x': Read-only file system
+
+$ docker compose exec api id
+uid=10001(app) gid=10001(app) groups=10001(app)
