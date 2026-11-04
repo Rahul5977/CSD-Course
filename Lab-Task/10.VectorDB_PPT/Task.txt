@@ -1,0 +1,19 @@
+Dear all,
+
+I would like to assign the following papers on Vector Databases to study.
+FINGER: Fast approx nearest neighbors:
+https://arxiv.org/abs/2206.11408
+Innovation in distance approximation methods. C++ implementation
+HARMONY: A Scalable Distributed Vector Database for High-Throughput Approximate Nearest Neighbor Search: 
+https://dl.acm.org/doi/10.1145/3749167
+Discusses partitioning schemes (dimension based, vector based, multi-granularity based) to optimize resource allocation across nodes. Early stopping approach to prune computations. Comparison to open source, FAISS.
+Manu: A Cloud Native Vector Database Management System: 
+https://arxiv.org/abs/2206.13843
+System design paper. Requirements for Vector DB, Design goals, High level design, 
+
+design philosophy of
+relaxing transaction complexity in exchange for tunable consistency and fine-grained elasticity, performance enhancements
+Future work section is also interesting for those who want to pursue research in this area.
+Fast-Convergent Proximity Graphs for Approximate Nearest Neighbor Search: https://arxiv.org/abs/2510.05975
+CS Theory paper, new notion of proximity graphs.
+Prepare a presentation summarizing the ideas from all 4 papers, comparing the approaches discussed, and discussing one paper in detail. 
