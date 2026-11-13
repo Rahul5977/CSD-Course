@@ -1,0 +1,20 @@
+# Case E (extension, not in the required table) - PostgreSQL WAL commit path:
+# sequential 8 KiB appends, fdatasync after every write (wal_sync_method=fdatasync,
+# synchronous_commit=on), buffered I/O like PostgreSQL 16's default.
+# Substituted at run time: FIO_FILE_WAL, RUNTIME, RAMP
+[global]
+ioengine=psync
+direct=0
+size=256m
+runtime=${RUNTIME}
+time_based=1
+ramp_time=${RAMP}
+group_reporting=1
+filename=${FIO_FILE_WAL}
+percentile_list=50:95:99:99.9
+
+[caseE]
+rw=write
+bs=8k
+fdatasync=1
+numjobs=1

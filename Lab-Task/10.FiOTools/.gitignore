@@ -1,0 +1,6 @@
+# all markdown stays local (planning notes, drafts)
+*.md
+
+.DS_Store
+report/*.aux
+report/*.log

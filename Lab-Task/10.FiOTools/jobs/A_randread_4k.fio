@@ -1,0 +1,19 @@
+# Case A - PostgreSQL index probes / point lookups (100% random read, 4 KiB)
+# Substituted at run time by scripts/run_all.sh:
+#   QD (1|8|32), FIO_FILE, SIZE, RUNTIME, RAMP, ENGINE
+[global]
+ioengine=${ENGINE}
+direct=1
+size=${SIZE}
+runtime=${RUNTIME}
+time_based=1
+ramp_time=${RAMP}
+group_reporting=1
+filename=${FIO_FILE}
+numjobs=1
+iodepth=${QD}
+percentile_list=50:95:99:99.9
+
+[caseA]
+rw=randread
+bs=4k

@@ -1,0 +1,14 @@
+-rw-r--r-- 1 root root 1073741824 Nov 13 16:26 /fio-lab/db-test.bin
+16:40:45 done A_randread_4k qd=1 -> big8g_A_randread_4k_qd1.json
+16:41:20 done A_randread_4k qd=8 -> big8g_A_randread_4k_qd8.json
+16:41:56 done A_randread_4k qd=32 -> big8g_A_randread_4k_qd32.json
+16:42:31 done B_randrw70_4k qd=1 -> big8g_B_randrw70_4k_qd1.json
+16:43:07 done B_randrw70_4k qd=8 -> big8g_B_randrw70_4k_qd8.json
+16:43:42 done B_randrw70_4k qd=32 -> big8g_B_randrw70_4k_qd32.json
+16:44:17 done C_randrw30_8k qd=1 -> big8g_C_randrw30_8k_qd1.json
+16:44:53 done C_randrw30_8k qd=8 -> big8g_C_randrw30_8k_qd8.json
+16:45:28 done C_randrw30_8k qd=32 -> big8g_C_randrw30_8k_qd32.json
+16:46:03 done D_seqread_256k qd=1 -> big8g_D_seqread_256k_qd1.json
+16:46:39 done D_seqread_256k qd=8 -> big8g_D_seqread_256k_qd8.json
+16:47:14 done D_seqread_256k qd=32 -> big8g_D_seqread_256k_qd32.json
+ALL DONE

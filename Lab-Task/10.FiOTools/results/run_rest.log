@@ -1,0 +1,8 @@
+-rw-r--r-- 1 root root 1073741824 Nov 13 16:26 /fio-lab/db-test.bin
+16:35:40 done A_randread_4k qd=32 -> engine_iouring_A_qd32.json
+16:36:51 done A_randread_4k qd=1 -> size8g_A_qd1.json
+16:37:27 done A_randread_4k qd=32 -> size8g_A_qd32.json
+16:37:52 done E_wal rep 1
+16:38:17 done E_wal rep 2
+16:38:43 done E_wal rep 3
+ALL DONE
