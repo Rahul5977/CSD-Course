@@ -1,0 +1,7 @@
+# all markdown stays local (planning notes, drafts)
+*.md
+
+# downloaded source papers stay local
+papers/
+
+.DS_Store

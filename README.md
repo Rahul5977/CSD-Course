@@ -17,6 +17,7 @@ were merged in with their full commit history.
 | [`Lab-Task/7.ProximitySearchAPI`](Lab-Task/7.ProximitySearchAPI) | Lab 7 | Proximity search API: 10 nearest locations by grid distance within a radius | Python, FastAPI |
 | [`Lab-Task/9.Docker`](Lab-Task/9.Docker) | Lab 9 | Lab 7 API containerised: api (multi-stage, non-root) + nginx proxy/LB + load-test client, one `docker compose up` | Docker, Compose, nginx |
 | [`Lab-Task/10.VectorDB_PPT`](Lab-Task/10.VectorDB_PPT) | Lab 10 | Paper study on vector databases (FINGER, HARMONY, Manu, α-CG): summary, comparison and Manu deep dive | PowerPoint |
+| [`Lab-Task/11.PPT-2`](Lab-Task/11.PPT-2) | Lab 11 | Paper summary on debugging distributed systems (live debugging study, Vicious Cycles, CSnake, UpFuzz, Tamias) for end-sem revision | PowerPoint, PDF |
 
 ## Projects
 
